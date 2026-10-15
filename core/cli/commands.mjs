@@ -30,6 +30,7 @@ import { projectEvents } from '../store/project.mjs';
 import { mail } from './mail.mjs';
 import { report } from './report.mjs';
 import { avisoEmailNaoConferido, sincronizarEmail } from '../mail/sync.mjs';
+import { kbCommands } from './kb.mjs';
 
 // Relógio simulado só com --teste: sem a flag, --now é recusado para não gravar marcador, rodada ou orçamento num dia que não é o real.
 function relogio(values) {
@@ -62,6 +63,7 @@ export const legacyCommandNames = ['migrate', 'project', 'verify', 'panel'];
 export const commandNames = () => [...legacyCommandNames, ...Object.keys(commands)];
 
 export const commands = {
+  ...kbCommands,
   async doctor(rest, { parseFlags }) {
     parseFlags(rest, { allowed: [] });
     const report = await runDoctor();
