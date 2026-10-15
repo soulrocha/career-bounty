@@ -1,8 +1,12 @@
 // Registro das fontes: id -> fábrica que lê a configuração pessoal.
 import { createFake } from './fake.mjs';
+import { createGupy } from './gupy.mjs';
+import { createCareerOps } from './careerOps.mjs';
 
 const FACTORIES = {
   fake: settings => createFake(settings.fontes.fake?.vagas ?? []),
+  gupy: (settings, deps) => createGupy(settings.fontes.gupy ?? {}, deps),
+  careerops: settings => createCareerOps(settings.fontes.careerops ?? {}),
 };
 
 export const sourceIds = () => Object.keys(FACTORIES);

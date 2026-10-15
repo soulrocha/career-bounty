@@ -14,7 +14,7 @@ export async function collect({ settings, only, dryRun = false, now = new Date()
   const lista = sources ?? buildSources(settings, { only });
   const plano = buildPlan(settings.radar, now);
   const window = plano.janela;
-  const coleta = await runSources(lista, { janela: window, plano, config: settings.fontes, now }, { timeoutMs: settings.radar.timeout_fonte_ms });
+  const coleta = await runSources(lista, { janela: window, plano, config: settings.fontes, now, dataRoot: settings.dataRoot }, { timeoutMs: settings.radar.timeout_fonte_ms });
   const { eventos, avisos } = await readEvents(settings.dataRoot);
   if (avisos.length) throw new Error(`Log de eventos truncado ou corrompido (${avisos.length} aviso(s)); revisão necessária.`);
   const conhecidas = new Set(projectEvents(eventos).vagas.map(vaga => vaga.id));
