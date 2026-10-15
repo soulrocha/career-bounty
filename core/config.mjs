@@ -19,7 +19,7 @@ export function defaultSettings() {
     panel: { port: 8880, base_files: [], app_name: 'career-bounty' },
     perfil: { nome: '', especialidade: '', regiao: '', aviso: '', pdfs_base: [] },
     mail: {
-      ativo: false, so_portais: false, portais_extras: [], dominios_confiaveis: [], modelo: 'haiku', janela_dias: 7, limite_resultados: 50, limite_fase_b: 5, orcamento_tokens: 800000,
+      ativo: false, so_portais: false, portais_extras: [], dominios_confiaveis: [], modelo: 'haiku', janela_dias: 7, limite_resultados: 50, limite_fase_b: 5, orcamento_tokens: 1000000,
       termos: ['processo seletivo', 'sua candidatura', 'sua inscrição', 'próxima etapa', 'your application'],
     },
   };
