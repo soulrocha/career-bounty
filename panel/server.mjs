@@ -1,73 +1,51 @@
 import { createServer } from 'node:http';
 import { randomBytes } from 'node:crypto';
-import { lstat, readFile } from 'node:fs/promises';
 import { noLinks } from '../core/migration/paths.mjs';
-import { isAbsolute, relative, resolve, sep, posix } from 'node:path';
+import { resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
+import { publicMarker } from '../core/store/rules.mjs';
+import { marcarCandidatura } from '../core/store/commands/marcarCandidatura.mjs';
+import { descartar } from '../core/store/commands/descartar.mjs';
+import { readEvents } from '../core/store/events.mjs';
+import { projectEvents } from '../core/store/project.mjs';
+import { renderPainelDe } from './render.mjs';
+import { createMaterials, namedMaterialsOf, privateFile, validateBaseFiles } from './materials.mjs';
 
-const confirmed = new Set(['candidatura-enviada-confirmada', 'candidatura-finalizada-confirmada',
-  'candidatura-anterior-identificada-triagem-pendente', 'candidatura-anterior-mesmo-cargo-confirmada-id-a-verificar']);
+// Painel sem recurso externo: nada carrega nem envia dado para fora de 127.0.0.1. Script e estilo inline vêm do template local.
+const CSP = ["default-src 'none'", "script-src 'unsafe-inline'", "style-src 'unsafe-inline'", "img-src 'self' data:", "font-src 'self' data:", "connect-src 'self'", "base-uri 'self'", "form-action 'none'", "frame-ancestors 'none'", "object-src 'none'"].join('; ');
 
-function marker(job) {
-  const mark = job.candidatura_usuario ?? {};
-  const email = job.candidatura_email ?? {};
-  const portal = job.candidatura_portal ?? {};
-  const previous = confirmed.has(job.status) || Boolean(email.aplicada) || Boolean(portal.aplicada);
-  return { id: job.id, aplicada: Boolean(mark.aplicada) || previous,
-    data: (mark.aplicada ? mark.data : portal.data || email.data) ?? null,
-    historico_confirmado: previous, status: job.status ?? null, evidencia_email: email.observacao ?? null,
-    etapa_email: email.etapa ?? null, origem: mark.aplicada ? 'usuario-no-painel' : previous ? 'historico' : null,
-    historico_anterior: Object.hasOwn(job, 'historico_anterior') ? job.historico_anterior : (Boolean(job.historico) && !mark.aplicada),
-    descartada: Boolean(job.descarte_usuario?.descartada) };
-}
-
-async function privateFile(root, path) {
-  await noLinks(root).catch(() => { throw new Error('Diretório inválido.'); });
-  const target = resolve(root, path);
-  const rel = relative(root, target);
-  if (!rel || rel.startsWith(`..${sep}`) || rel === '..' || isAbsolute(rel)) throw new Error('Arquivo indisponível.');
-  let current = root;
-  for (const part of rel.split(sep)) {
-    current = resolve(current, part);
-    if ((await lstat(current)).isSymbolicLink()) throw new Error('Link indisponível.');
-  }
-  if (!(await lstat(target)).isFile()) throw new Error('Arquivo indisponível.');
-  return readFile(target);
-}
-
-export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880 }) {
+export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, appName = 'career-bounty', now, hostId, perfil = {} }) {
   if (!['127.0.0.1', 'localhost'].includes(host)) throw new Error('O painel exige endereço local.');
   dataRoot = resolve(dataRoot);
   await noLinks(dataRoot).catch(() => { throw new Error('Diretório de dados inválido.'); });
   const token = randomBytes(32).toString('hex');
   const state = JSON.parse(await privateFile(dataRoot, 'state/migration.json'));
-  if (state.version !== 1 || state.mode !== 'shadow' || !/^backups\/[\w-][\w.-]*$/.test(state.snapshotRoot)) {
+  const hasSnapshot = state.snapshotRoot !== null;
+  if (state.version !== 1 || !['shadow', 'ativo'].includes(state.mode) || (hasSnapshot && !/^backups\/[\w-][\w.-]*$/.test(state.snapshotRoot))) {
     throw new Error('Estado de migração inválido.');
   }
-  const allowedBaseFiles = state.allowedBaseFiles ?? [];
-  if (!Array.isArray(allowedBaseFiles) || allowedBaseFiles.some(path => typeof path !== 'string'
-    || !/\.pdf$/i.test(path) || /[\\%\x00:?#]/.test(path)
-    || path.split('/').some(part => !part || part === '.' || part === '..'))) {
-    throw new Error('Allowlist de PDFs base inválida.');
-  }
-  const baseFiles = new Set(allowedBaseFiles.map(path => `/curriculos/${path}`));
-  const snapshot = resolve(dataRoot, state.snapshotRoot);
-  const pagePath = `${state.snapshotRoot}/carreira/busca-vagas/painel-vagas.html`;
+  const allowedBaseFiles = validateBaseFiles(state.allowedBaseFiles ?? []);
+  const snapshot = hasSnapshot ? resolve(dataRoot, state.snapshotRoot) : null;
   const pipeline = JSON.parse(await privateFile(dataRoot, 'projections/pipeline-vagas.json'));
-  const original = JSON.parse(await privateFile(dataRoot, `${state.snapshotRoot}/carreira/pipeline-vagas.json`));
-  if (!Array.isArray(pipeline.vagas) || !isDeepStrictEqual(pipeline, original)) throw new Error('Projeção difere do snapshot.');
-  const pageSource = (await privateFile(dataRoot, pagePath)).toString('utf8');
-  const materials = JSON.parse(await privateFile(dataRoot, `${state.snapshotRoot}/carreira/busca-vagas/curriculos-manifest.json`));
-  const namedMaterials = new Set(materials.flatMap(item => ['html', 'pdf_visual', 'pdf_ats']
-    .filter(field => typeof item[field] === 'string')
-    .map(field => posix.normalize(`/carreira/busca-vagas/${item[field].replaceAll('\\', '/')}`))));
-  const reports = new Set(['relatorio-vagas.md', 'busca-browseruse-2026-10-05.md', 'busca-linkedin-ampla-2026-10-05.md']);
+  if (!Array.isArray(pipeline.vagas)) throw new Error('Projeção inválida.');
+  let pageSource = null; // sem snapshot, a página é gerada da projeção a cada pedido
+  let namedMaterials = new Set();
+  if (hasSnapshot) {
+    const original = JSON.parse(await privateFile(dataRoot, `${state.snapshotRoot}/carreira/pipeline-vagas.json`));
+    if (state.mode === 'shadow' && !isDeepStrictEqual(pipeline, original)) throw new Error('Projeção difere do snapshot.');
+    pageSource = (await privateFile(dataRoot, `${state.snapshotRoot}/carreira/busca-vagas/painel-vagas.html`)).toString('utf8');
+    const materials = JSON.parse(await privateFile(dataRoot, `${state.snapshotRoot}/carreira/busca-vagas/curriculos-manifest.json`));
+    namedMaterials = namedMaterialsOf(materials);
+  }
+  const materialsPolicy = createMaterials({ snapshot, namedMaterials, baseFiles: allowedBaseFiles });
+  const writable = state.mode === 'ativo';
   let actualPort;
   const server = createServer(async (req, res) => {
     const send = (code, body, type = 'application/json; charset=utf-8') => {
       const bytes = Buffer.isBuffer(body) ? body : Buffer.from(JSON.stringify(body));
       res.writeHead(code, { 'Content-Type': type, 'Content-Length': bytes.length,
-        'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY' });
+        'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY',
+        'Referrer-Policy': 'no-referrer', 'Content-Security-Policy': CSP });
       res.end(bytes);
     };
     try {
@@ -77,44 +55,59 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880 }) 
           || req.headers['x-painel-token'] !== token || !['/api/candidaturas', '/api/descarte'].includes(req.url)) {
           return send(403, { erro: 'Acesso inválido.' });
         }
-        return send(409, { erro: 'Modo sombra: gravação desligada.', gravacao_painel: 'desligada' });
+        if (!writable) return send(409, { erro: 'Modo sombra: gravação desligada.', gravacao_painel: 'desligada' });
+        if ((req.headers['content-type'] ?? '').split(';')[0] !== 'application/json') return send(415, { erro: 'Formato inválido.' });
+        const size = Number(req.headers['content-length'] ?? 0);
+        if (!(size > 0 && size <= 4096)) return send(413, { erro: 'Pedido inválido.' });
+        const chunks = [];
+        for await (const chunk of req) chunks.push(chunk);
+        let body;
+        try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { return send(400, { erro: 'Pedido malformado.' }); }
+        const route = req.url;
+        const fields = route === '/api/candidaturas' ? ['id', 'aplicada', 'data'] : ['id', 'descartada'];
+        if (!body || typeof body !== 'object' || Array.isArray(body) || Object.keys(body).some(key => !fields.includes(key))) return send(400, { erro: 'Campos inválidos.' });
+        try {
+          const options = { dataRoot, now: now?.(), host: hostId };
+          const result = route === '/api/candidaturas'
+            ? await marcarCandidatura({ ...options, id: body.id, aplicada: body.aplicada, data: body.data })
+            : await descartar({ ...options, id: body.id, descartada: body.descartada });
+          return send(200, result);
+        } catch (error) {
+          if (error.code === 'nao_encontrado') return send(404, { erro: 'Vaga não encontrada.' });
+          if (error.code === 'invalido') return send(400, { erro: error.message });
+          if (error.code === 'ocupado') return send(409, { erro: error.message });
+          throw error;
+        }
       }
       let path;
       try { path = decodeURIComponent(req.url.split('?')[0]); } catch { return send(404, { erro: 'Arquivo indisponível.' }); }
       if (/[\\%\x00]/.test(path) || path.split('/').some(part => part === '.' || part === '..')) return send(404, { erro: 'Arquivo indisponível.' });
       if (req.method !== 'GET') return send(405, { erro: 'Método indisponível.' });
-      if (path === '/api/status') return send(200, { app: 'career-bounty', version: 1, mode: 'shadow' });
+      if (path === '/api/status') return send(200, { app: appName, version: 1, mode: state.mode });
       if (path === '/api/candidaturas') {
         if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
-        return send(200, { vagas: pipeline.vagas.map(marker) });
+        const vagas = writable ? projectEvents((await readEvents(dataRoot)).eventos).vagas : pipeline.vagas;
+        return send(200, { vagas: vagas.map(publicMarker) });
       }
       if (['/', '/carreira/busca-vagas/painel-vagas.html'].includes(path)) {
         const init = `<script>window.PAINEL_API=${JSON.stringify({ token })};</script>`;
-        const page = pageSource.replace('</head>', `<base href="/carreira/busca-vagas/">${init}</head>`)
+        const source = pageSource ?? await renderPainelDe(writable ? projectEvents((await readEvents(dataRoot)).eventos) : pipeline, { dataRoot, perfil });
+        const withInit = source.replace('</head>', `${pageSource ? "<base href=\"/carreira/busca-vagas/\">" : ""}${init}</head>`);
+        const page = writable ? withInit : withInit
           .replace(/<body([^>]*)>/i, '<body$1><p role="status">SOMBRA — gravação desligada. Dados importados para consulta.</p>')
           .replaceAll('applicationApiReady=true', 'applicationApiReady=false')
           .replaceAll('Marcações salvas neste computador e consideradas nas próximas buscas.', 'SOMBRA — gravação desligada. Marcações importadas para consulta.')
           .replaceAll('Abra o painel interativo para salvar.', 'SOMBRA — gravação desligada.');
         return send(200, Buffer.from(page), 'text/html; charset=utf-8');
       }
-      const name = path.split('/').at(-1);
-      const isMaterial = path.startsWith('/curriculos/vagas/') &&
-        (['curriculo.html', 'curriculo-visual.pdf', 'curriculo-ats.pdf'].includes(name) || namedMaterials.has(path));
-      const isBase = baseFiles.has(path);
-      const isReport = path.startsWith('/carreira/busca-vagas/') && reports.has(path.slice('/carreira/busca-vagas/'.length));
-      if (isMaterial || isBase || isReport) {
-        try {
-          const bytes = await privateFile(snapshot, path.slice(1));
-          const type = name.endsWith('.pdf') ? 'application/pdf' : name.endsWith('.html') ? 'text/html; charset=utf-8' : 'text/plain; charset=utf-8';
-          return send(200, bytes, type);
-        } catch { return send(404, { erro: 'Arquivo indisponível.' }); }
-      }
-      send(404, { erro: 'Não encontrado.' });
+      const material = await materialsPolicy.read(path);
+      if (material) return send(200, material.bytes, material.type);
+      send(404, { erro: path.startsWith('/curriculos/') || path.startsWith('/carreira/') ? 'Arquivo indisponível.' : 'Não encontrado.' });
     } catch {
       send(500, { erro: 'Não foi possível carregar os dados do painel.' });
     }
   });
   await new Promise((done, fail) => { server.once('error', fail); server.listen(port, host, done); });
   actualPort = server.address().port;
-  return { server, url: `http://${host}:${actualPort}`, close: () => new Promise((done, fail) => server.close(error => error ? fail(error) : done())) };
+  return { server, mode: state.mode, url: `http://${host}:${actualPort}`, close: () => new Promise((done, fail) => server.close(error => error ? fail(error) : done())) };
 }

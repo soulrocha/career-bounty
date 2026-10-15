@@ -8,12 +8,15 @@ const ENVIO_PADROES = ['parar_antes_de_enviar', 'confirmar_lote'];
 export function defaultSettings() {
   return {
     vault_root: null,
+    backups_retidos: 3,
+    portais_extras: {},
     manifesto_kb: null,
     identidade: null,
     ai_memory: { url: null },
     envio: { padrao: 'parar_antes_de_enviar', regras: [] },
     fontes: { linkedin_guest: { ativo: false, aceite_termos: false } },
-    panel: { port: 8880, base_files: [] },
+    panel: { port: 8880, base_files: [], app_name: 'career-bounty' },
+    perfil: { nome: '', especialidade: '', regiao: '', aviso: '', pdfs_base: [] },
   };
 }
 
@@ -37,6 +40,18 @@ export function validateSettings(raw) {
   if (!isObject(raw)) throw new Error('Configuração inválida: config.yml deve ser um objeto.');
   const settings = defaultSettings();
   settings.vault_root = optionalString(raw.vault_root, 'vault_root', { absolute: true });
+  if (raw.backups_retidos !== undefined) {
+    if (!Number.isInteger(raw.backups_retidos) || raw.backups_retidos < 1) throw invalid('backups_retidos', 'deve ser inteiro >= 1');
+    settings.backups_retidos = raw.backups_retidos;
+  }
+  if (raw.portais_extras !== undefined) {
+    const extras = raw.portais_extras;
+    const hostValido = host => typeof host === 'string' && /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/i.test(host) && host.includes('.');
+    if (!isObject(extras) || Object.entries(extras).some(([label, hosts]) => !label.trim() || !Array.isArray(hosts) || !hosts.length || !hosts.every(hostValido))) {
+      throw invalid('portais_extras', 'deve ser objeto { "Rótulo": ["host.exemplo"] } com hosts sem esquema nem caminho');
+    }
+    settings.portais_extras = extras;
+  }
   settings.manifesto_kb = optionalString(raw.manifesto_kb, 'manifesto_kb', { absolute: true });
   settings.identidade = optionalString(raw.identidade, 'identidade', { absolute: true });
   settings.ai_memory.url = optionalString(section(raw.ai_memory, 'ai_memory').url, 'ai_memory.url');
@@ -67,14 +82,39 @@ export function validateSettings(raw) {
     throw invalid('fontes.linkedin_guest.ativo', 'exige aceite_termos: true no mesmo bloco; o coletor guest pode violar os termos de uso do LinkedIn e a responsabilidade é sua');
   }
 
+  const perfil = section(raw.perfil, 'perfil');
+  for (const key of ['nome', 'especialidade', 'regiao', 'aviso']) {
+    if (perfil[key] !== undefined) {
+      if (typeof perfil[key] !== 'string') throw invalid(`perfil.${key}`, 'deve ser texto');
+      settings.perfil[key] = perfil[key];
+    }
+  }
+  if (perfil.pdfs_base !== undefined) {
+    if (!Array.isArray(perfil.pdfs_base) || perfil.pdfs_base.some(item => !isObject(item) || typeof item.texto !== 'string' || typeof item.href !== 'string' || /^[a-z][a-z0-9+.-]*:/i.test(item.href))) {
+      throw invalid('perfil.pdfs_base', 'deve ser lista de {texto, href} com href relativo');
+    }
+    settings.perfil.pdfs_base = perfil.pdfs_base;
+  }
+
   const panel = section(raw.panel, 'panel');
   if (panel.port !== undefined) {
     if (!Number.isInteger(panel.port) || panel.port < 1 || panel.port > 65535) throw invalid('panel.port', 'deve ser porta entre 1 e 65535');
     settings.panel.port = panel.port;
   }
+  if (panel.app_name !== undefined) {
+    if (typeof panel.app_name !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(panel.app_name)) throw invalid('panel.app_name', 'deve ser um nome curto em minúsculas, números e hífen');
+    settings.panel.app_name = panel.app_name;
+  }
   if (panel.base_files !== undefined) {
     if (!Array.isArray(panel.base_files)) throw new Error('Configuração inválida: panel.base_files deve ser lista.');
     settings.panel.base_files = panel.base_files;
+  }
+  // O link do currículo base só funciona se o painel o serve: href "curriculos/<arquivo>.pdf" com <arquivo> em panel.base_files.
+  for (const item of settings.perfil.pdfs_base) {
+    const arquivo = item.href.startsWith('curriculos/') ? item.href.slice('curriculos/'.length) : null;
+    if (arquivo === null || !settings.panel.base_files.includes(arquivo)) {
+      throw invalid('perfil.pdfs_base', 'cada href deve ser "curriculos/<arquivo>.pdf" com o arquivo listado em panel.base_files');
+    }
   }
   return settings;
 }
@@ -132,5 +172,5 @@ export async function loadConfig({ dataRoot = resolveDataRoot() } = {}) {
     }
     await noLinks(path.join(config.legacy_materials, relative));
   }
-  return { dataRoot, careerRoot, curriculaRoot: config.legacy_materials, port, allowedBaseFiles };
+  return { dataRoot, careerRoot, curriculaRoot: config.legacy_materials, port, allowedBaseFiles, backupsRetidos: settings.backups_retidos };
 }

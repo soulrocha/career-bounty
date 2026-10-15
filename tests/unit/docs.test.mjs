@@ -21,7 +21,7 @@ async function filesUnder(dir, extension) {
 const TERMOS = [
   ['Afirmação', /\bclaims?\b/i],
   ['Evidência', /\bevidence\b/i],
-  ['Vaga canônica', /canonical|canonica/i],
+  ['Vaga canônica', /canonica/i],
   ['Requisição', /requisicao|requisition/i],
   ['Candidatura', /candidatura/i],
   ['Resposta', /\banswers?\b|resposta/i],

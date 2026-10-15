@@ -1,0 +1,1422 @@
+{
+  "versao": 1,
+  "raiz": {
+    "atualizado": [
+      "string"
+    ],
+    "schema_version": [
+      "number"
+    ]
+  },
+  "vaga": {
+    "aderencia": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "alerta_pretensao": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "data": [
+          "string"
+        ],
+        "moeda": [
+          "string"
+        ],
+        "resumo": [
+          "string"
+        ],
+        "snapshot_empregador": [
+          "string"
+        ],
+        "valor_inicial": [
+          "number"
+        ],
+        "valor_perfil_corrigido": [
+          "number"
+        ]
+      }
+    },
+    "anuncio_publicado": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "application_url": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "avaliacao_empresa": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "consultado_em": [
+          "string"
+        ],
+        "fontes": [
+          "array"
+        ],
+        "resumo": [
+          "string"
+        ],
+        "data": [
+          "string"
+        ]
+      }
+    },
+    "beneficios": {
+      "tipos": [
+        "array"
+      ]
+    },
+    "cadastro_corrigido": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "candidatura_email": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "aplicada": [
+          "boolean"
+        ],
+        "conferido_em": [
+          "string"
+        ],
+        "correspondencia": [
+          "string"
+        ],
+        "data": [
+          "null",
+          "string"
+        ],
+        "data_confirmada_ate": [
+          "string"
+        ],
+        "etapa": [
+          "string"
+        ],
+        "evidencias": [
+          "array"
+        ],
+        "observacao": [
+          "string"
+        ],
+        "descricao_etapa": [
+          "string"
+        ],
+        "fontes": [
+          "array"
+        ],
+        "forca_match": [
+          "string"
+        ],
+        "ultima_atualizacao": [
+          "string"
+        ],
+        "data_devolutiva": [
+          "string"
+        ],
+        "status_processo": [
+          "string"
+        ],
+        "ultimo_lembrete_em": [
+          "string"
+        ],
+        "proxima_etapa": [
+          "object"
+        ],
+        "etapas_pendentes": [
+          "array"
+        ],
+        "status_processo_observacao": [
+          "string"
+        ]
+      }
+    },
+    "candidatura_indicio": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "confirmacao_envio": [
+          "boolean"
+        ],
+        "consultado_em": [
+          "string"
+        ],
+        "origem": [
+          "string"
+        ],
+        "texto": [
+          "string"
+        ]
+      }
+    },
+    "candidatura_portal": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "aplicada": [
+          "boolean"
+        ],
+        "comprovante": [
+          "string"
+        ],
+        "confirmacao": [
+          "string"
+        ],
+        "curriculo_enviado": [
+          "string"
+        ],
+        "data": [
+          "null",
+          "string"
+        ],
+        "sha256": [
+          "string"
+        ],
+        "url_confirmacao": [
+          "string"
+        ],
+        "pretensao_clt_mensal": [
+          "number"
+        ],
+        "requisicao_linkedin": [
+          "string"
+        ],
+        "conferido_em": [
+          "string"
+        ],
+        "curriculo_enviado_pendente_confirmacao": [
+          "boolean"
+        ],
+        "id_aplicacao": [
+          "string"
+        ],
+        "material": [
+          "string"
+        ],
+        "respostas_resumo": [
+          "object"
+        ],
+        "data_relativa_observada": [
+          "string"
+        ],
+        "fonte": [
+          "string"
+        ],
+        "prova": [
+          "string"
+        ],
+        "verificado_em": [
+          "string"
+        ],
+        "data_fonte": [
+          "string"
+        ]
+      }
+    },
+    "candidatura_simplificada": {
+      "tipos": [
+        "boolean"
+      ]
+    },
+    "candidatura_usuario": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "aplicada": [
+          "boolean"
+        ],
+        "data": [
+          "null",
+          "string"
+        ],
+        "origem": [
+          "string"
+        ],
+        "registrado_em": [
+          "string"
+        ],
+        "status_anterior": [
+          "string"
+        ],
+        "observacao": [
+          "string"
+        ]
+      }
+    },
+    "cargo": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "coleta_http": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "caracteres": [
+          "number"
+        ],
+        "data": [
+          "string"
+        ],
+        "status": [
+          "number"
+        ],
+        "url_final": [
+          "string"
+        ]
+      }
+    },
+    "comprovante_envio": {
+      "tipos": [
+        "null",
+        "object",
+        "string"
+      ],
+      "filhos": {
+        "arquivo": [
+          "string"
+        ],
+        "data": [
+          "string"
+        ],
+        "fonte": [
+          "string"
+        ],
+        "texto": [
+          "string"
+        ],
+        "data_envio_exata": [
+          "null"
+        ],
+        "nota": [
+          "string"
+        ],
+        "pdf_enviado": [
+          "null"
+        ],
+        "tipo": [
+          "string"
+        ],
+        "verificado_em": [
+          "string"
+        ]
+      }
+    },
+    "condicoes": {
+      "tipos": [
+        "object",
+        "string"
+      ],
+      "filhos": {
+        "motivos": [
+          "array"
+        ],
+        "piso": [
+          "null",
+          "number"
+        ],
+        "salario": [
+          "null",
+          "number"
+        ],
+        "situacao": [
+          "string"
+        ],
+        "faixa_publicada": [
+          "object"
+        ]
+      }
+    },
+    "consultada_em": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "consultado_em": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "curriculo": {
+      "tipos": [
+        "null",
+        "string"
+      ]
+    },
+    "curriculo_enviado": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "curriculo_html": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "curriculo_necessario": {
+      "tipos": [
+        "boolean"
+      ]
+    },
+    "data_consulta": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "declaracao_conflitos_usuario": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "data": [
+          "string"
+        ],
+        "fonte": [
+          "string"
+        ],
+        "resposta": [
+          "string"
+        ]
+      }
+    },
+    "descarte_usuario": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "descartada": [
+          "boolean"
+        ],
+        "origem": [
+          "string"
+        ],
+        "registrado_em": [
+          "string"
+        ],
+        "data": [
+          "string"
+        ],
+        "motivo": [
+          "string"
+        ]
+      }
+    },
+    "descricao": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "descricao_completa": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "descricao_prova_local": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "descricao_status": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "devolutiva_email": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "assunto": [
+          "string"
+        ],
+        "cargo": [
+          "string"
+        ],
+        "correspondencia": [
+          "string"
+        ],
+        "data_email": [
+          "string"
+        ],
+        "data_local": [
+          "string"
+        ],
+        "empresa": [
+          "string"
+        ],
+        "etapa": [
+          "string"
+        ],
+        "fonte": [
+          "string"
+        ],
+        "job_id": [
+          "string"
+        ],
+        "message_id": [
+          "string"
+        ],
+        "requisicao_confirmada": [
+          "boolean"
+        ],
+        "resumo": [
+          "string"
+        ]
+      }
+    },
+    "diferenciais": {
+      "tipos": [
+        "array"
+      ],
+      "filhos": {
+        "avaliacao": [
+          "string"
+        ],
+        "evidencia": [
+          "string"
+        ],
+        "requisito": [
+          "string"
+        ],
+        "tipo": [
+          "string"
+        ],
+        "ressalva": [
+          "string"
+        ]
+      }
+    },
+    "distincao_historico": {
+      "tipos": [
+        "array"
+      ]
+    },
+    "elegivel_brasil": {
+      "tipos": [
+        "boolean",
+        "null"
+      ]
+    },
+    "empresa": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "empresa_avaliacao": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "data": [
+          "null",
+          "string"
+        ],
+        "fontes": [
+          "array"
+        ],
+        "nota": [
+          "null",
+          "number"
+        ],
+        "plataforma": [
+          "null",
+          "string"
+        ],
+        "quantidade": [
+          "null",
+          "number"
+        ],
+        "resumo": [
+          "string"
+        ],
+        "avaliacoes": [
+          "null",
+          "number"
+        ],
+        "atualidade": [
+          "string"
+        ],
+        "status": [
+          "string"
+        ]
+      }
+    },
+    "etapa_usuario": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "data_conclusao": [
+          "string"
+        ],
+        "estado": [
+          "string"
+        ],
+        "etapa": [
+          "string"
+        ],
+        "observacao": [
+          "string"
+        ],
+        "origem": [
+          "string"
+        ]
+      }
+    },
+    "etapas_pendentes": {
+      "tipos": [
+        "array"
+      ],
+      "filhos": {
+        "data": [
+          "string"
+        ],
+        "estado": [
+          "string"
+        ],
+        "fonte": [
+          "string"
+        ],
+        "observacao": [
+          "string"
+        ],
+        "tipo": [
+          "string"
+        ],
+        "prioridade": [
+          "string"
+        ]
+      }
+    },
+    "evidencia_historico": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "data": [
+          "string"
+        ],
+        "descricao": [
+          "string"
+        ],
+        "mensagem_id": [
+          "string"
+        ],
+        "origem": [
+          "string"
+        ],
+        "url": [
+          "string"
+        ],
+        "vaga": [
+          "string"
+        ],
+        "cargo": [
+          "string"
+        ],
+        "conclusao": [
+          "string"
+        ],
+        "recebido_em": [
+          "string"
+        ]
+      }
+    },
+    "evidencias_perfil": {
+      "tipos": [
+        "array"
+      ]
+    },
+    "execucao_candidatura": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "data": [
+          "string"
+        ],
+        "estado": [
+          "string"
+        ],
+        "motivo": [
+          "string"
+        ],
+        "comprovante": [
+          "string"
+        ],
+        "material_preparado": [
+          "object"
+        ],
+        "comprovante_bloqueio": [
+          "string"
+        ],
+        "comprovante_login": [
+          "string"
+        ],
+        "curriculo_anexado": [
+          "string"
+        ],
+        "enviado": [
+          "boolean"
+        ],
+        "retomada": [
+          "string"
+        ]
+      }
+    },
+    "fonte_descricao": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "fonte_descricao_completa": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "fonte_salario": {
+      "tipos": [
+        "null",
+        "string"
+      ]
+    },
+    "fontes": {
+      "tipos": [
+        "array"
+      ]
+    },
+    "historico": {
+      "tipos": [
+        "boolean"
+      ]
+    },
+    "historico_anterior": {
+      "tipos": [
+        "boolean"
+      ]
+    },
+    "historico_descartes": {
+      "tipos": [
+        "array"
+      ],
+      "filhos": {
+        "antes": [
+          "object"
+        ],
+        "depois": [
+          "object"
+        ],
+        "acao": [
+          "string"
+        ],
+        "data": [
+          "string"
+        ],
+        "motivo": [
+          "string"
+        ],
+        "origem": [
+          "string"
+        ]
+      }
+    },
+    "historico_email": {
+      "tipos": [
+        "array"
+      ],
+      "filhos": {
+        "depois": [
+          "object"
+        ],
+        "status_anterior": [
+          "string"
+        ],
+        "correspondencia": [
+          "string"
+        ],
+        "data": [
+          "string"
+        ],
+        "data_email": [
+          "string"
+        ],
+        "etapa": [
+          "string"
+        ],
+        "evento": [
+          "string"
+        ],
+        "fonte": [
+          "string"
+        ],
+        "message_id": [
+          "string"
+        ],
+        "resumo": [
+          "string"
+        ],
+        "antes": [
+          "null",
+          "object"
+        ],
+        "data_registro": [
+          "string"
+        ],
+        "assunto": [
+          "string"
+        ],
+        "id": [
+          "string"
+        ],
+        "url": [
+          "string"
+        ],
+        "comprovante": [
+          "string"
+        ],
+        "curriculo_enviado": [
+          "string"
+        ],
+        "observacao": [
+          "string"
+        ],
+        "requisicao_linkedin": [
+          "string"
+        ],
+        "sha256": [
+          "string"
+        ]
+      }
+    },
+    "historico_etapas": {
+      "tipos": [
+        "array"
+      ],
+      "filhos": {
+        "antes": [
+          "null"
+        ],
+        "data": [
+          "string"
+        ],
+        "depois": [
+          "object"
+        ]
+      }
+    },
+    "historico_execucao": {
+      "tipos": [
+        "array"
+      ],
+      "filhos": {
+        "acao": [
+          "string"
+        ],
+        "antes": [
+          "object"
+        ],
+        "data": [
+          "string"
+        ],
+        "estado": [
+          "string"
+        ],
+        "motivo": [
+          "string"
+        ]
+      }
+    },
+    "historico_execucao_candidatura": {
+      "tipos": [
+        "array"
+      ],
+      "filhos": {
+        "data": [
+          "string"
+        ],
+        "estado": [
+          "string"
+        ],
+        "motivo": [
+          "string"
+        ],
+        "comprovante": [
+          "string"
+        ],
+        "observacao_usuario": [
+          "string"
+        ]
+      }
+    },
+    "historico_marcacoes": {
+      "tipos": [
+        "array"
+      ],
+      "filhos": {
+        "antes": [
+          "object"
+        ],
+        "depois": [
+          "object"
+        ],
+        "acao": [
+          "string"
+        ],
+        "data": [
+          "string"
+        ],
+        "estado_execucao_anterior": [
+          "object"
+        ],
+        "origem": [
+          "string"
+        ],
+        "declaracao": [
+          "string"
+        ],
+        "observacao": [
+          "string"
+        ],
+        "aplicada": [
+          "boolean"
+        ],
+        "data_envio": [
+          "null"
+        ],
+        "data_verificacao": [
+          "string"
+        ],
+        "fonte": [
+          "string"
+        ]
+      }
+    },
+    "id": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "id_canonico_gupy": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "id_requisicao": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "lacunas": {
+      "tipos": [
+        "array"
+      ]
+    },
+    "local": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "materiais_browseruse": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "analise": [
+          "string"
+        ],
+        "gerado_em": [
+          "string"
+        ],
+        "idioma": [
+          "string"
+        ],
+        "observacao": [
+          "string"
+        ]
+      }
+    },
+    "metadados_oficiais": {
+      "tipos": [
+        "object"
+      ]
+    },
+    "metadata_publicacao": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "data_freehire": [
+          "string"
+        ],
+        "nota": [
+          "string"
+        ]
+      }
+    },
+    "modalidade": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "modalidade_evidencia": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "modalidade_fonte": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "motivos": {
+      "tipos": [
+        "array"
+      ]
+    },
+    "municipio": {
+      "tipos": [
+        "null",
+        "string"
+      ]
+    },
+    "nova_publicacao_confirmada": {
+      "tipos": [
+        "boolean"
+      ]
+    },
+    "observacao": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "pendencias": {
+      "tipos": [
+        "array"
+      ]
+    },
+    "portal_candidatura": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "portal_site_confirmado": {
+      "tipos": [
+        "boolean"
+      ]
+    },
+    "prazo": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "prazo_inscricao": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "presencial_dias_semana": {
+      "tipos": [
+        "number"
+      ]
+    },
+    "pretensao_clt": {
+      "tipos": [
+        "number"
+      ]
+    },
+    "pretensao_faixa": {
+      "tipos": [
+        "array"
+      ]
+    },
+    "pretensao_portal": {
+      "tipos": [
+        "number"
+      ]
+    },
+    "prioridade": {
+      "tipos": [
+        "number"
+      ]
+    },
+    "publicada_em": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "recencia": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "regime": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "republicacoes": {
+      "tipos": [
+        "array"
+      ],
+      "filhos": {
+        "cargo": [
+          "string"
+        ],
+        "empresa": [
+          "string"
+        ],
+        "url": [
+          "string"
+        ]
+      }
+    },
+    "requisicao_id": {
+      "tipos": [
+        "number"
+      ]
+    },
+    "requisitos": {
+      "tipos": [
+        "array"
+      ],
+      "filhos": {
+        "avaliacao": [
+          "string"
+        ],
+        "evidencia": [
+          "string"
+        ],
+        "requisito": [
+          "string"
+        ],
+        "tipo": [
+          "string"
+        ],
+        "ressalva": [
+          "string"
+        ]
+      }
+    },
+    "requisitos_obrigatorios": {
+      "tipos": [
+        "array"
+      ],
+      "filhos": {
+        "avaliacao": [
+          "string"
+        ],
+        "evidencia": [
+          "string"
+        ],
+        "requisito": [
+          "string"
+        ],
+        "ressalva": [
+          "string"
+        ],
+        "tipo": [
+          "string"
+        ]
+      }
+    },
+    "revisao_aderencia": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "revisao_independente": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "rodada_descoberta": {
+      "tipos": [
+        "number"
+      ]
+    },
+    "salario": {
+      "tipos": [
+        "null",
+        "number"
+      ]
+    },
+    "salario_max": {
+      "tipos": [
+        "number"
+      ]
+    },
+    "salario_maximo": {
+      "tipos": [
+        "number"
+      ]
+    },
+    "salario_min": {
+      "tipos": [
+        "number"
+      ]
+    },
+    "salario_observacao": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "salario_original": {
+      "tipos": [
+        "null",
+        "object",
+        "string"
+      ],
+      "filhos": {
+        "maximo": [
+          "null",
+          "number"
+        ],
+        "minimo": [
+          "number"
+        ],
+        "moeda": [
+          "string"
+        ],
+        "natureza": [
+          "string"
+        ],
+        "periodicidade": [
+          "string"
+        ]
+      }
+    },
+    "source_name": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "status": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "status_api": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "status_candidatura": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "status_evidencia": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "status_historico": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "status_processo": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "status_processo_observacao": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "status_validacao": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "url": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "url_candidatura_confirmado_ats": {
+      "tipos": [
+        "null"
+      ]
+    },
+    "url_espelho_gupy": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "url_oficial_vaga": {
+      "tipos": [
+        "null",
+        "string"
+      ]
+    },
+    "url_portal_oficial": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "url_status": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "url_status_evidencia": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "validacao": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "validacao_abertura": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "validacao_oficial": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "validacao_post_recente": {
+      "tipos": [
+        "object"
+      ],
+      "filhos": {
+        "data": [
+          "string"
+        ],
+        "observacao": [
+          "string"
+        ],
+        "portal": [
+          "string"
+        ]
+      }
+    },
+    "validacao_status": {
+      "tipos": [
+        "string"
+      ]
+    }
+  },
+  "email": {
+    "assunto": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "cargo": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "conferido_em": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "consultado_em": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "correspondencia": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "data": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "data_email": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "data_local": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "empresa": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "estado": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "etapa": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "fonte": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "id": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "job_id": {
+      "tipos": [
+        "null"
+      ]
+    },
+    "message_id": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "observacao": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "requisicao": {
+      "tipos": [
+        "null",
+        "string"
+      ]
+    },
+    "resumo": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "status": {
+      "tipos": [
+        "string"
+      ]
+    },
+    "tipo": {
+      "tipos": [
+        "string"
+      ]
+    }
+  }
+}
