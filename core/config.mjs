@@ -18,6 +18,10 @@ export function defaultSettings() {
     radar: { janela_dias: 7, timeout_fonte_ms: 60000, termos: [], empresas_monitoradas: [], criterios: {} },
     panel: { port: 8880, base_files: [], app_name: 'career-bounty' },
     perfil: { nome: '', especialidade: '', regiao: '', aviso: '', pdfs_base: [] },
+    mail: {
+      ativo: false, so_portais: false, portais_extras: [], dominios_confiaveis: [], modelo: 'haiku', janela_dias: 7, limite_resultados: 50, limite_fase_b: 5, orcamento_tokens: 800000,
+      termos: ['processo seletivo', 'sua candidatura', 'sua inscrição', 'próxima etapa', 'your application'],
+    },
   };
 }
 
@@ -153,6 +157,38 @@ export function validateSettings(raw) {
       }
     }
     settings.radar.criterios = out;
+  }
+
+  const mail = section(raw.mail, 'mail');
+  for (const key of ['ativo', 'so_portais']) {
+    if (mail[key] !== undefined) {
+      if (typeof mail[key] !== 'boolean') throw invalid(`mail.${key}`, 'deve ser booleano');
+      settings.mail[key] = mail[key];
+    }
+  }
+  for (const key of ['janela_dias', 'limite_resultados', 'limite_fase_b']) {
+    if (mail[key] !== undefined) {
+      if (!Number.isInteger(mail[key]) || mail[key] < 1) throw invalid(`mail.${key}`, 'deve ser inteiro >= 1');
+      settings.mail[key] = mail[key];
+    }
+  }
+  if (mail.orcamento_tokens !== undefined && mail.orcamento_tokens !== null) {
+    if (!Number.isInteger(mail.orcamento_tokens) || mail.orcamento_tokens < 1) throw invalid('mail.orcamento_tokens', 'deve ser inteiro >= 1 (ou null para sem orçamento)');
+    settings.mail.orcamento_tokens = mail.orcamento_tokens;
+  } else if (mail.orcamento_tokens === null) settings.mail.orcamento_tokens = null;
+  for (const key of ['portais_extras', 'dominios_confiaveis']) {
+    if (mail[key] !== undefined) {
+      if (!Array.isArray(mail[key]) || mail[key].some(host => typeof host !== 'string' || !/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/i.test(host) || !host.includes('.'))) throw invalid(`mail.${key}`, 'deve ser lista de domínios sem esquema nem caminho');
+      settings.mail[key] = mail[key].map(host => host.toLowerCase());
+    }
+  }
+  if (mail.termos !== undefined) {
+    if (!Array.isArray(mail.termos) || mail.termos.some(item => typeof item !== 'string' || !item.trim() || /["()]/.test(item))) throw invalid('mail.termos', 'deve ser lista de textos simples (sem aspas nem parênteses)');
+    settings.mail.termos = [...mail.termos];
+  }
+  if (mail.modelo !== undefined) {
+    if (!['haiku', 'sonnet'].includes(mail.modelo)) throw invalid('mail.modelo', 'deve ser haiku ou sonnet');
+    settings.mail.modelo = mail.modelo;
   }
 
   const perfil = section(raw.perfil, 'perfil');
