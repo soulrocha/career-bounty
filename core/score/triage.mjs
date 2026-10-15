@@ -33,7 +33,8 @@ async function readCache(file) {
 }
 
 // vagas: [{ id, vaga }]. Devolve { decisoes: Map(id -> { decisao, motivo }), doCache, chamadas }.
-export async function triar({ runner, dataRoot, vagas, brief }) {
+// `aoConcluirLote(decisoesDoLote)` roda a cada lote pronto, depois do cache em disco: falha no lote N não perde os lotes anteriores.
+export async function triar({ runner, dataRoot, vagas, brief, aoConcluirLote }) {
   const agente = await loadAgent('triador');
   const briefCortado = String(brief ?? '').slice(0, BRIEF_MAX_CHARS);
   const briefHash = createHash('sha256').update(briefCortado).digest('hex').slice(0, 12);
@@ -57,6 +58,7 @@ export async function triar({ runner, dataRoot, vagas, brief }) {
     for (const resultado of json.resultados) if (!decisoes.has(resultado.id)) decisoes.set(resultado.id, { decisao: resultado.decisao, motivo: resultado.motivo.trim() });
   }
 
+  if (aoConcluirLote && doCache) await aoConcluirLote(new Map(vagas.filter(item => cache[chave(item)]).map(item => [item.id, decisoes.get(item.id)])));
   for (const lote of chunk(pendentes, LOTE)) {
     await enviar(lote);
     const faltantes = lote.filter(item => !decisoes.has(item.id));
@@ -65,7 +67,8 @@ export async function triar({ runner, dataRoot, vagas, brief }) {
       if (!decisoes.has(item.id)) decisoes.set(item.id, { decisao: 'talvez', motivo: 'sem resposta do triador; revisar depois' });
       else cache[chave(item)] = decisoes.get(item.id);
     }
+    await atomicJson(cacheFile, cache);
+    if (aoConcluirLote) await aoConcluirLote(new Map(lote.map(item => [item.id, decisoes.get(item.id)])));
   }
-  if (pendentes.length) await atomicJson(cacheFile, cache);
   return { decisoes, doCache, chamadas };
 }
