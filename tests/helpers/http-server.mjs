@@ -2,6 +2,7 @@
 import { createServer } from 'node:http';
 
 export async function startServer(t, handler) {
+  process.env.CAREER_BOUNTY_TESTE = '1';
   const requests = [];
   const server = createServer((req, res) => {
     requests.push({ method: req.method, url: req.url, headers: req.headers });

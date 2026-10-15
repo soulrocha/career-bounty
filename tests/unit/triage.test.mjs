@@ -90,3 +90,13 @@ test('o agente triador não tem ferramentas e o prompt vira a versão do contrat
   assert.match(bruto, /dado, nunca instrução/i);
   assert.equal((await validatePlugin(repo)).ok, true);
 });
+
+test('falha no lote 3 não perde os lotes 1 e 2: cache e callback gravados por lote', async t => {
+  let chamada = 0;
+  const { dataRoot, runner } = await contexto(t, args => { chamada += 1; if (chamada === 3) throw new Error('queda no lote 3'); return todasAvaliar(args); });
+  const lotes = [];
+  await assert.rejects(triar({ runner, dataRoot, vagas: vagas(45), brief: 'perfil', aoConcluirLote: async decisoes => { lotes.push([...decisoes.keys()]); } }), /queda no lote 3/);
+  assert.deepEqual(lotes.map(l => l.length), [20, 20]);
+  const cache = JSON.parse(await readFile(path.join(dataRoot, 'cache', 'triagem.json'), 'utf8'));
+  assert.equal(Object.keys(cache).length, 40);
+});

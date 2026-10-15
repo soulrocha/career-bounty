@@ -1,7 +1,8 @@
 // Projeção: reconstrói o documento do pipeline a partir do log de eventos.
 // Função pura: mesmos eventos, mesmo documento.
 import { semanticHash } from './canonicalize.mjs';
-import { applyDescarte, applyMarcacao, requisicaoKey } from './rules.mjs';
+import { applyDescarte, applyMarcacao, aplicadaDe, descartadaDe, requisicaoKey } from './rules.mjs';
+import { chavesCanonicas } from '../dedup/keys.mjs';
 import { localDay } from './schema.mjs';
 import { portalCandidatura } from '../apply/portal.mjs';
 
@@ -22,7 +23,7 @@ export function emailKeys(items) {
 }
 
 function emptyState() {
-  return { raiz: {}, chaves: ['schema_version', 'atualizado', 'vagas', EMAILS], vagas: new Map(), emails: new Map(), ordemVagas: null, ordemEmails: null, descartes: new Map() };
+  return { raiz: {}, chaves: ['schema_version', 'atualizado', 'vagas', EMAILS], vagas: new Map(), emails: new Map(), ordemVagas: null, ordemEmails: null, descartes: new Map(), importadas: new Set() };
 }
 
 function fromDocument(document) {
@@ -31,7 +32,7 @@ function fromDocument(document) {
   for (const [key, value] of Object.entries(document)) {
     if (key !== 'vagas' && key !== EMAILS) state.raiz[key] = clone(value);
   }
-  for (const vaga of document.vagas ?? []) state.vagas.set(vaga.id, clone(vaga));
+  for (const vaga of document.vagas ?? []) { state.vagas.set(vaga.id, clone(vaga)); state.importadas.add(vaga.id); }
   const items = document[EMAILS] ?? [];
   emailKeys(items).forEach((key, index) => state.emails.set(key, clone(items[index])));
   return state;
@@ -69,6 +70,7 @@ function entity(collection) {
     importada: (state, event) => {
       check(event, event.dados.legado);
       state[collection].set(event.entidade_id, clone(event.dados.legado));
+      if (collection === 'vagas') state.importadas.add(event.entidade_id);
       return state;
     },
     atualizada: (state, event) => {
@@ -173,12 +175,40 @@ export function registerReducer(tipo, reducer) {
   reducers[tipo] = reducer;
 }
 
-// Descarte vale para a requisição: a mesma vaga republicada com outro id continua descartada.
-function inherit(state, vaga) {
-  const key = state.descartes.size ? requisicaoKey(vaga) : null;
-  const origin = key ? state.descartes.get(key) : null;
-  if (!origin || vaga.id === origin.entidade_id || vaga.descarte_usuario) return clone(vaga);
-  return { ...clone(vaga), descarte_usuario: { descartada: true, registrado_em: origin.registrado_em, origem: 'requisicao-descartada', herdado_de: origin.entidade_id } };
+// Descarte e candidatura valem para a requisição: a mesma vaga republicada com outro id ou endereço continua descartada ou aplicada.
+// A origem pode ser um descarte feito aqui (chave `req:`) ou a marca importada do legado, casada pelas chaves canônicas de portal.
+// Vaga importada do legado nunca herda de outra importada: o documento do legado fica como veio (a sombra segue sem diferença).
+function origens(state) {
+  const descartes = new Map(state.descartes);
+  const aplicadas = new Map();
+  for (const vaga of state.vagas.values()) {
+    const descartada = descartadaDe(vaga);
+    const aplicada = aplicadaDe(vaga);
+    if (!descartada && !aplicada) continue;
+    for (const chave of chavesCanonicas(vaga)) {
+      if (descartada && !descartes.has(`can:${chave}`)) descartes.set(`can:${chave}`, { entidade_id: vaga.id, registrado_em: vaga.descarte_usuario.registrado_em });
+      if (aplicada && !aplicadas.has(`can:${chave}`)) aplicadas.set(`can:${chave}`, { entidade_id: vaga.id, data: vaga.candidatura_usuario?.data ?? vaga.candidatura_portal?.data ?? vaga.candidatura_email?.data ?? null });
+    }
+  }
+  return { descartes, aplicadas };
+}
+
+function inherit(state, indice, vaga) {
+  const legado = state.importadas.has(vaga.id);
+  const key = requisicaoKey(vaga);
+  const chaves = legado ? [] : chavesCanonicas(vaga).map(chave => `can:${chave}`);
+  const origem = [key, ...chaves].map(item => (item ? indice.descartes.get(item) : null)).find(item => item && item.entidade_id !== vaga.id);
+  let next = clone(vaga);
+  // Importada: só herda de descarte feito aqui (comportamento anterior); as demais também herdam do que veio do legado.
+  const descarte = legado ? (key ? state.descartes.get(key) : null) : origem;
+  if (descarte && descarte.entidade_id !== vaga.id && !vaga.descarte_usuario) {
+    next = { ...next, descarte_usuario: { descartada: true, registrado_em: descarte.registrado_em, origem: 'requisicao-descartada', herdado_de: descarte.entidade_id } };
+  }
+  if (!legado && !aplicadaDe(vaga)) {
+    const aplicada = chaves.map(item => indice.aplicadas.get(item)).find(item => item && item.entidade_id !== vaga.id);
+    if (aplicada) next = { ...next, candidatura_herdada: { aplicada: true, data: aplicada.data, origem: 'requisicao-aplicada', herdado_de: aplicada.entidade_id } };
+  }
+  return next;
 }
 
 function ordered(map, order) {
@@ -204,8 +234,9 @@ export function projectEvents(events, { avisos = [] } = {}) {
   for (const event of events) apply(event, true);
   for (const event of deferred) apply(event, false);
   const document = {};
+  const indice = state.chaves.includes('vagas') ? origens(state) : null;
   for (const key of state.chaves) {
-    if (key === 'vagas') document.vagas = ordered(state.vagas, state.ordemVagas).map(vaga => inherit(state, vaga));
+    if (key === 'vagas') document.vagas = ordered(state.vagas, state.ordemVagas).map(vaga => inherit(state, indice, vaga));
     else if (key === EMAILS) document[EMAILS] = ordered(state.emails, state.ordemEmails).map(clone);
     else if (Object.hasOwn(state.raiz, key)) document[key] = clone(state.raiz[key]);
   }

@@ -92,3 +92,17 @@ test('o agente avaliador usa Sonnet e não tem ferramentas', async () => {
   assert.equal(agente.modelo, 'sonnet');
   assert.deepEqual(agente.tools, ['none']);
 });
+
+test('requisito crítico sem prova (idioma, anos de experiência, certificação, registro) vira lacuna por categoria, não por termo pontual', () => {
+  const criticos = ['Espanhol fluente', 'Inglês avançado para reuniões', 'Francês intermediário', 'Fluent English', 'Idioma alemão', '5 anos de experiência com Java', 'Mínimo de 3 anos em arquitetura de dados',
+    '10+ years of experience in cloud', 'AWS Certified Solutions Architect', 'Certificação ITIL v4', 'Scrum Master certificado (CSM)', 'CISSP', 'Registro ativo no CREA'];
+  for (const texto of criticos) {
+    const r = refinarAvaliacao(saida([req({ requisito: texto, afirmacoes: [] })]), niveis);
+    assert.equal(r.requisitos[0].avaliacao, 'lacuna', texto);
+  }
+  for (const texto of ['Conhecimento de Kubernetes', 'Liderança de times', 'Boa comunicação']) {
+    const r = refinarAvaliacao(saida([req({ requisito: texto, afirmacoes: [] })]), niveis);
+    assert.equal(r.requisitos[0].avaliacao, 'parcial', texto);
+  }
+  assert.equal(refinarAvaliacao(saida([req({ requisito: '5 anos de experiência com Java', afirmacoes: ['AF-001'] })]), niveis).requisitos[0].avaliacao, 'atendido');
+});

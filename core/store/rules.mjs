@@ -66,3 +66,18 @@ export function requisicaoKey(vaga) {
   const value = vaga.requisicao_id ?? vaga.id_requisicao;
   return value === undefined || value === null || value === '' ? null : `req:${value}`;
 }
+
+const temComprovante = job => {
+  const valor = job.comprovante_envio;
+  if (valor === undefined || valor === null) return false;
+  if (typeof valor === 'string') return valor.trim() !== '';
+  if (typeof valor === 'object') return Object.keys(valor).length > 0;
+  return Boolean(valor);
+};
+
+// A vaga já tem candidatura registrada? Junta o que a pessoa marcou, o histórico importado do legado (e-mail, portal,
+// status confirmado, comprovante) e a marca herdada de outra publicação da mesma requisição.
+export const aplicadaDe = job => Boolean(job.candidatura_usuario?.aplicada) || CONFIRMED.has(job.status) || Boolean(job.candidatura_email?.aplicada)
+  || Boolean(job.candidatura_portal?.aplicada) || Boolean(job.candidatura_herdada?.aplicada) || Boolean(job.historico) || temComprovante(job);
+
+export const descartadaDe = job => Boolean(job.descarte_usuario?.descartada);

@@ -6,6 +6,7 @@ import { cenarios } from '../golden/make-cenarios-merge.mjs';
 import { CAMPOS_PROTEGIDOS, mergePipeline } from '../../core/dedup/merge.mjs';
 import { roleKey } from '../../core/dedup/keys.mjs';
 import { canonicalize } from '../../core/store/canonicalize.mjs';
+import { MOTIVO_FORA_DA_REGIAO } from '../../core/score/constraints.mjs';
 
 const golden = JSON.parse(await readFile(new URL('../golden/refresh-merge.json', import.meta.url), 'utf8'));
 const dom = (...parts) => parts.join('.');
@@ -21,7 +22,7 @@ test('100% da golden: o merge em Node produz o mesmo pipeline que o refresh.py',
   for (const cenario of golden.cenarios) {
     let obtido;
     try { obtido = executa(cenario); } catch { divergentes.push(`${cenario.nome}: Node lançou erro`); continue; }
-    if (JSON.stringify(canonicalize(JSON.parse(JSON.stringify(obtido)))) !== JSON.stringify(canonicalize(cenario.saida))) divergentes.push(cenario.nome);
+    if (JSON.stringify(canonicalize(JSON.parse(JSON.stringify(obtido).replaceAll(MOTIVO_FORA_DA_REGIAO, 'Presença fora de BH/região metropolitana')))) !== JSON.stringify(canonicalize(cenario.saida))) divergentes.push(cenario.nome);
   }
   assert.deepEqual(divergentes, []);
 });

@@ -2,7 +2,8 @@
 import { appendEvents } from '../store/events.mjs';
 import { localDay } from '../store/schema.mjs';
 
-const falhou = rodada => (rodada.fontes ?? []).some(fonte => fonte.estado === 'erro');
+// Falha de fonte ou de estágio: a rodada não conferiu tudo, então não prova que "não houve alta".
+const falhou = rodada => Boolean(rodada.falha) || (rodada.fontes ?? []).some(fonte => fonte.estado === 'erro');
 const naoConferida = rodada => (rodada.fontes ?? []).filter(fonte => fonte.estado === 'erro' || fonte.estado === 'indisponivel');
 
 // Endereço público sem querystring, fragmento nem host local.
