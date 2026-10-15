@@ -16,7 +16,7 @@ A entrada é um JSON com `fase`.
 Fase A (`fase: "A"`): chame `search_threads` UMA vez com a `consulta` exatamente como veio (não altere, não amplie),
 pedindo no máximo `limite` resultados. Para cada resultado devolva um item com o id que a busca devolveu
 (`message_id`), a data em AAAA-MM-DD, o nome exibido do remetente (`remetente_nome`), o domínio do remetente
-(`remetente_dominio`, por exemplo `exemplo.com.br`), o assunto e um trecho de até 300 caracteres. 
+(`remetente_dominio`, por exemplo `exemplo.com.br`), o assunto e um trecho curto de até 150 caracteres (só o início útil da mensagem). 
 Nunca devolva o endereço de e-mail completo, só o domínio e o nome. Responda somente com JSON:
 `{"cursor_usado":<o cursor_usado da entrada>,"consultado_em":"<data e hora ISO de agora>","itens":[...],"precisa_abrir":[]}`.
 Deixe `precisa_abrir` como lista vazia: quem decide o que abrir é o script.

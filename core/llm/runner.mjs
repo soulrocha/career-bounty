@@ -105,6 +105,14 @@ export function createRunner({ modo, dataRoot, fake, replayDir, identity = [], e
         ...(uso.tokens_cache_criacao ? { tokens_cache_criacao: uso.tokens_cache_criacao } : {}), ...(uso.custo_usd != null ? { custo_usd: uso.custo_usd } : {}), hash, modo, versaoPrompt, tentativa, ...(meta ?? {}) } }], { now: ts });
   }
 
+  // Diagnóstico de saída fora do contrato: só o motivo (sem a saída do modelo), para saber por que houve nova tentativa.
+  async function registrarFalha({ agente, hash, tentativa, motivo, meta }) {
+    if (!dataRoot) return;
+    const ts = now().toISOString();
+    seq += 1;
+    await appendEvents(dataRoot, [{ id: `llm.falha:${hash.slice(0, 12)}:${ts}:${seq}:${tentativa}`, ts, ator: 'llm', tipo: 'llm.falha', entidade: 'llm', entidade_id: agente, dados: { agente, hash, tentativa, motivo: String(motivo).slice(0, 200), ...(meta ?? {}) } }], { now: ts });
+  }
+
   return {
     modo,
     async run({ agente, modelo, versaoPrompt, entrada, sistema, validar = () => {}, argsLive, meta }) {
@@ -116,8 +124,8 @@ export function createRunner({ modo, dataRoot, fake, replayDir, identity = [], e
         await registrar({ agente, modelo, versaoPrompt, hash, uso, tentativa, meta });
         let json;
         try { json = JSON.parse(stripFence(texto)); }
-        catch { motivo = 'saída não é JSON válido'; continue; }
-        try { validar(json); } catch (error) { motivo = `saída fora do contrato: ${error.message}`; continue; }
+        catch { motivo = 'saída não é JSON válido'; await registrarFalha({ agente, hash, tentativa, motivo, meta }); continue; }
+        try { validar(json); } catch (error) { motivo = `saída fora do contrato: ${error.message}`; await registrarFalha({ agente, hash, tentativa, motivo, meta }); continue; }
         return { json, uso, hash };
       }
       throw new LlmSaidaInvalida(`${agente}: ${motivo} (2 tentativas)`, { agente, tentativas: 2 });
