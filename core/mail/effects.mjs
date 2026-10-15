@@ -1,7 +1,7 @@
 // Efeitos do e-mail classificado e vinculado: etapa da candidatura, proposta de evento de Calendar e aviso de prazo.
 // Função pura: devolve eventos para o log. O Calendar nunca é tocado por script; a criação real fica na sessão, com confirmação.
 import { fold } from '../dedup/keys.mjs';
-import { sanitizarCampo } from './sanitize.mjs';
+import { REMOVIDO, sanitizarCampo } from './sanitize.mjs';
 
 export const ETAPAS = ['inscrita', 'etapa', 'entrevista', 'oferta'];
 const ETAPA_DA_CLASSE = { confirmacao: 'inscrita', etapa_liberada: 'etapa', entrevista_agendada: 'entrevista', oferta: 'oferta' };
@@ -11,7 +11,14 @@ const pad = n => String(n).padStart(2, '0');
 const somaDias = (dia, n) => new Date(Date.parse(`${dia}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
 const diaValido = (ano, mes, dia) => { const d = new Date(Date.UTC(ano, mes - 1, dia)); return d.getUTCFullYear() === ano && d.getUTCMonth() === mes - 1 && d.getUTCDate() === dia; };
 
-// Data, hora e local de uma entrevista no texto. O ano vem do e-mail; data já passada vira a do ano seguinte.
+// Assunto guardado no log: até 120 caracteres e sem URL alguma (nem o marcador de link removido), para não carregar códigos de requisição ou rastreio.
+const ASSUNTO_MAX = 120;
+export function assuntoPersistido(texto) {
+  const semUrl = sanitizarCampo(texto, 1000).replace(/https?:\/\/\S+/gi, ' ').split(REMOVIDO).join(' ');
+  return [...semUrl.replace(/\s+/g, ' ').trim()].slice(0, ASSUNTO_MAX).join('').trimEnd();
+}
+
+// Data, hora e local de uma entrevista no texto. Sem ano no texto, vale o ano do e-mail (mesmo que a data já tenha passado).
 export function extrairEntrevista(texto, dataEmail) {
   const t = fold(texto);
   let dia = null;
@@ -22,11 +29,7 @@ export function extrairEntrevista(texto, dataEmail) {
   if (numerica) { dia = Number(numerica[1]); mes = Number(numerica[2]); if (numerica[3]) ano = Number(numerica[3].length === 2 ? `20${numerica[3]}` : numerica[3]); }
   else if (extenso) { dia = Number(extenso[1]); mes = MESES.indexOf(extenso[2]) + 1; }
   if (!dia || !diaValido(ano, mes, dia)) return null;
-  let data = `${ano}-${pad(mes)}-${pad(dia)}`;
-  if (data < somaDias(dataEmail, -1) && !(numerica?.[3])) {
-    if (!diaValido(ano + 1, mes, dia)) return null;
-    data = `${ano + 1}-${pad(mes)}-${pad(dia)}`;
-  }
+  const data = `${ano}-${pad(mes)}-${pad(dia)}`;
   const h = /\b(\d{1,2})(?:h|:)(\d{2})?(?!\d)/.exec(t.replace(/\d{1,2}\/\d{1,2}(\/\d+)?/g, ' '));
   const hora = h && Number(h[1]) < 24 && Number(h[2] ?? 0) < 60 ? `${pad(Number(h[1]))}:${pad(Number(h[2] ?? 0))}` : null;
   const local = /google meet/.test(t) ? 'videochamada (Google Meet)' : /zoom/.test(t) ? 'videochamada (Zoom)' : /teams/.test(t) ? 'videochamada (Teams)' : /videochamada|video chamada|online/.test(t) ? 'videochamada' : /presencial/.test(t) ? 'presencial' : null;
@@ -57,7 +60,7 @@ export function aplicarEfeitos({ itens, vagas, now = new Date() }) {
   const ordenados = [...itens].sort((a, b) => a.item.data.localeCompare(b.item.data) || a.item.message_id.localeCompare(b.item.message_id));
   for (const entrada of ordenados) {
     const { item, classificacao, vinculo, corpo } = entrada;
-    const comum = { message_id: item.message_id, classe: classificacao.classe, data_email: item.data, remetente_dominio: item.remetente_dominio, assunto: sanitizarCampo(item.assunto, 160) };
+    const comum = { message_id: item.message_id, classe: classificacao.classe, data_email: item.data, remetente_dominio: item.remetente_dominio, assunto: assuntoPersistido(item.assunto) };
     if (vinculo.status === 'sem_candidatura') { resumo.ignorados += 1; continue; }
     if (classificacao.classe === 'pendente' || !classificacao.classe) { resumo.pendentes += 1; eventos.push(base('email.pendente', item.message_id, 'email', item.message_id, ts, { ...comum, motivo: 'classe_incerta' })); continue; }
     if (vinculo.status === 'pendente') { resumo.pendentes += 1; eventos.push(base('email.pendente', item.message_id, 'email', item.message_id, ts, { ...comum, motivo: vinculo.motivo })); continue; }

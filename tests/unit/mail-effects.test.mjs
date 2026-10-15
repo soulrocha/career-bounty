@@ -69,7 +69,10 @@ test('entrevista agendada gera proposta de evento (título, data, local) e nada 
   assert.deepEqual({ ...proposta.dados }, { message_id: 'm1', vaga_id: 'v1', status: 'proposto', titulo: 'Entrevista - Empresa Alfa - Analista de Dados', data: '2026-10-20', hora: '14:30', local: 'videochamada (Google Meet)' });
   assert.equal(resumo.propostas, 1);
   assert.deepEqual(extrairEntrevista('dia 5 de novembro às 9h, presencial', '2026-10-30'), { data: '2026-11-05', hora: '09:00', local: 'presencial' });
-  assert.deepEqual(extrairEntrevista('dia 03/01 às 10:00', '2026-12-28'), { data: '2027-01-03', hora: '10:00', local: null });
+  assert.deepEqual(extrairEntrevista('dia 03/01 às 10:00', '2026-12-28'), { data: '2026-01-03', hora: '10:00', local: null }, 'sem ano, usa o ano do e-mail e não pula para o próximo');
+  assert.equal(extrairEntrevista('dia 10 de março às 9h', '2026-10-10').data, '2026-03-10');
+  assert.equal(extrairEntrevista('dia 03/01/2027 às 10:00', '2026-12-28').data, '2027-01-03', 'com ano explícito, vale o do texto');
+  assert.equal(extrairEntrevista('dia 29/02 às 10h', '2027-10-10'), null, 'dia inexistente no ano do e-mail não vira outro ano');
   assert.equal(extrairEntrevista('dia 31/02 às 10h', '2026-10-10'), null);
   assert.equal(extrairEntrevista('sem data nenhuma', '2026-10-10'), null);
 });
@@ -105,4 +108,16 @@ test('nenhuma URL nem endereço de e-mail vai para os eventos', () => {
   const json = JSON.stringify(eventos);
   assert.ok(!/https?:\/\//.test(json), json);
   assert.ok(!/@/.test(json));
+});
+
+test('o assunto persistido tem no máximo 120 caracteres e nenhum código de URL', () => {
+  const longo = `Retorno do processo ${'muito '.repeat(40)}fim`;
+  const comUrl = 'Confirmação https://app.inhire.app/vagas/3f2c1a9e-5b7d-4c68-9a10-0d4e6f8b2c31 e http://x.test/jobs/70123456?token=abc final';
+  const { eventos } = aplicarEfeitos({ itens: [msg('m1', '2026-10-12', 'confirmacao', 'v1', { assunto: longo }), msg('m2', '2026-10-12', 'confirmacao', 'v1', { assunto: comUrl })], vagas, now: AGORA });
+  const assuntos = eventos.map(e => e.dados.assunto);
+  assert.equal(assuntos.length, 2);
+  for (const assunto of assuntos) assert.ok([...assunto].length <= 120, assunto);
+  assert.equal(assuntos[0].length, 120);
+  assert.equal(assuntos[1], 'Confirmação e final');
+  assert.ok(!/70123456|3f2c1a9e|token|https?:/.test(JSON.stringify(eventos)));
 });
