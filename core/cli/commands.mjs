@@ -1,4 +1,5 @@
-import { describeDefaults, loadSettings } from '../config.mjs';
+import { loadSettings } from '../config.mjs';
+import { runDoctor } from '../doctor/index.mjs';
 import { validatePlugin } from '../plugin/validate.mjs';
 import { planApply } from '../apply/plan.mjs';
 import { ensureSkeleton, resolveDataRoot } from '../store/dataRoot.mjs';
@@ -28,10 +29,9 @@ export const commandNames = () => [...legacyCommandNames, ...Object.keys(command
 
 export const commands = {
   async doctor() {
-    const settings = await loadSettings();
-    const padroes = describeDefaults(settings);
-    return { result: { dataRoot: settings.dataRoot, ok: true, padroes }, text: `${padroes}
-ok` };
+    const report = await runDoctor();
+    const lines = report.checks.map(c => `[${c.status}] ${c.id}: ${c.mensagem}`);
+    return { result: report, exitCode: report.ok ? 0 : 1, text: [...lines, report.padroes, report.ok ? 'ok' : 'falha'].join(String.fromCharCode(10)) };
   },
   async setup() {
     const dataRoot = resolveDataRoot();
