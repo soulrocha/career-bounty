@@ -1,0 +1,70 @@
+import { spawnSync } from 'node:child_process';
+import { access, readFile, stat as fsStat } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { activeRules, describeDefaults, loadSettings } from '../config.mjs';
+
+export const CAREER_OPS_TAG = 'v1.36.0';
+const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
+
+function realHooksPath() {
+  const inside = spawnSync('git', ['rev-parse', '--is-inside-work-tree'], { cwd: repoRoot, encoding: 'utf8' });
+  if (inside.status !== 0) return null;
+  const toplevel = spawnSync('git', ['rev-parse', '--show-toplevel'], { cwd: repoRoot, encoding: 'utf8' }).stdout.trim();
+  if (path.resolve(toplevel) !== path.resolve(repoRoot)) return null;
+  return spawnSync('git', ['config', '--get', 'core.hooksPath'], { cwd: repoRoot, encoding: 'utf8' }).stdout.trim();
+}
+
+const exists = filename => access(filename).then(() => true, () => false);
+
+// Diagnóstico somente leitura. Dependências injetáveis para os testes.
+export async function runDoctor({
+  dataRoot,
+  nodeVersion = process.versions.node,
+  platform = process.platform,
+  hooksPath = realHooksPath,
+  stat = fsStat,
+} = {}) {
+  const settings = await loadSettings({ dataRoot });
+  dataRoot = settings.dataRoot;
+  const checks = [];
+  const add = (id, status, mensagem) => checks.push({ id, status, mensagem });
+
+  const major = Number(nodeVersion.split('.')[0]);
+  if (major >= 20) add('node', 'ok', `Node ${nodeVersion}`);
+  else add('node', 'falha', `Node ${nodeVersion} é antigo: instale o Node 20 ou superior.`);
+
+  if (await exists(dataRoot)) add('data_root', 'ok', 'DATA_ROOT existe.');
+  else add('data_root', 'aviso', 'DATA_ROOT ainda não existe: rode o setup para criar o esqueleto.');
+
+  const engine = path.join(dataRoot, 'engines', 'career-ops');
+  let installed = null;
+  try { installed = JSON.parse(await readFile(path.join(engine, 'package.json'), 'utf8')).version ?? null; } catch { /* ausente */ }
+  if (installed === null) {
+    add('career_ops', 'aviso', `career-ops ausente: clone a tag fixada com git clone --branch ${CAREER_OPS_TAG} <repositório do career-ops> "${engine}".`);
+  } else if (`v${installed}` !== CAREER_OPS_TAG) {
+    add('career_ops', 'aviso', `career-ops v${installed} instalado; a versão fixada é ${CAREER_OPS_TAG}.`);
+  } else add('career_ops', 'ok', `career-ops ${CAREER_OPS_TAG}`);
+
+  const secrets = path.join(dataRoot, 'secrets');
+  try {
+    const info = await stat(secrets);
+    if (platform !== 'win32' && (info.mode & 0o077) !== 0) add('secrets', 'aviso', 'secrets/ está com permissão aberta: rode chmod 700 nessa pasta.');
+    else add('secrets', 'ok', 'secrets/ existe.');
+  } catch { add('secrets', 'aviso', 'secrets/ ausente: rode o setup.'); }
+
+  const hooks = hooksPath();
+  if (hooks === null) add('hooks', 'ok', 'Fora de um clone git: hooks não se aplicam.');
+  else if (hooks === '.githooks') add('hooks', 'ok', 'core.hooksPath aponta para .githooks.');
+  else add('hooks', 'falha', 'core.hooksPath não aponta para .githooks: rode npm run prepare no clone.');
+
+  const rules = activeRules(settings);
+  if (rules.length) add('envio', 'aviso', `ATENÇÃO: ${rules.length} regra(s) de envio automático ativa(s) em config.yml.`);
+  else add('envio', 'ok', 'Nenhuma regra de envio automático ativa.');
+  if (settings.fontes.linkedin_guest.ativo) add('linkedin_guest', 'aviso', 'ATENÇÃO: coletor guest do LinkedIn ligado; você respondeu pelos termos de uso do site.');
+  else add('linkedin_guest', 'ok', 'Coletor guest do LinkedIn desligado.');
+
+  add('conector_gmail', 'ok', 'informativo: o conector Gmail só pode ser conferido dentro da sessão do Claude (spike F3.1).');
+
+  return { ok: checks.every(c => c.status !== 'falha'), dataRoot, checks, padroes: describeDefaults(settings) };
+}
