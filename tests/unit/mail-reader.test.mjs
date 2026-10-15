@@ -129,3 +129,17 @@ test('o runner live repassa os argumentos próprios do leitor (sem o --tools vaz
   const { json } = await runner.run({ agente: 'leitor-email-busca', modelo: 'haiku', versaoPrompt: 'v', entrada: { x: 1 }, argsLive: [falso, '--allowedTools', 'mcp__claude_ai_Gmail__search_threads'], validar: () => {} });
   assert.deepEqual(json.argv, ['--allowedTools', 'mcp__claude_ai_Gmail__search_threads']);
 });
+
+test('saída fora do contrato registra o motivo (sem o conteúdo) e a nova tentativa segue', async t => {
+  const dataRoot = await tempDir(t);
+  let n = 0;
+  const runner = createRunner({ modo: 'fake', dataRoot, fake: () => (++n === 1 ? { ...digestValido, itens: [{ ...digestValido.itens[0], acao: 'forward' }] } : digestValido) });
+  const r = await lerFaseA({ runner, consulta, now: AGORA, rodada: 'r9' });
+  assert.equal(r.digest.itens.length, 1);
+  const { eventos } = await readEvents(dataRoot);
+  const falha = eventos.find(e => e.tipo === 'llm.falha');
+  assert.equal(falha.dados.tentativa, 1);
+  assert.ok(falha.dados.motivo.includes("campo fora do contrato (acao)"));
+  assert.equal(falha.dados.rodada, 'r9');
+  assert.ok(!JSON.stringify(falha).includes('Confirmação de inscrição'));
+});

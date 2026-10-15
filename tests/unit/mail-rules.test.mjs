@@ -94,3 +94,9 @@ test('a injeção no trecho não muda a classe resolvida pelo assunto', () => {
   const alvo = amostra.find(a => a.rotulo.armadilha === 'injecao' && a.rotulo.classe === 'confirmacao');
   assert.equal(classificar(alvo.item).classe, 'confirmacao');
 });
+
+test('confirmação de candidatura enviada pelo LinkedIn é reconhecida', () => {
+  const r = classificar({ remetente_dominio: 'linkedin.com', assunto: 'Candidatura', trecho: 'Sua candidatura foi enviada para Empresa Alfa' });
+  assert.equal(r.classe, 'confirmacao');
+  assert.equal(classificar({ remetente_dominio: 'linkedin.com', assunto: 'x', trecho: 'Your application was sent to Empresa Alfa' }).classe, 'confirmacao');
+});
