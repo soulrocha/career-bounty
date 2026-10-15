@@ -1,17 +1,20 @@
 import { spawnSync } from 'node:child_process';
+import { realpathSync } from 'node:fs';
 import { access, readFile, stat as fsStat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { activeRules, describeDefaults, loadSettings } from '../config.mjs';
 
 export const CAREER_OPS_TAG = 'v1.36.0';
-const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
+const defaultRepoRoot = fileURLToPath(new URL('../../', import.meta.url));
 
+// CAREER_BOUNTY_REPO_ROOT permite apontar o clone a diagnosticar (usado nos testes).
 function realHooksPath() {
+  const repoRoot = process.env.CAREER_BOUNTY_REPO_ROOT || defaultRepoRoot;
   const inside = spawnSync('git', ['rev-parse', '--is-inside-work-tree'], { cwd: repoRoot, encoding: 'utf8' });
   if (inside.status !== 0) return null;
   const toplevel = spawnSync('git', ['rev-parse', '--show-toplevel'], { cwd: repoRoot, encoding: 'utf8' }).stdout.trim();
-  if (path.resolve(toplevel) !== path.resolve(repoRoot)) return null;
+  if (realpathSync(toplevel) !== realpathSync(repoRoot)) return null;
   return spawnSync('git', ['config', '--get', 'core.hooksPath'], { cwd: repoRoot, encoding: 'utf8' }).stdout.trim();
 }
 

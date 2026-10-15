@@ -108,3 +108,15 @@ test('setup é idempotente e não sobrescreve a config existente', async t => {
   assert.deepEqual(second.json.created, []);
   assert.deepEqual(JSON.parse(await (await import('node:fs/promises')).readFile(path.join(dataRoot, 'config.yml'), 'utf8')), { panel: { port: 9000 } });
 });
+
+test('clone git sem core.hooksPath (condição da CI Linux) faz o doctor falhar; fora de clone ele passa', async t => {
+  const { git } = await import('../helpers/git.mjs');
+  const dataRoot = await ready(t);
+  const clone = await tempDir(t, 'cb-clone-');
+  git(clone, ['init', '-q']);
+  const falha = run(['doctor', '--json'], { dataRoot, env: { CAREER_BOUNTY_REPO_ROOT: clone } });
+  assert.equal(falha.status, 1);
+  assert.equal(falha.json.checks.find(c => c.id === 'hooks').status, 'falha');
+  git(clone, ['config', 'core.hooksPath', '.githooks']);
+  assert.equal(run(['doctor', '--json'], { dataRoot, env: { CAREER_BOUNTY_REPO_ROOT: clone } }).status, 0);
+});
