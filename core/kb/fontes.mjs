@@ -1,13 +1,15 @@
 // Monta a lista de fontes de conhecimento a partir de DATA_ROOT. Nenhum caminho pessoal vive no repositório:
 // a raiz do vault vem de config.yml (vault_root) ou de fontes.yml, e o manifesto das notas vem só de fontes.yml.
+// O endereço do ai-memory vem só de config.yml (ai_memory.url) e o token, de secrets/ai-memory.token.
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { loadSettings } from '../config.mjs';
 import { noLinks, within } from '../migration/paths.mjs';
+import { createAiMemory } from './sources/aiMemory.mjs';
 import { createMarkdownFolder } from './sources/markdownFolder.mjs';
 import { createObsidianVault } from './sources/obsidianVault.mjs';
 
-const CHAVES = ['versao', 'markdown_folder', 'obsidian_vault'];
+const CHAVES = ['versao', 'markdown_folder', 'obsidian_vault', 'ai_memory'];
 
 export async function lerManifesto(dataRoot) {
   const arquivo = path.join(dataRoot, 'fontes.yml');
@@ -39,4 +41,17 @@ export async function carregarFontes({ dataRoot, settings } = {}) {
     fontes.push({ nome: 'obsidian-vault', fonte: createObsidianVault({ raiz, manifesto: manifesto.obsidian_vault }) });
   }
   return { fontes, avisos: [] };
+}
+
+// ai-memory fica fora de lerBase: o que ele devolve é candidato, nunca afirmação.
+export async function candidatosAiMemory({ dataRoot, settings, consulta, fetchImpl }) {
+  const config = settings ?? await loadSettings({ dataRoot });
+  if (!config.ai_memory?.url) return { ativo: false, disponivel: false, candidatos: [], mensagem: 'ai-memory não configurado (ai_memory.url em config.yml).' };
+  const manifesto = (await lerManifesto(dataRoot)).ai_memory ?? {};
+  const arquivoToken = path.join(dataRoot, 'secrets', 'ai-memory.token');
+  await noLinks(arquivoToken);
+  let token = null;
+  try { token = (await readFile(arquivoToken, 'utf8')).trim() || null; } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  const fonte = createAiMemory({ url: config.ai_memory.url, token, workspace: manifesto.workspace ?? null, project: manifesto.project ?? null, limite: manifesto.limite ?? 10, ...(fetchImpl ? { fetchImpl } : {}) });
+  return { ativo: true, ...(await fonte.candidatos({ consulta })) };
 }
