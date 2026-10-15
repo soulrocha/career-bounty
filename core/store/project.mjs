@@ -115,6 +115,22 @@ function discovered(state, event) {
   return state;
 }
 
+// Resultado do radar sobre uma vaga já descoberta: triagem do Haiku e avaliação validada do Sonnet.
+const LEGADO = { atendido: 'atendido', parcial: 'parcial', lacuna: 'nao-atendido' };
+function triada(vaga, dados) {
+  const next = { ...vaga, triagem: { decisao: dados.decisao, motivo: dados.motivo } };
+  if (dados.decisao === 'descartar' && next.aderencia === 'pendente') next.aderencia = 'baixa';
+  return next;
+}
+function avaliada(vaga, dados) {
+  const a = dados.avaliacao;
+  const incompativel = vaga.condicoes?.situacao === 'incompativel';
+  return { ...vaga, aderencia: incompativel ? 'incompativel' : a.aderencia, motivos: [a.resumo, ...(vaga.motivos ?? [])].filter(Boolean),
+    requisitos: a.requisitos.map(r => ({ requisito: r.requisito, tipo: r.tipo, avaliacao: LEGADO[r.avaliacao], afirmacoes: r.afirmacoes, ...(r.nao_verificado ? { nao_verificado: true } : {}) })),
+    lacunas: a.requisitos.filter(r => r.tipo === 'obrigatorio' && r.avaliacao === 'lacuna').map(r => r.requisito), pendencias: [...new Set([...(vaga.pendencias ?? []), ...a.pendencias])],
+    avaliacao_radar: { descricao_hash: dados.descricao_hash, snapshot_afirmacoes: a.snapshot_afirmacoes, versaoPrompt: a.versaoPrompt, modelo: a.modelo, aderencia_sugerida_llm: a.aderencia_sugerida_llm, ajustes: a.ajustes } };
+}
+
 const vaga = entity('vagas');
 const email = entity('emails');
 
@@ -134,6 +150,8 @@ const reducers = {
   'vaga.importada': vaga.importada,
   'vaga.atualizada': vaga.atualizada,
   'vaga.descoberta': discovered,
+  'vaga.triada': onVaga(triada),
+  'vaga.avaliada': onVaga(avaliada),
   'email_evento.importado': email.importada,
   'email_evento.atualizado': email.atualizada,
   'candidatura.marcada': onVaga(applyMarcacao),
