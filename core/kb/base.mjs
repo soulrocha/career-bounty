@@ -47,5 +47,6 @@ export async function lerBase(fontes) {
     texto: [acc.texto, itens.texto].filter(Boolean).join('\n\n'),
   }), { cargo_alvo: null, cargos_alvo: [], texto: '' });
   const identidades = (await coletar(fontes, 'identity')).map(g => g.itens).filter(Boolean);
+  for (const { nome, fonte } of fontes) for (const aviso of fonte.avisos?.() ?? []) avisos.push(`${nome}: ${aviso}`);
   return { claims, evidence, historias, arcos, cvTemplates, preferencias, identityPath: identidades[0] ?? null, avisos };
 }
