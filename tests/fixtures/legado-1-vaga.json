@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "atualizado": "2026-10-14",
+  "vagas": [
+    {
+      "id": "empresa-alfa-0000000001",
+      "empresa": "Empresa Alfa",
+      "cargo": "Gestor de Tecnologia",
+      "url": "https://vagas.exemplo.test/jobs/123456",
+      "modalidade": "remoto",
+      "local": "Brasil",
+      "regime": "CLT",
+      "salario": null,
+      "status": "avaliada-sem-envio",
+      "aderencia": "boa",
+      "portal_candidatura": "Pendente"
+    }
+  ],
+  "eventos_email_sem_requisicao": []
+}
