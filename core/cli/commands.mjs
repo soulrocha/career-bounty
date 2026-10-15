@@ -7,6 +7,9 @@ import { formatFindings, scanMessageFile, scanStaged, scanTracked } from '../pri
 import { buildDenylist, loadPrivacyContext } from '../privacy/context.mjs';
 import { auditTemplateFile } from '../privacy/auditTemplate.mjs';
 import { collect } from '../radar/collect.mjs';
+import { buildDigest } from '../score/digest.mjs';
+import { readEvents } from '../store/events.mjs';
+import { projectEvents } from '../store/project.mjs';
 
 async function privacy(rest, { parseFlags }) {
   const [sub, ...flags] = rest;
@@ -67,6 +70,15 @@ export const commands = {
     const linhas = [`coletadas: ${result.coletadas}; novas: ${result.novas}; eventos gravados: ${result.eventos_gravados}`,
       ...result.fontes.map(fonte => `${fonte.id}: ${fonte.estado}${fonte.erro ? ` (${fonte.erro})` : ` (${fonte.vagas})`}`)];
     return { result, text: linhas.join(String.fromCharCode(10)), exitCode: falhas && falhas === result.fontes.length ? 1 : 0 };
+  },
+  async digest(rest, { parseFlags }) {
+    parseFlags(rest, { allowed: [] });
+    const settings = await loadSettings();
+    const { eventos } = await readEvents(settings.dataRoot);
+    const rodadas = eventos.filter(evento => evento.tipo === 'radar.rodada').map(evento => evento.dados);
+    if (!rodadas.length) return { result: { vazio: true, texto: 'Nenhuma rodada registrada.' }, text: 'Nenhuma rodada registrada.' };
+    const result = buildDigest({ rodada: rodadas.at(-1), projecao: projectEvents(eventos).vagas, historico: rodadas.slice(0, -1) });
+    return { result, text: result.texto };
   },
   async help() {
     return { result: { commands: commandNames() } };
