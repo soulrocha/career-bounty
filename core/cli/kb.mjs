@@ -5,7 +5,10 @@ import { runnerDasOpcoes } from './llm.mjs';
 import { analisarBase, resumoQuadrantes } from '../kb/analise.mjs';
 import { candidatosAiMemory, carregarFontes } from '../kb/fontes.mjs';
 import { sugerirMarcas } from '../kb/suggest.mjs';
+import { relatorioQuadrantes } from '../kb/relatorio.mjs';
 import { syncKb } from '../kb/sync.mjs';
+import { atomicWriteFile } from '../store/atomicWrite.mjs';
+import { localDay } from '../store/schema.mjs';
 
 const NL = String.fromCharCode(10);
 
@@ -15,6 +18,16 @@ async function kbSync(settings) {
 }
 
 export const kbCommands = {
+  // Relatório local dos quadrantes em DATA_ROOT/reports (nunca no repositório). A saída traz só as contagens.
+  async quadrantes(rest, { parseFlags }) {
+    parseFlags(rest, { allowed: [] });
+    const settings = await loadSettings();
+    const { quadrantes, itens, base } = await analisarBase({ dataRoot: settings.dataRoot, settings });
+    const dia = localDay(new Date());
+    const relatorio = path.join(settings.dataRoot, 'reports', `quadrantes-${dia}.md`);
+    await atomicWriteFile(relatorio, relatorioQuadrantes({ quadrantes, itens, afirmacoes: base.claims, dia }));
+    return { result: { contagem: quadrantes.contagem, avisos: quadrantes.avisos, relatorio }, text: `${resumoQuadrantes(quadrantes)}${NL}relatório em ${relatorio}` };
+  },
   async kb(rest, { parseFlags }) {
     const [sub, ...flags] = rest;
     if (sub === 'sync') {

@@ -13,6 +13,18 @@ const CONFIANCAS = ['alta', 'media', 'baixa'];
 
 const refDe = item => `${item.modelo}:${item.linha}`;
 
+// Afirmações publicáveis que compartilham números com o bullet (ao menos metade deles), da mais para a menos aderente.
+// Dica determinística, nunca decisão.
+export function pontuarCandidatas(item, afirmacoes) {
+  const chaves = new Set(item.numeros.map(chaveNumero));
+  if (!chaves.size) return [];
+  return afirmacoes.filter(af => af.publicavel !== 'nao')
+    .map(af => ({ id: af.id, acertos: new Set(numerosDaAfirmacao(af).map(chaveNumero).filter(k => chaves.has(k))).size, total: chaves.size }))
+    .filter(c => c.acertos >= Math.ceil(c.total / 2)).sort((x, y) => y.acertos - x.acertos || x.id.localeCompare(y.id, 'pt-BR', { numeric: true }));
+}
+
+export const candidatasPorNumero = (item, afirmacoes) => pontuarCandidatas(item, afirmacoes).map(c => c.id);
+
 function validarSugestoes(json, { refs, ids }) {
   if (!json || typeof json !== 'object' || Array.isArray(json)) throw new Error('saída deve ser um objeto');
   const extra = Object.keys(json).find(chave => chave !== 'sugestoes');
@@ -49,10 +61,9 @@ export async function sugerirMarcas({ runner, dataRoot, base, itens, snapshotHas
   const publicaveis = base.claims.filter(af => af.publicavel !== 'nao');
   const { b } = classificarForaDoCv({ afirmacoes: base.claims, itens, historias: [], arcos: [], cvCarregado: true });
   const prioridade = b.filter(x => x.tipo === 'afirmacao').map(x => x.id);
-  const chaves = new Map(publicaveis.map(af => [af.id, new Set(numerosDaAfirmacao(af).map(chaveNumero))]));
   const entrada = {
     itens: semMarca.map(item => ({ ref: refDe(item), texto: item.texto,
-      candidatas_por_numero: publicaveis.filter(af => item.numeros.some(n => chaves.get(af.id).has(chaveNumero(n)))).map(af => af.id) })),
+      candidatas_por_numero: candidatasPorNumero(item, publicaveis) })),
     afirmacoes: publicaveis.map(af => ({ id: af.id, texto: af.texto, nivel_prova: af.nivel_prova, numeros: af.numeros })),
     prioridade,
   };
