@@ -148,3 +148,18 @@ test('scan --all varre os arquivos versionados do diretório atual', async t => 
   assert.equal(result.json.findings[0].file, 'a.md');
   assert.equal(result.json.findings[0].rule, 'cpf');
 });
+
+test('testes ignoram IDENTITY_FILE e DATA_ROOT herdados do ambiente', async t => {
+  const dir = await tempDir(t, 'cb-herdado-');
+  const herdado = path.join(dir, 'real.json');
+  await writeFile(herdado, JSON.stringify({ nome: 'Pessoa Herdada Ambiente', email: 'herdado@ambiente-real.invalid' }));
+  const antes = { IDENTITY_FILE: process.env.IDENTITY_FILE, DATA_ROOT: process.env.DATA_ROOT };
+  process.env.IDENTITY_FILE = herdado;
+  process.env.DATA_ROOT = dir;
+  t.after(() => { for (const [k, v] of Object.entries(antes)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; } });
+  const repo = await setup(t, { identity: null });
+  await repo.write('a.md', 'contato herdado@ambiente-real.invalid\n');
+  assert.equal(repo.commit().status, 0);
+  const cli = run(['privacy', 'scan', '--all', '--json'], { dataRoot: repo.env.DATA_ROOT, cwd: repo.dir });
+  assert.equal(cli.status, 0);
+});
