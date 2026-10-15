@@ -1,0 +1,26 @@
+{
+  "hash": "54cfebbf16b4d386efffdf3e395943cf5affd146c7d2d3aaf4952ef791d219fe",
+  "agente": "entrevistador",
+  "modelo": "opus",
+  "versaoPrompt": "e933f2550570",
+  "entrada": {
+    "lacuna": {
+      "tipo": "sem_fonte"
+    },
+    "contexto": {
+      "afirmacao": {
+        "id": "AF-106",
+        "texto": "Economizou R$ 2,3 mi em renegociação de contratos.",
+        "nivel_prova": "entregue"
+      }
+    }
+  },
+  "saida": "{\"perguntas\":[\"Em que documento, relatório ou sistema está registrada a economia de R$ 2,3 mi com a renegociação dos contratos?\",\"Que área ou função, sem citar nomes, pode confirmar esse resultado?\",\"A que período essa economia se refere?\"]}",
+  "uso": {
+    "tokens_in": 2,
+    "tokens_out": 143,
+    "tokens_cache_leitura": 0,
+    "tokens_cache_criacao": 1591,
+    "custo_usd": 0.015596
+  }
+}
