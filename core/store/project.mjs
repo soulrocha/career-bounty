@@ -3,6 +3,7 @@
 import { semanticHash } from './canonicalize.mjs';
 import { applyDescarte, applyMarcacao, requisicaoKey } from './rules.mjs';
 import { localDay } from './schema.mjs';
+import { portalCandidatura } from '../apply/portal.mjs';
 
 const clone = value => structuredClone(value);
 export const EMAILS = 'eventos_email_sem_requisicao';
@@ -81,6 +82,36 @@ function entity(collection) {
   };
 }
 
+// Vaga descoberta pelo radar entra no formato do pipeline; descobertas repetidas só acrescentam aparições
+// e atualizam o texto quando o hash muda. Nada que a pessoa marcou é tocado.
+function discovered(state, event) {
+  const nova = event.dados.vaga;
+  const dia = localDay(event.ts);
+  const atual = state.vagas.get(event.entidade_id);
+  if (!state.raiz.atualizado) state.raiz.atualizado = dia;
+  if (!atual) {
+    const vaga = { id: event.entidade_id, empresa: nova.empresa, cargo: nova.cargo, url: nova.url, local: nova.local, modalidade: nova.modalidade,
+      regime: nova.regime, salario: null, salario_min: nova.salario_min, salario_max: nova.salario_max, requisicao_id: nova.requisicao_id,
+      descricao_completa: nova.descricao, descricao_hash: nova.descricao_hash, publicado_em: nova.publicado_em, consultado_em: dia,
+      fontes: [nova.fonte], aparicoes: [{ fonte: nova.fonte, url: nova.url, em: dia }], status: 'avaliada-sem-envio', url_status: 'aberta', aderencia: 'pendente' };
+    vaga.portal_candidatura = portalCandidatura(vaga);
+    state.vagas.set(event.entidade_id, vaga);
+    return state;
+  }
+  const next = { ...atual };
+  const aparicoes = [...(next.aparicoes ?? [])];
+  if (!aparicoes.some(item => item.fonte === nova.fonte && item.url === nova.url)) aparicoes.push({ fonte: nova.fonte, url: nova.url, em: dia });
+  next.aparicoes = aparicoes;
+  next.fontes = [...new Set([...(next.fontes ?? []), nova.fonte])];
+  if (nova.descricao_hash && next.descricao_hash !== nova.descricao_hash) {
+    next.descricao_completa = nova.descricao;
+    next.descricao_hash = nova.descricao_hash;
+    next.consultado_em = dia;
+  }
+  state.vagas.set(event.entidade_id, next);
+  return state;
+}
+
 const vaga = entity('vagas');
 const email = entity('emails');
 
@@ -99,6 +130,7 @@ const reducers = {
   },
   'vaga.importada': vaga.importada,
   'vaga.atualizada': vaga.atualizada,
+  'vaga.descoberta': discovered,
   'email_evento.importado': email.importada,
   'email_evento.atualizado': email.atualizada,
   'candidatura.marcada': onVaga(applyMarcacao),

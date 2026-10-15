@@ -6,6 +6,7 @@ import { ensureSkeleton, resolveDataRoot } from '../store/dataRoot.mjs';
 import { formatFindings, scanMessageFile, scanStaged, scanTracked } from '../privacy/scan.mjs';
 import { buildDenylist, loadPrivacyContext } from '../privacy/context.mjs';
 import { auditTemplateFile } from '../privacy/auditTemplate.mjs';
+import { collect } from '../radar/collect.mjs';
 
 async function privacy(rest, { parseFlags }) {
   const [sub, ...flags] = rest;
@@ -55,6 +56,17 @@ export const commands = {
     parseFlags(rest.slice(1), { allowed: [] });
     const result = await validatePlugin(process.cwd());
     return { result, exitCode: result.ok ? 0 : 1, text: result.ok ? 'ok' : result.errors.join('\n') };
+  },
+  async collect(rest, { parseFlags }) {
+    const values = parseFlags(rest, { allowed: ['--dry-run', '--source', '--now'], withValue: ['--source', '--now'] });
+    const now = values['--now'] ? new Date(values['--now']) : new Date();
+    if (Number.isNaN(now.getTime())) throw new Error('Opção inválida: --now deve ser uma data ISO.');
+    const only = values['--source'] ? values['--source'].split(',').map(id => id.trim()).filter(Boolean) : undefined;
+    const result = await collect({ settings: await loadSettings(), only, dryRun: Boolean(values['--dry-run']), now });
+    const falhas = result.fontes.filter(fonte => fonte.estado === 'erro').length;
+    const linhas = [`coletadas: ${result.coletadas}; novas: ${result.novas}; eventos gravados: ${result.eventos_gravados}`,
+      ...result.fontes.map(fonte => `${fonte.id}: ${fonte.estado}${fonte.erro ? ` (${fonte.erro})` : ` (${fonte.vagas})`}`)];
+    return { result, text: linhas.join(String.fromCharCode(10)), exitCode: falhas && falhas === result.fontes.length ? 1 : 0 };
   },
   async help() {
     return { result: { commands: commandNames() } };
