@@ -64,11 +64,14 @@ exige token nas APIs protegidas e responde 409 às gravações autenticadas em s
 
 ## Limites de validação
 
-- O plugin ainda não foi validado: F0.5 e F0.7 são etapas posteriores.
+- O manifesto do plugin passa em `plugin validate` e em `claude plugin validate .`; a instalação
+  local pelo marketplace ainda não foi exercitada.
 - O processamento/renderização equivalente e eventos granulares continuam pendentes.
 - A sincronização da pasta privada entre máquinas não está configurada por este setup.
 - O corte definitivo exige cinco dias úteis reais com diff zero, teste de escrita
   em dados sintéticos e decisão explícita de congelar o escritor anterior.
-- A publicação depende de F0.3, F0.4, F0.10, F0.11 e auditoria do plano.
+- A publicação (F0.9) é manual e continua pendente: F0.2 a F0.8, F0.10 e F0.11 estão implementadas
+  na branch `feat/F0-fundacao`; falta a auditoria do histórico, a revisão dos textos que citam
+  ferramentas pessoais (este arquivo e `CLAUDE.md`) e a decisão de tornar o repositório público.
 - O setup global de skills não foi executado; o comando citado nas regras não
   está disponível no catálogo desta sessão.
