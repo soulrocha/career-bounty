@@ -20,7 +20,7 @@ export async function runStage2({ dataRoot, runner, afirmacoes, brief, now = new
     if (avisos.length) throw new Error(`Log de eventos truncado ou corrompido (${avisos.length} aviso(s)); revisão necessária.`);
     return projectEvents(eventos).vagas;
   };
-  const resultado = { triadas: 0, avaliadas: 0, falhas: [], doCache: 0 };
+  const resultado = { triadas: 0, avaliadas: 0, avaliadas_ids: [], falhas: [], doCache: 0 };
 
   const primeiro = calcularDelta(await projetar(), versoes);
   if (primeiro.triar.length) {
@@ -40,6 +40,7 @@ export async function runStage2({ dataRoot, runner, afirmacoes, brief, now = new
       const { avaliacao } = await avaliar({ runner, afirmacoes, vaga: { id: vaga.id, vaga: { cargo: vaga.cargo, empresa: vaga.empresa, local: vaga.local, modalidade: vaga.modalidade, regime: vaga.regime, descricao: vaga.descricao_completa ?? '' } } });
       await appendEvents(dataRoot, [evento('vaga.avaliada', vaga.id, `${vaga.descricao_hash.slice(0, 12)}:${avaliacao.snapshot_afirmacoes}:${avaliacao.versaoPrompt}`, ts, { descricao_hash: vaga.descricao_hash, avaliacao })], opcoes);
       resultado.avaliadas += 1;
+      resultado.avaliadas_ids.push(vaga.id);
     } catch (error) {
       if (!(error instanceof LlmSaidaInvalida)) throw error;
       resultado.falhas.push({ id: vaga.id, erro: error.message });
