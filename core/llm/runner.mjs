@@ -67,7 +67,7 @@ export function createRunner({ modo, dataRoot, fake, replayDir, identity = [], e
   let seq = 0;
   let chamadasLive = 0;
 
-  async function chamar({ agente, modelo, versaoPrompt, entrada, sistema, tentativa, hash }) {
+  async function chamar({ agente, modelo, versaoPrompt, entrada, sistema, tentativa, hash, argsLive }) {
     if (modo === 'fake') {
       if (typeof fake !== 'function') throw new Error('Modo fake exige a função fake.');
       const saida = await fake({ agente, modelo, versaoPrompt, entrada, tentativa });
@@ -87,7 +87,7 @@ export function createRunner({ modo, dataRoot, fake, replayDir, identity = [], e
     if (chamadasLive >= maxChamadasLive) throw new Error(`Limite de ${maxChamadasLive} chamadas live atingido; nada foi enviado.`);
     chamadasLive += 1;
     const prompt = `Entrada (JSON):\n${JSON.stringify(entrada)}\nResponda somente com o JSON do contrato.`;
-    const stdout = await runClaude({ bin: claudeBin ?? await resolveClaudeBin({ env }), args: buildLiveArgs({ modelo, sistema }), input: prompt, cwd: tmpdir(), timeoutMs, env });
+    const stdout = await runClaude({ bin: claudeBin ?? await resolveClaudeBin({ env }), args: argsLive ?? buildLiveArgs({ modelo, sistema }), input: prompt, cwd: tmpdir(), timeoutMs, env });
     const resultado = parseEnvelope(stdout);
     if (gravar && replayDir) {
       await mkdir(replayDir, { recursive: true });
@@ -96,24 +96,24 @@ export function createRunner({ modo, dataRoot, fake, replayDir, identity = [], e
     return resultado;
   }
 
-  async function registrar({ agente, modelo, versaoPrompt, hash, uso, tentativa }) {
+  async function registrar({ agente, modelo, versaoPrompt, hash, uso, tentativa, meta }) {
     if (!dataRoot) return;
     const ts = now().toISOString();
     seq += 1;
     await appendEvents(dataRoot, [{ id: `llm.uso:${hash.slice(0, 12)}:${ts}:${seq}:${tentativa}`, ts, ator: 'llm', tipo: 'llm.uso', entidade: 'llm', entidade_id: agente,
       dados: { modelo, agente, tokens_in: uso.tokens_in ?? 0, tokens_out: uso.tokens_out ?? 0, ...(uso.tokens_cache_leitura ? { tokens_cache_leitura: uso.tokens_cache_leitura } : {}),
-        ...(uso.tokens_cache_criacao ? { tokens_cache_criacao: uso.tokens_cache_criacao } : {}), ...(uso.custo_usd != null ? { custo_usd: uso.custo_usd } : {}), hash, modo, versaoPrompt, tentativa } }], { now: ts });
+        ...(uso.tokens_cache_criacao ? { tokens_cache_criacao: uso.tokens_cache_criacao } : {}), ...(uso.custo_usd != null ? { custo_usd: uso.custo_usd } : {}), hash, modo, versaoPrompt, tentativa, ...(meta ?? {}) } }], { now: ts });
   }
 
   return {
     modo,
-    async run({ agente, modelo, versaoPrompt, entrada, sistema, validar = () => {} }) {
+    async run({ agente, modelo, versaoPrompt, entrada, sistema, validar = () => {}, argsLive, meta }) {
       const limpa = redact(entrada, identity).valor;
       const hash = entradaHash({ agente, modelo, versaoPrompt, entrada: limpa });
       let motivo = '';
       for (let tentativa = 1; tentativa <= 2; tentativa++) {
-        const { texto, uso } = await chamar({ agente, modelo, versaoPrompt, entrada: limpa, sistema, tentativa, hash });
-        await registrar({ agente, modelo, versaoPrompt, hash, uso, tentativa });
+        const { texto, uso } = await chamar({ agente, modelo, versaoPrompt, entrada: limpa, sistema, tentativa, hash, argsLive });
+        await registrar({ agente, modelo, versaoPrompt, hash, uso, tentativa, meta });
         let json;
         try { json = JSON.parse(stripFence(texto)); }
         catch { motivo = 'saída não é JSON válido'; continue; }
