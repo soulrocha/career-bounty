@@ -4,7 +4,7 @@ import test from 'node:test';
 import { CONFIG, casosRegras } from '../golden/make-vagas-regras.mjs';
 import { curriculoNecessario, portalCandidatura } from '../../core/apply/portal.mjs';
 import { canonicalUrl, companyKey, idFor, roleKey } from '../../core/dedup/keys.mjs';
-import { constraints } from '../../core/score/constraints.mjs';
+import { constraints, MOTIVO_FORA_DA_REGIAO } from '../../core/score/constraints.mjs';
 
 const golden = JSON.parse(await readFile(new URL('../golden/refresh-regras.json', import.meta.url), 'utf8'));
 
@@ -34,7 +34,8 @@ test('100% da golden: cada função Node devolve a saída gravada do Python (ou 
     try { obtido = funcoes[caso.funcao](caso.entrada); } catch { falhou = true; }
     if (Object.hasOwn(caso, 'erro')) { if (!falhou) divergencias.push(`#${index} ${caso.funcao}: o Python falha (${caso.erro}) e o Node não`); continue; }
     if (falhou) { divergencias.push(`#${index} ${caso.funcao}: o Node lançou erro e o Python não`); continue; }
-    try { assert.deepEqual(JSON.parse(JSON.stringify(obtido)), caso.saida); } catch { divergencias.push(`#${index} ${caso.funcao}`); }
+    // O texto do legado nomeava a cidade; o Node usa o texto genérico da região configurada. O resto da saída é idêntico.
+    try { assert.deepEqual(JSON.parse(JSON.stringify(obtido).replaceAll(MOTIVO_FORA_DA_REGIAO, 'Presença fora de BH/região metropolitana')), caso.saida); } catch { divergencias.push(`#${index} ${caso.funcao}`); }
   }
   assert.deepEqual(divergencias, []);
 });
@@ -100,4 +101,11 @@ test('portal privado de recrutamento vem da configuração (portais_extras), nã
   assert.equal(portalCandidatura({ url: 'https://boards.greenhouse.io/x/jobs/1' }, config), 'Greenhouse');
   assert.equal(curriculoNecessario(vaga, { ...config, cv_skip_portals: ['Portal Exemplo'] }), false);
   assert.equal(curriculoNecessario(vaga, { ...config, cv_skip_portals: [] }), true);
+});
+
+test('motivo de presença fora da região não nomeia cidade e vale para qualquer regiao_presencial', () => {
+  const resultado = constraints(job({ modalidade: 'presencial', local: 'Cidade Distante' }), { ...CONFIG, regiao_presencial: ['cidade perto'] });
+  assert.equal(resultado.situacao, 'incompativel');
+  assert.deepEqual(resultado.motivos, [MOTIVO_FORA_DA_REGIAO]);
+  assert.doesNotMatch(MOTIVO_FORA_DA_REGIAO, /BH|Belo|metropolitana/i);
 });
