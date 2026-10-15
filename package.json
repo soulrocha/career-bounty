@@ -12,6 +12,7 @@
   "scripts": {
     "test": "node --test",
     "prepare": "git config core.hooksPath .githooks || exit 0",
+    "record": "node bin/career-bounty.mjs llm record",
     "test:local": "node --test tests/local/acceptance.local.mjs"
   }
 }
