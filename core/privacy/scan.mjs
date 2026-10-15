@@ -31,11 +31,18 @@ export function flattenStrings(value, out = []) {
   return out;
 }
 
+// Valores de identidade: ignora chaves de instrução (iniciadas por _) do modelo criado pelo setup.
+export function identityStrings(identity) {
+  const data = identity && typeof identity === 'object' && !Array.isArray(identity)
+    ? Object.fromEntries(Object.entries(identity).filter(([key]) => !key.startsWith('_')))
+    : identity;
+  return flattenStrings(data ?? []).map(v => v.trim()).filter(Boolean);
+}
+
 const escapeRegex = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export function buildContext({ identity = null, denylist = [] } = {}) {
-  const identityValues = flattenStrings(identity ?? [])
-    .map(v => v.trim())
+  const identityValues = identityStrings(identity)
     .filter(v => v.length >= 4 && !EXEMPT_DOMAIN.test(v));
   const denyPatterns = denylist
     .map(v => v.trim())

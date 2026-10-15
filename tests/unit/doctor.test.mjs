@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
 import { run, tempDir } from '../helpers/cli.mjs';
@@ -11,6 +11,7 @@ async function ready(t, config = {}) {
   const dataRoot = await tempDir(t);
   await writeFile(path.join(dataRoot, 'config.yml'), JSON.stringify(config));
   await mkdir(path.join(dataRoot, 'secrets'));
+  await writeFile(path.join(dataRoot, 'identity.yml'), JSON.stringify({ nome: 'Pessoa Ficticia Teste' }));
   await mkdir(path.join(dataRoot, 'engines', 'career-ops'), { recursive: true });
   await writeFile(path.join(dataRoot, 'engines', 'career-ops', 'package.json'), JSON.stringify({ name: 'career-ops-falso', version: '1.36.0' }));
   return dataRoot;
@@ -119,4 +120,16 @@ test('clone git sem core.hooksPath (condição da CI Linux) faz o doctor falhar;
   assert.equal(falha.json.checks.find(c => c.id === 'hooks').status, 'falha');
   git(clone, ['config', 'core.hooksPath', '.githooks']);
   assert.equal(run(['doctor', '--json'], { dataRoot, env: { CAREER_BOUNTY_REPO_ROOT: clone } }).status, 0);
+});
+
+test('identity.yml ausente ou sem valores avisa e aponta o setup; preenchido fica ok', async t => {
+  const dataRoot = await ready(t);
+  assert.equal(check(await runDoctor({ dataRoot, ...healthyDeps }), 'identidade').status, 'ok');
+  await rm(path.join(dataRoot, 'identity.yml'));
+  const ausente = check(await runDoctor({ dataRoot, ...healthyDeps }), 'identidade');
+  assert.equal(ausente.status, 'aviso');
+  assert.match(ausente.mensagem, /identity\.yml/);
+  assert.match(ausente.mensagem, /setup/);
+  await writeFile(path.join(dataRoot, 'identity.yml'), JSON.stringify({ _instrucao: 'texto', nome: '', email: '' }));
+  assert.equal(check(await runDoctor({ dataRoot, ...healthyDeps }), 'identidade').status, 'aviso');
 });

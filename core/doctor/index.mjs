@@ -3,6 +3,7 @@ import { realpathSync } from 'node:fs';
 import { access, readFile, stat as fsStat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { identityStrings } from '../privacy/scan.mjs';
 import { activeRules, describeDefaults, loadSettings } from '../config.mjs';
 
 export const CAREER_OPS_TAG = 'v1.36.0';
@@ -39,6 +40,11 @@ export async function runDoctor({
 
   if (await exists(dataRoot)) add('data_root', 'ok', 'DATA_ROOT existe.');
   else add('data_root', 'aviso', 'DATA_ROOT ainda não existe: rode o setup para criar o esqueleto.');
+
+  let identity = null;
+  try { identity = JSON.parse(await readFile(path.join(dataRoot, 'identity.yml'), 'utf8')); } catch { /* ausente ou inválido */ }
+  if (identity !== null && identityStrings(identity).length) add('identidade', 'ok', 'identity.yml preenchido: a camada pessoal do pre-commit está ativa.');
+  else add('identidade', 'aviso', 'identity.yml ausente ou sem valores: o pre-commit roda só as regras genéricas. Rode o setup para criar o modelo e preencha com os seus dados.');
 
   const engine = path.join(dataRoot, 'engines', 'career-ops');
   let installed = null;
