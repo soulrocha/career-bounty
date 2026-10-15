@@ -1,4 +1,5 @@
 // Estágio 1 do radar, sem LLM: coleta, identifica o que é novo e grava `vaga.descoberta`.
+import { createHash } from 'node:crypto';
 import { consolidar, classificar } from '../dedup/consolidar.mjs';
 import { runSources } from '../sources/index.mjs';
 import { triagemPre } from '../score/prescore.mjs';
@@ -8,7 +9,8 @@ import { appendEvents, readEvents } from '../store/events.mjs';
 import { projectEvents } from '../store/project.mjs';
 
 export function descobertaEvent(vaga, id, ts, aparicoes = [], extra = {}) {
-  return { id: `descoberta:${id}:${vaga.descricao_hash.slice(0, 12)}`, ts, ator: 'radar', tipo: 'vaga.descoberta', entidade: 'vaga', entidade_id: id, dados: { vaga, aparicoes, ...extra } };
+  const urls = createHash('sha256').update(JSON.stringify((aparicoes.length ? aparicoes : [{ fonte: vaga.fonte, url: vaga.url }]).map(item => `${item.fonte}|${item.url}`).sort())).digest('hex').slice(0, 8);
+  return { id: `descoberta:${id}:${vaga.descricao_hash.slice(0, 12)}:${urls}`, ts, ator: 'radar', tipo: 'vaga.descoberta', entidade: 'vaga', entidade_id: id, dados: { vaga, aparicoes, ...extra } };
 }
 
 export async function collect({ settings, only, dryRun = false, now = new Date(), sources, host }) {
