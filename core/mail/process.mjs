@@ -49,5 +49,7 @@ export async function processarItens({ itens, vagas, abrir, classificarLlm, conf
   const { eventos, resumo } = aplicarEfeitos({ itens: vinculados, vagas, now });
   const porOrigem = {};
   for (const c of classificados.values()) porOrigem[c.origem] = (porOrigem[c.origem] ?? 0) + 1;
-  return { eventos, resumo, classificados: [...classificados].map(([message_id, c]) => ({ message_id, ...c })), por_origem: porOrigem, abertos: [...corpos.keys()], adiados, enviados_ao_llm: paraLlm.length };
+  const porRegra = {};
+  for (const regra of depois.values()) for (const id of regra.regras) porRegra[id] = (porRegra[id] ?? 0) + 1;
+  return { eventos, resumo, por_regra: porRegra, precisa_abrir: precisaAbrir.length, classificados: [...classificados].map(([message_id, c]) => ({ message_id, ...c })), por_origem: porOrigem, abertos: [...corpos.keys()], adiados, enviados_ao_llm: paraLlm.length };
 }

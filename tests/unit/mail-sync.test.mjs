@@ -127,3 +127,13 @@ test('e-mail falso de entrevista não gera proposta de calendário no sync', asy
   assert.ok(!eventos.some(e => e.tipo === 'calendario.proposto' && falsos.includes(e.dados.message_id)));
   assert.ok(!eventos.some(e => e.tipo === 'email.recebido' && falsos.includes(e.dados.message_id)));
 });
+
+test('o relatório do sync traz contagens por regra e ambíguos, nunca texto de e-mail', async t => {
+  const dataRoot = await tempDir(t);
+  const ledgerRoot = await tempDir(t);
+  const runner = createRunner({ modo: 'fake', dataRoot: ledgerRoot, fake: fakeGmail() });
+  const r = await sincronizarEmail({ dataRoot, ledgerRoot, settings: settings(), runner, now: AGORA, dryRun: true });
+  assert.ok(Object.values(r.por_regra).every(Number.isInteger));
+  assert.ok(Number.isInteger(r.precisa_abrir));
+  assert.ok(Object.keys(r.por_regra).every(id => /^[a-z-]+$/.test(id)));
+});

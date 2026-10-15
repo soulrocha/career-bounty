@@ -86,7 +86,7 @@ export async function sincronizarEmail({ dataRoot, ledgerRoot = dataRoot, settin
   return {
     ok: true, dry_run: dryRun, rodada, consulta: { janela_apos: consulta.after, limite: consulta.limite, cursor_usado: consulta.cursor_usado },
     itens: a.digest.itens.length, rejeitados: a.rejeitados.length, novos: novos.length, repetidos,
-    por_classe: contar(r.classificados, 'classe'), por_origem: r.por_origem, abertos: r.abertos.length, adiados: r.adiados.length, enviados_ao_classificador: r.enviados_ao_llm,
+    por_classe: contar(r.classificados, 'classe'), por_origem: r.por_origem, por_regra: r.por_regra, precisa_abrir: r.precisa_abrir, abertos: r.abertos.length, adiados: r.adiados.length, enviados_ao_classificador: r.enviados_ao_llm,
     efeitos: r.resumo, eventos_por_tipo: contar(r.eventos.map(e => ({ tipo: e.tipo })), 'tipo'), avisos, limite_fase_b: plano.limite, tokens,
   };
 }
