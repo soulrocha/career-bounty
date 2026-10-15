@@ -1,0 +1,15 @@
+{
+  "name": "career-bounty",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "career-bounty": "bin/career-bounty.mjs"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,21 @@
+# Dependencies and generated output
+node_modules/
+coverage/
+dist/
+*.log
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+.ai-memory.toml
+*.pem
+*.key
+credentials*.json
+secrets*.json
+
+# Runtime data and private handoff
+data/
+runtime/
+.career-bounty/
+.local/
