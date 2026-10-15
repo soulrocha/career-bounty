@@ -39,7 +39,7 @@ test('varre cada termo, mapeia os campos e filtra pela janela de dias', async t 
   server.assertSemCredenciais();
 });
 
-test('descarta vaga confidencial e URL fora de gupy.io', async t => {
+test('descarta vaga sigilosa e URL fora de gupy.io', async t => {
   const server = await gupyServer(t);
   const { vagas } = await runSources([fonte(server, { termos: ['Coordenador', 'Gerente de Produto', 'Líder'] })], ctx);
   assert.deepEqual(vagas, []);

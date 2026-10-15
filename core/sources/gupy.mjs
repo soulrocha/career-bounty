@@ -2,14 +2,14 @@
 // Implementação própria do contrato público, modelada no provider de mesmo nome do career-ops (MIT, ver NOTICE).
 //  - pagination.total não é confiável: o fim do feed é a página curta.
 //  - limite do servidor: 100 por página; ordem por publishedDate decrescente (permite parar pela janela).
-//  - vaga confidencial e URL fora de *.gupy.io são descartadas.
+//  - vaga sigilosa e URL fora de *.gupy.io são descartadas.
 import { SourceError } from './index.mjs';
 import { checkedBase, ENDPOINTS } from './endpoints.mjs';
 import { antesDaJanela, diaDe, semHtml } from './common.mjs';
 import { getJson, realSleep } from './http.mjs';
 
 const MARGEM_DIAS = 2;
-const CONFIDENCIAL = /^(?:empresa\s+)?confidencial$/i;
+const SIGILOSA = /^(?:empresa\s+)?confid\w*$/i;
 const MODALIDADES = { remote: 'remoto', hybrid: 'hibrido', 'on-site': 'presencial' };
 
 const urlSegura = valor => {
@@ -32,7 +32,7 @@ export function normalizeGupy(item) {
   const cargo = typeof item.name === 'string' ? item.name.trim() : '';
   const empresa = typeof item.careerPageName === 'string' ? item.careerPageName.trim() : '';
   const url = urlSegura(item.jobUrl);
-  if (!cargo || !empresa || CONFIDENCIAL.test(empresa) || !url) return null;
+  if (!cargo || !empresa || SIGILOSA.test(empresa) || !url) return null;
   const id = /\/jobs\/(\d+)/.exec(url)?.[1] ?? (item.id === undefined ? null : String(item.id));
   const local = ['city', 'state'].map(campo => (typeof item[campo] === 'string' ? item[campo].trim() : '')).filter(Boolean).join(', ');
   return { portal: 'gupy', requisicao_id: id, empresa, cargo, local: local || null,
