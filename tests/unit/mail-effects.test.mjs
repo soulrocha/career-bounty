@@ -4,9 +4,7 @@ import { tempDir } from '../helpers/cli.mjs';
 import { appendEvents, readEvents } from '../../core/store/events.mjs';
 import { projectEvents } from '../../core/store/project.mjs';
 import { aplicarEfeitos, extrairEntrevista, extrairPrazo } from '../../core/mail/effects.mjs';
-import { registrarReducersEmail } from '../../core/mail/register.mjs';
 
-registrarReducersEmail();
 const AGORA = new Date('2026-10-14T18:00:00Z');
 const vagas = [
   { id: 'v1', empresa: 'Empresa Alfa', cargo: 'Analista de Dados', requisicao_id: 'job:31790' },
