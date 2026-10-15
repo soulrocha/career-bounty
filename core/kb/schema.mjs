@@ -1,4 +1,4 @@
-export const NIVEIS_PROVA = ['declarado', 'documentado', 'verificado'];
+export const NIVEIS_PROVA = ['verificado', 'entregue', 'proposto', 'relato'];
 
 // Frontmatter mínimo: `chave: valor` e `chave: [a, b]`. Sem dependência de YAML.
 export function parseFrontmatter(text) {

@@ -16,7 +16,7 @@ async function copyPersona(t) {
 test('claims() devolve as afirmações da persona com id, texto e nível de prova', async () => {
   const claims = await createMarkdownFolder(persona).claims();
   assert.deepEqual(claims.map(c => c.id), ['AF-001', 'AF-002', 'AF-003']);
-  assert.equal(claims[0].nivel_prova, 'documentado');
+  assert.equal(claims[0].nivel_prova, 'entregue');
   assert.match(claims[0].texto, /tempo de triagem de chamados de 5 dias para 2 dias/);
   assert.equal(claims[0].arquivo, 'claims/AF-001.md');
 });
@@ -25,13 +25,13 @@ test('frontmatter sem nivel_prova ou com nível desconhecido é erro que nomeia 
   const dir = await copyPersona(t);
   await writeFile(path.join(dir, 'claims', 'AF-009.md'), '---\nid: AF-009\n---\nTexto sem prova.\n');
   await assert.rejects(createMarkdownFolder(dir).claims(), /claims\/AF-009\.md.*nivel_prova/);
-  await writeFile(path.join(dir, 'claims', 'AF-009.md'), '---\nid: AF-009\nnivel_prova: absoluto\n---\nTexto.\n');
+  await writeFile(path.join(dir, 'claims', 'AF-009.md'), '---\nid: AF-009\nnivel_prova: declarado\n---\nTexto.\n');
   await assert.rejects(createMarkdownFolder(dir).claims(), /claims\/AF-009\.md.*nivel_prova/);
 });
 
 test('id de afirmação duplicado é erro', async t => {
   const dir = await copyPersona(t);
-  await writeFile(path.join(dir, 'claims', 'AF-010.md'), '---\nid: AF-001\nnivel_prova: declarado\n---\nOutra afirmação.\n');
+  await writeFile(path.join(dir, 'claims', 'AF-010.md'), '---\nid: AF-001\nnivel_prova: relato\n---\nOutra afirmação.\n');
   await assert.rejects(createMarkdownFolder(dir).claims(), /AF-001.*duplicad/);
 });
 
@@ -68,4 +68,12 @@ test('a persona fictícia carrega inteira pelo adaptador', async () => {
   const source = createMarkdownFolder(persona);
   assert.equal((await source.claims()).length, 3);
   assert.equal((await source.evidence()).length, 2);
+});
+
+test('aceita exatamente os níveis verificado, entregue, proposto e relato', async t => {
+  const dir = await copyPersona(t);
+  for (const nivel of ['verificado', 'entregue', 'proposto', 'relato']) {
+    await writeFile(path.join(dir, 'claims', 'AF-020.md'), `---\nid: AF-020\nnivel_prova: ${nivel}\n---\nTexto.\n`);
+    assert.equal((await createMarkdownFolder(dir).claims()).find(c => c.id === 'AF-020').nivel_prova, nivel);
+  }
 });
