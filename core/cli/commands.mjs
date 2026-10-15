@@ -23,6 +23,7 @@ import { formatFindings, scanMessageFile, scanStaged, scanTracked } from '../pri
 import { buildDenylist, loadPrivacyContext } from '../privacy/context.mjs';
 import { auditTemplateFile } from '../privacy/auditTemplate.mjs';
 import { collect } from '../radar/collect.mjs';
+import { compararRadar } from '../radar/compare.mjs';
 import { buildDigest } from '../score/digest.mjs';
 import { readEvents } from '../store/events.mjs';
 import { projectEvents } from '../store/project.mjs';
@@ -131,6 +132,20 @@ export const commands = {
     const saida = spawnSync('schtasks', ['/Delete', '/TN', nome, '/F'], { encoding: 'utf8' });
     if (saida.status !== 0) throw new Error(`schtasks falhou: ${(saida.stderr || saida.stdout).trim().slice(0, 200)}`);
     return { result: { removido: true, nome }, text: `tarefa ${nome} removida` };
+  },
+  async 'compare-radar'(rest, { parseFlags }) {
+    const values = parseFlags(rest, { allowed: ['--antigo', '--desde'], withValue: ['--antigo', '--desde'] });
+    const settings = await loadSettings();
+    const arquivo = values['--antigo'] ?? settings.raw.legado_path;
+    if (!arquivo) throw new Error('Informe --antigo <pipeline-vagas.json> ou configure legado_path em DATA_ROOT/config.yml.');
+    const desde = values['--desde'] ?? localDay(new Date(Date.now() - 7 * 86400000));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(desde)) throw new Error('Opção inválida: --desde deve ser AAAA-MM-DD.');
+    const antigo = JSON.parse(await readFile(arquivo, 'utf8')).vagas ?? [];
+    const { eventos } = await readEvents(settings.dataRoot);
+    const result = compararRadar({ antigo, novo: projectEvents(eventos).vagas, desde });
+    const linhas = [`desde ${desde}: antigo ${result.contagem.antigo}, novo ${result.contagem.novo}, em ambos ${result.contagem.ambos}`,
+      `só no antigo: ${result.contagem.so_antigo} (${result.altas_boas_so_antigo.length} alta/boa a explicar); só no novo: ${result.contagem.so_novo}`];
+    return { result, text: linhas.join(String.fromCharCode(10)) };
   },
   async eval(rest, { parseFlags }) {
     if (rest[0] !== 'radar') throw new Error(`Subcomando eval desconhecido: ${rest[0] ?? ''}`.trim());
