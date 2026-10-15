@@ -14,7 +14,7 @@ function realHooksPath() {
   const inside = spawnSync('git', ['rev-parse', '--is-inside-work-tree'], { cwd: repoRoot, encoding: 'utf8' });
   if (inside.status !== 0) return null;
   const toplevel = spawnSync('git', ['rev-parse', '--show-toplevel'], { cwd: repoRoot, encoding: 'utf8' }).stdout.trim();
-  if (realpathSync(toplevel) !== realpathSync(repoRoot)) return null;
+  if (realpathSync.native(toplevel) !== realpathSync.native(repoRoot)) return null;
   return spawnSync('git', ['config', '--get', 'core.hooksPath'], { cwd: repoRoot, encoding: 'utf8' }).stdout.trim();
 }
 
