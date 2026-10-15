@@ -15,10 +15,14 @@ export function defaultSettings() {
     ai_memory: { url: null },
     envio: { padrao: 'parar_antes_de_enviar', regras: [] },
     fontes: { linkedin_guest: { ativo: false, aceite_termos: false } },
+    radar: { janela_dias: 7, timeout_fonte_ms: 60000 },
     panel: { port: 8880, base_files: [], app_name: 'career-bounty' },
     perfil: { nome: '', especialidade: '', regiao: '', aviso: '', pdfs_base: [] },
   };
 }
+
+// Fontes de vagas que aceitam bloco próprio em `fontes` (linkedin_guest tem validação própria abaixo).
+export const FONTES_CONHECIDAS = ['fake', 'gupy', 'careerops', 'freehire', 'inhire', 'solides', 'jobspy', 'linkedin_alertas'];
 
 const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const invalid = (key, rule) => new Error(`Configuração inválida: ${key} ${rule}.`);
@@ -80,6 +84,25 @@ export function validateSettings(raw) {
   }
   if (settings.fontes.linkedin_guest.ativo && !settings.fontes.linkedin_guest.aceite_termos) {
     throw invalid('fontes.linkedin_guest.ativo', 'exige aceite_termos: true no mesmo bloco; o coletor guest pode violar os termos de uso do LinkedIn e a responsabilidade é sua');
+  }
+
+  const fontesRaw = section(raw.fontes, 'fontes');
+  for (const [id, bloco] of Object.entries(fontesRaw)) {
+    if (id === 'linkedin_guest') continue;
+    if (!FONTES_CONHECIDAS.includes(id)) throw invalid(`fontes.${id}`, `não é uma fonte conhecida (${FONTES_CONHECIDAS.join(', ')})`);
+    if (!isObject(bloco)) throw invalid(`fontes.${id}`, 'deve ser objeto');
+    settings.fontes[id] = structuredClone(bloco);
+  }
+  for (const key of Object.keys(guest)) {
+    if (!['ativo', 'aceite_termos'].includes(key)) settings.fontes.linkedin_guest[key] = structuredClone(guest[key]);
+  }
+
+  const radar = section(raw.radar, 'radar');
+  for (const key of ['janela_dias', 'timeout_fonte_ms']) {
+    if (radar[key] !== undefined) {
+      if (!Number.isInteger(radar[key]) || radar[key] < 1) throw invalid(`radar.${key}`, 'deve ser inteiro >= 1');
+      settings.radar[key] = radar[key];
+    }
   }
 
   const perfil = section(raw.perfil, 'perfil');
