@@ -28,7 +28,7 @@ async function runOne(source, ctx, timeoutMs) {
       const vaga = makeVaga({ fonte: source.id, ...raw });
       try { validateVaga(vaga); vagas.push(vaga); } catch { invalidas += 1; }
     }
-    const info = { id: source.id, estado: 'ok', vagas: vagas.length, ...(invalidas ? { invalidas } : {}), ...(found.avisos?.length ? { avisos: found.avisos } : {}) };
+    const info = { id: source.id, estado: 'ok', vagas: vagas.length, ...(invalidas ? { invalidas } : {}), ...(found.avisos?.length ? { avisos: found.avisos } : {}), ...(found.fase_b?.length ? { fase_b: found.fase_b } : {}) };
     return { info, vagas };
   } catch (error) {
     const codigo = error instanceof SourceError ? error.codigo : 'erro';

@@ -1,0 +1,99 @@
+{
+  "itens": [
+    {
+      "message_id": "msg-alerta-1",
+      "data": "2026-10-14",
+      "remetente_dominio": "linkedin.com",
+      "assunto": "Novas vagas para \"Tech Lead\" em Brasil",
+      "trecho": "Vagas sugeridas",
+      "classe": "alerta",
+      "alerta": {
+        "origem": "linkedin",
+        "termo": "Tech Lead",
+        "vagas": [
+          {
+            "titulo": "Tech Lead Plataforma 1",
+            "empresa": "Empresa Alfa",
+            "local": "Brasil",
+            "url": "https://www.linkedin.com/jobs/view/440000001?trackingId=abc&refId=def"
+          }
+        ]
+      }
+    },
+    {
+      "message_id": "msg-alerta-2",
+      "data": "2026-10-14",
+      "remetente_dominio": "linkedin.com",
+      "assunto": "Novas vagas para \"Tech Lead\" em Brasil",
+      "trecho": "Vagas sugeridas",
+      "classe": "alerta",
+      "alerta": {
+        "origem": "linkedin",
+        "termo": "Tech Lead",
+        "vagas": [
+          {
+            "titulo": "Engenheiro Principal",
+            "empresa": "Empresa Beta",
+            "url": "https://www.linkedin.com/jobs/view/4400000099"
+          },
+          {
+            "titulo": "Gerente de Plataforma",
+            "empresa": "Empresa Gama",
+            "url": "https://www.linkedin.com/jobs/view/4400000098"
+          }
+        ]
+      }
+    },
+    {
+      "message_id": "msg-alerta-3",
+      "data": "2026-10-14",
+      "remetente_dominio": "linkedin.com",
+      "assunto": "Novas vagas para \"Tech Lead\" em Brasil",
+      "trecho": "Vagas sugeridas",
+      "classe": "alerta",
+      "alerta": {
+        "origem": "linkedin",
+        "termo": "Pintor",
+        "vagas": [
+          {
+            "titulo": "Pintor",
+            "empresa": "Empresa Delta",
+            "url": "https://www.linkedin.com/jobs/view/4400000097"
+          }
+        ]
+      }
+    },
+    {
+      "message_id": "msg-alerta-4",
+      "data": "2026-10-14",
+      "remetente_dominio": "linkedin.com",
+      "assunto": "Novas vagas para \"Tech Lead\" em Brasil",
+      "trecho": "Vagas sugeridas",
+      "classe": "alerta",
+      "alerta": {
+        "origem": "linkedin",
+        "termo": "Tech Lead"
+      }
+    },
+    {
+      "message_id": "msg-alerta-1",
+      "data": "2026-10-14",
+      "remetente_dominio": "linkedin.com",
+      "assunto": "Novas vagas para \"Tech Lead\" em Brasil",
+      "trecho": "Vagas sugeridas",
+      "classe": "alerta",
+      "alerta": {
+        "origem": "linkedin",
+        "termo": "Tech Lead",
+        "vagas": [
+          {
+            "titulo": "Tech Lead Plataforma 1",
+            "empresa": "Empresa Alfa",
+            "local": "Brasil",
+            "url": "https://www.linkedin.com/jobs/view/440000001?trackingId=abc&refId=def"
+          }
+        ]
+      }
+    }
+  ]
+}
