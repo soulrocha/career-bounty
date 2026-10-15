@@ -19,3 +19,12 @@ Projetos de licença restritiva
 
 Do ApplyPilot (AGPL) e do job-ops (Commons Clause) apenas ideias foram consideradas.
 Nenhum código desses projetos entra aqui (ver CONTRIBUTING.md).
+
+Atribuições de design (MIT)
+
+- core/sources/gupy.mjs: o contrato de varredura por palavra-chave, o fim por página curta, a parada
+  pela janela de dias e o descarte de vaga sigilosa seguem o comportamento do provider
+  providers/gupy.mjs do career-ops (MIT, https://github.com/career-ops-hq/career-ops). O código é
+  uma implementação própria; nenhum arquivo do projeto de origem foi copiado.
+- core/sources/freehire.mjs: usa a API pública REST do Freehire descrita na skill freehire-search
+  (MIT); implementação própria.
