@@ -15,7 +15,7 @@ export function defaultSettings() {
     ai_memory: { url: null },
     envio: { padrao: 'parar_antes_de_enviar', regras: [] },
     fontes: { linkedin_guest: { ativo: false, aceite_termos: false } },
-    radar: { janela_dias: 7, timeout_fonte_ms: 60000, termos: [], empresas_monitoradas: [] },
+    radar: { janela_dias: 7, timeout_fonte_ms: 60000, termos: [], empresas_monitoradas: [], criterios: {} },
     panel: { port: 8880, base_files: [], app_name: 'career-bounty' },
     perfil: { nome: '', especialidade: '', regiao: '', aviso: '', pdfs_base: [] },
   };
@@ -110,6 +110,31 @@ export function validateSettings(raw) {
       if (!Array.isArray(radar[key]) || radar[key].some(item => typeof item !== 'string')) throw invalid(`radar.${key}`, 'deve ser lista de textos');
       settings.radar[key] = [...radar[key]];
     }
+  }
+
+  if (radar.criterios !== undefined) {
+    const c = section(radar.criterios, 'radar.criterios');
+    const out = {};
+    for (const key of ['regiao_presencial', 'titulos_alvo', 'palavras_chave', 'palavras_negativas']) {
+      if (c[key] === undefined) continue;
+      if (!Array.isArray(c[key]) || c[key].some(item => typeof item !== 'string')) throw invalid(`radar.criterios.${key}`, 'deve ser lista de textos');
+      out[key] = [...c[key]];
+    }
+    if (c.corte_prescore !== undefined) {
+      if (typeof c.corte_prescore !== 'number' || c.corte_prescore < 0 || c.corte_prescore > 1) throw invalid('radar.criterios.corte_prescore', 'deve ser número entre 0 e 1');
+      out.corte_prescore = c.corte_prescore;
+    }
+    for (const [key, campos] of [['clt', ['onsite_min', 'remote_hybrid_min']], ['pj', ['min']]]) {
+      if (c[key] === undefined) continue;
+      const bloco = section(c[key], `radar.criterios.${key}`);
+      out[key] = {};
+      for (const campo of campos) {
+        if (bloco[campo] === undefined) continue;
+        if (typeof bloco[campo] !== 'number' || bloco[campo] < 0) throw invalid(`radar.criterios.${key}.${campo}`, 'deve ser número >= 0');
+        out[key][campo] = bloco[campo];
+      }
+    }
+    settings.radar.criterios = out;
   }
 
   const perfil = section(raw.perfil, 'perfil');

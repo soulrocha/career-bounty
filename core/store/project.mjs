@@ -95,7 +95,8 @@ function discovered(state, event) {
     const vaga = { id: event.entidade_id, empresa: nova.empresa, cargo: nova.cargo, url: nova.url, local: nova.local, modalidade: nova.modalidade,
       regime: nova.regime, salario: null, salario_min: nova.salario_min, salario_max: nova.salario_max, requisicao_id: nova.requisicao_id && nova.portal ? `${nova.portal}:${nova.requisicao_id}` : nova.requisicao_id, portal_origem: nova.portal,
       descricao_completa: nova.descricao, descricao_hash: nova.descricao_hash, publicado_em: nova.publicado_em, consultado_em: dia,
-      fontes: [...new Set(aparicoesDe(event, dia).map(a => a.fonte))], aparicoes: aparicoesDe(event, dia), destino_pendente: event.dados.destino_pendente === true, possivel_duplicata: event.dados.possivel_duplicata ?? [], status: 'avaliada-sem-envio', url_status: 'aberta', aderencia: 'pendente' };
+      fontes: [...new Set(aparicoesDe(event, dia).map(a => a.fonte))], aparicoes: aparicoesDe(event, dia), destino_pendente: event.dados.destino_pendente === true, possivel_duplicata: event.dados.possivel_duplicata ?? [], status: 'avaliada-sem-envio', url_status: 'aberta', aderencia: event.dados.pre?.descartada ? 'incompativel' : event.dados.pre?.nivel === 'baixa' ? 'baixa' : 'pendente' };
+    if (event.dados.pre) { vaga.pre_score = event.dados.pre.pre_score; vaga.motivos = event.dados.pre.motivos; vaga.condicoes = event.dados.pre.condicoes; }
     vaga.portal_candidatura = portalCandidatura(vaga);
     state.vagas.set(event.entidade_id, vaga);
     return state;
