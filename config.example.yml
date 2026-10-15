@@ -1,0 +1,9 @@
+{
+  "vault_root": null,
+  "manifesto_kb": null,
+  "identidade": null,
+  "ai_memory": { "url": null },
+  "envio": { "padrao": "parar_antes_de_enviar", "regras": [] },
+  "fontes": { "linkedin_guest": { "ativo": false, "aceite_termos": false } },
+  "panel": { "port": 8880, "base_files": [] }
+}

@@ -19,3 +19,9 @@ data/
 runtime/
 .career-bounty/
 .local/
+
+# Configuração e identidade pessoais (vivem em DATA_ROOT; nunca no repositório)
+/config.yml
+/identity.yml
+denylist.txt
+secrets/
