@@ -107,3 +107,13 @@ test('redact preserva ids numéricos longos de vagas', () => {
   assert.equal(valor.req, '7000002');
   assert.match(valor.fone, /REDIGIDO/);
 });
+
+test('o modo live só roda com o opt-in dedicado (LIVE=1 genérico não basta) e nunca na CI, mesmo com o opt-in', async t => {
+  const dataRoot = await tempDir(t);
+  const genericoApenas = createRunner({ modo: 'live', dataRoot, env: { LIVE: '1' } });
+  await assert.rejects(genericoApenas.run({ ...base, validar: aceitaLista }), /CAREER_BOUNTY_LIVE=1/);
+  const naCi = createRunner({ modo: 'live', dataRoot, env: { CAREER_BOUNTY_LIVE: '1', CI: 'true' } });
+  await assert.rejects(naCi.run({ ...base, validar: aceitaLista }), /CI/);
+  const vazio = createRunner({ modo: 'live', dataRoot, env: { CAREER_BOUNTY_LIVE: '0' } });
+  await assert.rejects(vazio.run({ ...base, validar: aceitaLista }), /CAREER_BOUNTY_LIVE=1/);
+});

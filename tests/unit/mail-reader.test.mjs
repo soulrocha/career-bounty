@@ -125,7 +125,7 @@ test('o runner live repassa os argumentos próprios do leitor (sem o --tools vaz
   const dir = await tempDir(t);
   const falso = path.join(dir, 'falso-claude.mjs');
   await writeFile(falso, "process.stdin.resume(); process.stdin.on('end', () => console.log(JSON.stringify({ result: JSON.stringify({ argv: process.argv.slice(2) }), usage: { input_tokens: 1, output_tokens: 1 }, total_cost_usd: 0.001 })));");
-  const runner = createRunner({ modo: 'live', dataRoot, claudeBin: process.execPath, env: { LIVE: '1' } });
+  const runner = createRunner({ modo: 'live', dataRoot, claudeBin: process.execPath, env: {} });
   const { json } = await runner.run({ agente: 'leitor-email-busca', modelo: 'haiku', versaoPrompt: 'v', entrada: { x: 1 }, argsLive: [falso, '--allowedTools', 'mcp__claude_ai_Gmail__search_threads'], validar: () => {} });
   assert.deepEqual(json.argv, ['--allowedTools', 'mcp__claude_ai_Gmail__search_threads']);
 });
