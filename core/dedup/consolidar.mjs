@@ -42,14 +42,16 @@ export function consolidar(vagas) {
 // Situação frente ao que o usuário já tem: nova, conhecida, aplicada ou descartada.
 export function classificar(canonicas, projecao) {
   const porId = new Map(projecao.map(vaga => [vaga.id, vaga]));
+  // A mesma requisição republicada com outro endereço continua sendo a vaga que já existe.
+  const porRequisicao = new Map(projecao.filter(vaga => vaga.requisicao_id).map(vaga => [String(vaga.requisicao_id), vaga]));
   return canonicas.map(item => {
-    const atual = porId.get(item.id);
+    const atual = porId.get(item.id) ?? porRequisicao.get(item.chave);
     let situacao = 'nova';
     if (atual) {
       situacao = 'conhecida';
       if (atual.descarte_usuario?.descartada) situacao = 'descartada';
       else if (atual.candidatura_usuario?.aplicada || atual.candidatura_email?.aplicada || atual.candidatura_portal?.aplicada || atual.historico) situacao = 'aplicada';
     }
-    return { ...item, situacao };
+    return { ...item, id: atual?.id ?? item.id, situacao };
   });
 }
