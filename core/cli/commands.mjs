@@ -27,6 +27,7 @@ import { compararRadar } from '../radar/compare.mjs';
 import { buildDigest } from '../score/digest.mjs';
 import { readEvents } from '../store/events.mjs';
 import { projectEvents } from '../store/project.mjs';
+import { mail } from './mail.mjs';
 
 async function privacy(rest, { parseFlags }) {
   const [sub, ...flags] = rest;
@@ -62,6 +63,7 @@ export const commands = {
     return { result: { dataRoot, created, ok: true } };
   },
   privacy,
+  mail,
   async 'audit-template'(rest, { parseFlags }) {
     const [file, ...flags] = rest;
     if (!file || file.startsWith('--')) throw new Error('Uso: audit-template <arquivo>');
