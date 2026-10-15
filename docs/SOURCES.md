@@ -27,7 +27,7 @@ inesperada (campo-chave ausente) é erro nomeado, nunca lista vazia silenciosa.
   100), `offset`, `workplaceType`, `type`. Resposta `{ data: [...], pagination }`.
 - `pagination.total` não é confiável (devolve o tamanho da página): o fim do feed é a página curta.
 - Ordenação por `publishedDate` decrescente, o que permite parar pela janela de dias.
-- Vaga confidencial (empregador "Confidencial") é descartada; a URL precisa ser HTTPS em `*.gupy.io`.
+- Vaga de empregador sigiloso (o rótulo no lugar do nome da empresa) é descartada; a URL precisa ser HTTPS em `*.gupy.io`.
 - Modelo de comportamento: `providers/gupy.mjs` do career-ops (MIT). O módulo daqui é uma
   implementação própria do mesmo contrato público, com atribuição no `NOTICE`.
 
@@ -87,3 +87,20 @@ inesperada (campo-chave ausente) é erro nomeado, nunca lista vazia silenciosa.
 - **Freehire:** o coletor legado chamava uma CLI em Bun. Aqui o coletor fala direto com a API REST
   pública (mesmos parâmetros: país, janela de dias, limite 20, paginação por `offset`).
 - **JobSpy:** mantido como fonte externa opcional; sem o executável a fonte fica `indisponivel`.
+
+## Radar diário (F2): decisões de implementação
+
+- **Habilitar uma fonte** é declarar o bloco dela em `fontes` no `config.yml` pessoal (`{}` basta para Gupy e Freehire,
+  que usam os termos de `radar.termos`). Sem bloco, `collect` não chama a fonte. O LinkedIn guest exige
+  `ativo: true` e `aceite_termos: true`.
+- **Estágio 2 em processo:** triagem (Haiku) e avaliação (Sonnet) rodam pelo `LlmRunner`, cada chamada como um
+  `claude -p` sem ferramentas, sem MCP, sem skills e sem sessão salva. Em vez de uma única sessão
+  `claude -p "/radar --delta"`, o ganho é orquestração determinística, livro de tokens por chamada e a garantia de
+  zero ferramentas diante de texto de vaga hostil. A leitura de e-mail (F3) entra como fonte (`linkedin_alertas`).
+- **Rotina diária:** gatilho no logon (atraso de 2 min) e semanal às 18:00 de segunda a sexta, com início perdido
+  executado assim que possível; a trava "já rodou hoje" vive em `state/daily-run.json`. `schedule install` só grava
+  na máquina com `--confirmo-instalar`; `--dry-run` imprime o XML.
+- **Ferramentas dos agentes:** `triador` e `avaliador` declaram `tools: none`. O Claude Code não documenta uma sintaxe
+  para "nenhuma ferramenta" em subagente; a garantia real é o `--tools ""` do runner, coberto por teste.
+- **Medição de custo** de uma rodada de 5 vagas sintéticas (1 triagem + 2 avaliações, tokens de cache incluídos) fica no
+  relatório do `eval radar --json` (`uso`).

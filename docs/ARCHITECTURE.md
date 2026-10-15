@@ -45,7 +45,7 @@ Testes vivem nestas fronteiras públicas, nunca em detalhes internos.
 | S10 | Contrato do leitor de e-mail: JSON `MailDigest` e `MailFull` |
 | S11 | Rotina diária: `shouldRun({now, ultimaExecucao, calendario, host})` |
 
-Estado atual: S1, S5 e S6 (em modo sombra) têm implementação; os demais entram nas fatias seguintes.
+Estado atual: S1, S5 e S6 (em modo sombra) têm implementação desde a F1. A F2 acrescentou S3 (fontes de vagas em `core/sources/`), S4 (`core/llm/runner.mjs` com fake, replay e live), S9 (`hooks/session-start.mjs`) e S11 (`core/schedule/`). S7, S8 e S10 entram nas fatias seguintes.
 
 ## Painel: desvio deliberado do contrato
 
