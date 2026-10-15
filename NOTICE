@@ -1,0 +1,21 @@
+CareerBounty
+Copyright (c) 2026 CareerBounty contributors. Licenciado sob a licença MIT (ver LICENSE).
+
+Componentes de terceiros
+
+- career-ops (MIT): usado como dependência externa, instalada pelo próprio usuário na tag
+  v1.36.0 em DATA_ROOT/engines/career-ops. Não é distribuído neste repositório. O nome
+  "career-ops" pertence aos seus autores e não faz parte do nome deste projeto.
+
+Código copiado para vendor/
+
+Cada arquivo em vendor/ deve ter uma linha neste formato:
+
+  vendor/<arquivo> | origem: <URL do projeto> | licença: MIT
+
+Nenhum arquivo está vendorizado até esta versão.
+
+Projetos de licença restritiva
+
+Do ApplyPilot (AGPL) e do job-ops (Commons Clause) apenas ideias foram consideradas.
+Nenhum código desses projetos entra aqui (ver CONTRIBUTING.md).
