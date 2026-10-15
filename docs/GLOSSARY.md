@@ -5,7 +5,7 @@ Vocabulário do projeto. Nomes de teste e de interface seguem estes termos.
 ## Afirmação
 
 Fato curto sobre a trajetória da pessoa, com identificador (`AF-001`) e nível de prova
-(`declarado`, `documentado`, `verificado`). No código aparece como `claims`. Currículos e
+(`verificado`, `entregue`, `proposto`, `relato`). No código aparece como `claims`. Currículos e
 respostas só escolhem afirmações por identificador; nunca inventam fato novo.
 
 ## Evidência
