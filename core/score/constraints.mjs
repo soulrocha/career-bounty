@@ -1,6 +1,8 @@
 // Condições da vaga contra o piso da pessoa (porte de constraints() do refresh.py).
 import { fold, pyText } from '../dedup/keys.mjs';
 
+// A região vem de regiao_presencial na configuração privada; o texto não nomeia cidade.
+export const MOTIVO_FORA_DA_REGIAO = 'Presença fora da região presencial configurada';
 const UNKNOWN_MODES = ['desconhecida', 'nao informado', 'a confirmar', 'pendente'];
 
 // Salário "numérico" como no legado: int ou float (booleano do Python também conta, mas não ocorre no pipeline).
@@ -17,7 +19,7 @@ export function constraints(job, config) {
   const onsite = mode.includes('presencial') || mode.includes('onsite');
   if ((mode.includes('hibrid') || mode.includes('hybrid') || onsite) && loc && !metro.some(place => loc.includes(place))) {
     result.situacao = 'incompativel';
-    result.motivos.push('Presença fora de BH/região metropolitana');
+    result.motivos.push(MOTIVO_FORA_DA_REGIAO);
     return result;
   }
   if (mode.includes('remot') && j.elegivel_brasil === false) {
