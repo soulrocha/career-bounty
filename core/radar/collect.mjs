@@ -35,5 +35,5 @@ export async function collect({ settings, only, dryRun = false, now = new Date()
     const result = await appendEvents(settings.dataRoot, descobertas.map(item => descobertaEvent(item.vaga, item.id, ts, item.aparicoes, { destino_pendente: item.destino_pendente, possivel_duplicata: item.possivel_duplicata, pre: item.pre })), { ...(host ? { host } : {}), now: ts });
     gravados = result.events.length;
   }
-  return { dry_run: dryRun, janela: window, fontes: coleta.fontes, coletadas: coleta.vagas.length, novas: novas.length, delta: delta.length, eventos_gravados: gravados };
+  return { dry_run: dryRun, janela: window, fontes: coleta.fontes, coletadas: coleta.vagas.length, novas: novas.length, delta: delta.length, eventos_gravados: gravados, novas_ids: novas.map(item => item.id) };
 }

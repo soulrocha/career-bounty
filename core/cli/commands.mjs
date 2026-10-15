@@ -1,4 +1,16 @@
+import { spawnSync } from 'node:child_process';
+import { writeFile, rm } from 'node:fs/promises';
+import { hostname, tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { loadSettings } from '../config.mjs';
+import { createRunner } from '../llm/runner.mjs';
+import { loadIdentityValues } from '../privacy/redact.mjs';
+import { createMarkdownFolder } from '../kb/sources/markdownFolder.mjs';
+import { loadBrief } from '../kb/brief.mjs';
+import { runStage2 } from '../radar/stage2.mjs';
+import { dailyRun } from '../schedule/dailyRun.mjs';
+import { buildTaskXml } from '../schedule/taskXml.mjs';
 import { runDoctor } from '../doctor/index.mjs';
 import { validatePlugin } from '../plugin/validate.mjs';
 import { planApply } from '../apply/plan.mjs';
@@ -65,7 +77,7 @@ export const commands = {
     const now = values['--now'] ? new Date(values['--now']) : new Date();
     if (Number.isNaN(now.getTime())) throw new Error('Opção inválida: --now deve ser uma data ISO.');
     const only = values['--source'] ? values['--source'].split(',').map(id => id.trim()).filter(Boolean) : undefined;
-    const result = await collect({ settings: await loadSettings(), only, dryRun: Boolean(values['--dry-run']), now });
+    const { novas_ids, ...result } = await collect({ settings: await loadSettings(), only, dryRun: Boolean(values['--dry-run']), now });
     const falhas = result.fontes.filter(fonte => fonte.estado === 'erro').length;
     const linhas = [`coletadas: ${result.coletadas}; novas: ${result.novas}; eventos gravados: ${result.eventos_gravados}`,
       ...result.fontes.map(fonte => `${fonte.id}: ${fonte.estado}${fonte.erro ? ` (${fonte.erro})` : ` (${fonte.vagas})`}`)];
@@ -79,6 +91,42 @@ export const commands = {
     if (!rodadas.length) return { result: { vazio: true, texto: 'Nenhuma rodada registrada.' }, text: 'Nenhuma rodada registrada.' };
     const result = buildDigest({ rodada: rodadas.at(-1), projecao: projectEvents(eventos).vagas, historico: rodadas.slice(0, -1) });
     return { result, text: result.texto };
+  },
+  async 'daily-run'(rest, { parseFlags }) {
+    const values = parseFlags(rest, { allowed: ['--dry-run', '--now', '--host'], withValue: ['--now', '--host'] });
+    const now = values['--now'] ? new Date(values['--now']) : new Date();
+    if (Number.isNaN(now.getTime())) throw new Error('Opção inválida: --now deve ser uma data ISO.');
+    const settings = await loadSettings();
+    const host = values['--host'] ?? hostname();
+    const kbRoot = path.join(settings.dataRoot, 'kb');
+    const result = await dailyRun({ dataRoot: settings.dataRoot, config: settings.radar.agenda ?? {}, host, now, dryRun: Boolean(values['--dry-run']),
+      estagio1: async () => collect({ settings, now }),
+      estagio2: async () => {
+        const runner = createRunner({ modo: 'live', dataRoot: settings.dataRoot, identity: await loadIdentityValues(), env: { ...process.env, LIVE: '1' } });
+        return runStage2({ dataRoot: settings.dataRoot, runner, afirmacoes: await createMarkdownFolder(kbRoot).claims(), brief: await loadBrief(kbRoot), now });
+      } });
+    return { result, text: result.dry_run ? `executaria: ${result.executaria} (${result.motivo})` : (result.executou ? 'rodada concluída' : `não rodou: ${result.motivo}`), exitCode: result.falha ? 1 : 0 };
+  },
+  async schedule(rest, { parseFlags }) {
+    const [sub, ...flags] = rest;
+    if (!['install', 'uninstall'].includes(sub)) throw new Error(`Subcomando schedule desconhecido: ${sub ?? ''}`.trim());
+    const values = parseFlags(flags, { allowed: ['--dry-run', '--confirmo-instalar'] });
+    const nome = 'CareerBounty radar diario';
+    if (sub === 'install') {
+      const xml = buildTaskXml({ node: process.execPath, script: fileURLToPath(new URL('../../bin/career-bounty.mjs', import.meta.url)), nome });
+      if (values['--dry-run']) return { result: { instalado: false, nome, xml }, text: xml };
+      if (!values['--confirmo-instalar']) throw new Error('A instalação real no Agendador exige --confirmo-instalar (ou use --dry-run para só ver o XML).');
+      const arquivo = path.join(tmpdir(), `career-bounty-task-${process.pid}.xml`);
+      await writeFile(arquivo, Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(xml, 'utf16le')]));
+      const saida = spawnSync('schtasks', ['/Create', '/TN', nome, '/XML', arquivo, '/F'], { encoding: 'utf8' });
+      await rm(arquivo, { force: true });
+      if (saida.status !== 0) throw new Error(`schtasks falhou: ${(saida.stderr || saida.stdout).trim().slice(0, 200)}`);
+      return { result: { instalado: true, nome }, text: `tarefa ${nome} instalada` };
+    }
+    if (values['--dry-run']) return { result: { removido: false, nome }, text: `removeria a tarefa ${nome}` };
+    const saida = spawnSync('schtasks', ['/Delete', '/TN', nome, '/F'], { encoding: 'utf8' });
+    if (saida.status !== 0) throw new Error(`schtasks falhou: ${(saida.stderr || saida.stdout).trim().slice(0, 200)}`);
+    return { result: { removido: true, nome }, text: `tarefa ${nome} removida` };
   },
   async help() {
     return { result: { commands: commandNames() } };

@@ -51,6 +51,7 @@ export function buildDigest({ rodada, projecao, historico = [] }) {
   if (talvez.length) decisoes.push(`- ${talvez.length} ${talvez.length === 1 ? 'vaga em "talvez"' : 'vagas em "talvez"'} aguardam sua decisão`);
   if (perguntas) decisoes.push(`- ${perguntas} ${perguntas === 1 ? 'pergunta pendente' : 'perguntas pendentes'} para você responder`);
   if (decisoes.length) secoes.push('## Aguardando você', ...decisoes);
+  if (rodada.falha) secoes.unshift('## Rodada interrompida', `- A rodada foi interrompida no estágio ${rodada.falha.estagio}: ${rodada.falha.erro}`);
   const vazio = secoes.length === 0;
   const linhas = [`# Radar de ${dia}`];
   if (vazio) linhas.push(pendentes.length ? 'Sem novidades nas fontes conferidas.' : 'Sem novidades hoje.');

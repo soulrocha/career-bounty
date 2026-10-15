@@ -112,6 +112,24 @@ export function validateSettings(raw) {
     }
   }
 
+  if (radar.agenda !== undefined) {
+    const a = section(radar.agenda, 'radar.agenda');
+    const agenda = { hora_inicio: 18, feriados: [], host_agendador: null };
+    if (a.hora_inicio !== undefined) {
+      if (!Number.isInteger(a.hora_inicio) || a.hora_inicio < 0 || a.hora_inicio > 23) throw invalid('radar.agenda.hora_inicio', 'deve ser hora inteira entre 0 e 23');
+      agenda.hora_inicio = a.hora_inicio;
+    }
+    if (a.feriados !== undefined) {
+      if (!Array.isArray(a.feriados) || a.feriados.some(dia => typeof dia !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dia))) throw invalid('radar.agenda.feriados', 'deve ser lista de datas AAAA-MM-DD');
+      agenda.feriados = [...a.feriados];
+    }
+    if (a.host_agendador !== undefined && a.host_agendador !== null) {
+      if (typeof a.host_agendador !== 'string' || !a.host_agendador) throw invalid('radar.agenda.host_agendador', 'deve ser texto');
+      agenda.host_agendador = a.host_agendador;
+    }
+    settings.radar.agenda = agenda;
+  }
+
   if (radar.criterios !== undefined) {
     const c = section(radar.criterios, 'radar.criterios');
     const out = {};
