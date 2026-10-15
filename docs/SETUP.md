@@ -21,7 +21,7 @@ para Node 20 em Windows e Ubuntu; sua execução remota ainda não foi verificad
 Foi implementado um recorte de migração em sombra, com resolução mínima da pasta
 privada e configuração. Isso não conclui integralmente F0.2 nem F1.
 A continuidade depende do plano completo e de suas decisões pendentes no handoff
-do projeto no ai-memory.
+do projeto.
 
 ## Configuração e uso
 
@@ -58,7 +58,7 @@ exige token nas APIs protegidas e responde 409 às gravações autenticadas em s
 ## Retomar
 
 1. Confira a branch e o estado do Git; preserve alterações existentes.
-2. Leia o handoff do projeto no ai-memory e localize o plano de implementação existente.
+2. Leia o handoff do projeto e localize o plano de implementação existente.
 3. Confira as decisões pendentes antes de implementar o teste da primeira fatia.
 4. Atualize o handoff com arquivos alterados, comandos, resultados e próximo passo.
 

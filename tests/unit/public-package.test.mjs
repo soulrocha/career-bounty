@@ -121,3 +121,9 @@ test('CI roda gitleaks com o .gitleaks.toml e o scan de privacidade em todos os 
   assert.match(ci, /fetch-depth:\s*0/);
   assert.match(ci, /node bin\/career-bounty\.mjs privacy scan --all/);
 });
+
+test('expressão mista com AND de licença proibida é recusada; parênteses decidem a precedência', () => {
+  for (const bad of ['(MIT OR ISC) AND GPL-3.0', '(MIT OR GPL-3.0) AND AGPL-3.0', 'MIT OR GPL-3.0 AND AGPL-3.0', 'MIT AND (ISC OR GPL-3.0) AND AGPL-3.0', '(MIT', 'MIT)'])
+    assert.equal(checkLicenseExpression(bad), false, bad);
+  for (const ok of ['(MIT OR GPL-3.0) AND ISC', '(MIT AND GPL-2.0) OR ISC', 'MIT AND (ISC OR GPL-3.0)']) assert.equal(checkLicenseExpression(ok), true, ok);
+});

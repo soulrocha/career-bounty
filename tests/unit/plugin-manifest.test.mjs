@@ -91,3 +91,16 @@ test('.mcp.json só pode listar o MCP público da Gupy e sem credencial', async 
   assert.match((await errorsOf(dir)).join('\n'), /\.mcp\.json.*credencial/);
   await rm(file);
 });
+
+test('todo comando restringe allowed-tools ao CLI do plugin', async t => {
+  const dir = await copyPlugin(t);
+  const cmd = path.join(dir, 'commands', 'doctor.md');
+  const original = await readFile(cmd, 'utf8');
+  assert.deepEqual(await errorsOf(dir), []);
+  for (const tools of ['Bash(node:*)', 'Bash', 'Bash(node "${CLAUDE_PLUGIN_ROOT}/bin/career-bounty.mjs":*), Write']) {
+    await writeFile(cmd, original.replace(/allowed-tools:.*/, `allowed-tools: ${tools}`));
+    assert.match((await errorsOf(dir)).join('\n'), /commands\/doctor\.md.*allowed-tools/, tools);
+  }
+  await writeFile(cmd, original.replace(/allowed-tools:.*\n/, ''));
+  assert.match((await errorsOf(dir)).join('\n'), /commands\/doctor\.md.*allowed-tools/);
+});

@@ -28,7 +28,8 @@ export const legacyCommandNames = ['migrate', 'project', 'verify', 'panel'];
 export const commandNames = () => [...legacyCommandNames, ...Object.keys(commands)];
 
 export const commands = {
-  async doctor() {
+  async doctor(rest, { parseFlags }) {
+    parseFlags(rest, { allowed: [] });
     const report = await runDoctor();
     const lines = report.checks.map(c => `[${c.status}] ${c.id}: ${c.mensagem}`);
     return { result: report, exitCode: report.ok ? 0 : 1, text: [...lines, report.padroes, report.ok ? 'ok' : 'falha'].join(String.fromCharCode(10)) };

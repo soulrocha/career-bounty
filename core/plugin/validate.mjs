@@ -8,6 +8,9 @@ const WRITE_TOOLS = ['Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'Bash'];
 const READ_ONLY_AGENTS = /triador|leitor|classificador/;
 const MODELS = ['haiku', 'sonnet', 'opus', 'inherit'];
 
+const CLI_ONLY_TOOL = /^Bash\(node "?(?:\$\{CLAUDE_PLUGIN_ROOT\}\/)?bin\/career-bounty\.mjs"?:\*\)$/;
+const CLI_TOOL_EXAMPLE = 'Bash(node "${CLAUDE_PLUGIN_ROOT}/bin/career-bounty.mjs":*)';
+
 const exists = async filename => access(filename).then(() => true, () => false);
 
 async function readJson(root, relative, errors) {
@@ -45,6 +48,8 @@ export async function validatePlugin(root) {
     const file = `commands/${name}`;
     const { data, body } = parseFrontmatter(await readFile(path.join(root, file), 'utf8'));
     if (!data.description) errors.push(`${file}: frontmatter sem description.`);
+    const tools = typeof data['allowed-tools'] === 'string' ? data['allowed-tools'].split(/,(?![^(]*\))/).map(t => t.trim()).filter(Boolean) : [];
+    if (!tools.length || !tools.every(t => CLI_ONLY_TOOL.test(t))) errors.push(`${file}: allowed-tools deve se restringir ao CLI do plugin (${CLI_TOOL_EXAMPLE}).`);
     const sub = /career-bounty\.mjs"?\s+([a-z][\w-]*)/.exec(body)?.[1];
     if (!sub) errors.push(`${file}: não chama nenhum subcomando da CLI.`);
     else if (!known.has(sub)) errors.push(`${file}: chama o subcomando ${sub}, que não existe na CLI.`);
