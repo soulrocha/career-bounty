@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { loadConfig } from '../core/config.mjs';
 import { migrateLegacy, projectLegacy, verifyMigration, exportRollback } from '../core/migration/legacy.mjs';
-import { commands as extraCommands } from '../core/cli/commands.mjs';
+import { commands as extraCommands, legacyCommandNames } from '../core/cli/commands.mjs';
 
 const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
@@ -29,7 +29,7 @@ function fail(error) {
   process.exitCode = 2;
 }
 
-const legacyCommands = ['migrate', 'project', 'verify', 'panel'];
+const legacyCommands = legacyCommandNames;
 
 if (command.length === 1 && command[0] === '--version') {
   console.log(json ? JSON.stringify({ version }) : version);
