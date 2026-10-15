@@ -35,7 +35,7 @@ node bin/career-bounty.mjs doctor
 ## Configuration <!-- sec:configuracao -->
 
 `DATA_ROOT` points to the private folder (default `~/.career-bounty`). Personal configuration
-lives only in `DATA_ROOT/config.yml` (valid JSON). See `config.example.yml`. Safe defaults:
+lives only in `DATA_ROOT/config.yml` (well-formed JSON). See `config.example.yml`. Safe defaults:
 manual sending and the LinkedIn guest collector turned off.
 
 ## Privacy <!-- sec:privacidade -->
