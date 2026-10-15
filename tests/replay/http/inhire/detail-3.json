@@ -1,0 +1,16 @@
+{
+  "tenantName": "Empresa Alfa",
+  "displayName": "Analista Júnior",
+  "jobId": "11111111-aaaa-4bbb-8ccc-000000000003",
+  "status": "published",
+  "workplaceType": "On-site",
+  "location": "Maringá, PR, BR",
+  "contractType": [
+    "CLT"
+  ],
+  "description": "<p>Descrição <strong>sintética</strong> da vaga 3.</p>",
+  "createdAt": "2026-09-01T12:00:00.000Z",
+  "publishedAt": "2026-09-01T12:00:00.000Z",
+  "lastPublishedAt": "2026-09-01T12:00:00.000Z",
+  "updatedAt": "2026-09-01T12:00:00.000Z"
+}

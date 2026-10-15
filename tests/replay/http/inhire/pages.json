@@ -1,0 +1,38 @@
+{
+  "tenantName": "Empresa Alfa",
+  "about": "<p>Sobre a empresa.</p>",
+  "jobsPage": [
+    {
+      "careerPageId": "default",
+      "displayName": "Gerente de Engenharia",
+      "jobId": "11111111-aaaa-4bbb-8ccc-000000000001",
+      "status": "published",
+      "workplaceType": "Remote",
+      "location": "Belo Horizonte, MG, BR"
+    },
+    {
+      "careerPageId": "default",
+      "displayName": "Tech Lead",
+      "jobId": "11111111-aaaa-4bbb-8ccc-000000000002",
+      "status": "published",
+      "workplaceType": "Hybrid",
+      "location": "São Paulo, SP, BR"
+    },
+    {
+      "careerPageId": "default",
+      "displayName": "Analista Júnior",
+      "jobId": "11111111-aaaa-4bbb-8ccc-000000000003",
+      "status": "published",
+      "workplaceType": "On-site",
+      "location": "Maringá, PR, BR"
+    },
+    {
+      "careerPageId": "default",
+      "displayName": "Vaga pausada",
+      "jobId": "11111111-aaaa-4bbb-8ccc-000000000004",
+      "status": "paused",
+      "workplaceType": "Remote",
+      "location": "Brasil"
+    }
+  ]
+}

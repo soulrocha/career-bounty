@@ -4,12 +4,16 @@ import { createGupy } from './gupy.mjs';
 import { createCareerOps } from './careerOps.mjs';
 import { createFreehire } from './freehire.mjs';
 import { createJobSpy } from './jobspy.mjs';
+import { createInhire } from './inhire.mjs';
+import { createSolides } from './solides.mjs';
 
 const FACTORIES = {
   fake: settings => createFake(settings.fontes.fake?.vagas ?? []),
   gupy: (settings, deps) => createGupy(settings.fontes.gupy ?? {}, deps),
   freehire: (settings, deps) => createFreehire(settings.fontes.freehire ?? {}, deps),
   jobspy: settings => createJobSpy(settings.fontes.jobspy ?? {}),
+  inhire: (settings, deps) => createInhire(settings.fontes.inhire ?? {}, deps),
+  solides: (settings, deps) => createSolides(settings.fontes.solides ?? {}, deps),
   careerops: settings => createCareerOps(settings.fontes.careerops ?? {}),
 };
 

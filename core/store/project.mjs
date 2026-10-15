@@ -91,7 +91,7 @@ function discovered(state, event) {
   if (!state.raiz.atualizado) state.raiz.atualizado = dia;
   if (!atual) {
     const vaga = { id: event.entidade_id, empresa: nova.empresa, cargo: nova.cargo, url: nova.url, local: nova.local, modalidade: nova.modalidade,
-      regime: nova.regime, salario: null, salario_min: nova.salario_min, salario_max: nova.salario_max, requisicao_id: nova.requisicao_id,
+      regime: nova.regime, salario: null, salario_min: nova.salario_min, salario_max: nova.salario_max, requisicao_id: nova.requisicao_id, portal_origem: nova.portal,
       descricao_completa: nova.descricao, descricao_hash: nova.descricao_hash, publicado_em: nova.publicado_em, consultado_em: dia,
       fontes: [nova.fonte], aparicoes: [{ fonte: nova.fonte, url: nova.url, em: dia }], status: 'avaliada-sem-envio', url_status: 'aberta', aderencia: 'pendente' };
     vaga.portal_candidatura = portalCandidatura(vaga);
