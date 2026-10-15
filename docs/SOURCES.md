@@ -72,12 +72,24 @@ inesperada (campo-chave ausente) é erro nomeado, nunca lista vazia silenciosa.
 - Orçamento rígido de 10 requisições por dia, persistido em `state/`, sem `Cookie` e sem
   `Authorization`. A rota principal para o LinkedIn é o alerta por e-mail (F2.19).
 
-## Conector Gmail dentro do `claude -p` (F3.1, resultado parcial)
+## Conector Gmail dentro do `claude -p` (F3.1)
 
-- Funciona sem interação em `claude -p --model haiku` com a ferramenta de busca do conector liberada
-  e as de escrita bloqueadas. A saída do modelo vem dentro de uma cerca de código `json`: o parser do
-  contrato remove a cerca.
-- Não faz parte da F2; fica registrado porque o `daily-run` (F2.18) e os alertas (F2.19) dependem.
+Spike medido em 15/10/2026 no PC de casa, sem interação. **Decisão: GO.** O conector do claude.ai está disponível
+no `claude -p` não interativo, então a leitura de e-mail entra na rotina (subagente Haiku de somente leitura) e o
+`/email` interativo (F3.14) fica como fallback.
+
+| Verificação | Resultado |
+|---|---|
+| (a) conector em `claude -p` | disponível: `claude -p --model haiku --allowedTools mcp__claude_ai_Gmail__search_threads ...` buscou e devolveu JSON |
+| (b) ferramentas expostas | leitura: `search_threads`, `get_thread`, `get_message` (mais `get_draft`, `list_drafts`, `list_labels`); escrita: `send_message`, `reply`, `forward`, `trash_*`/`untrash_*`, `create/update/delete_draft`, `create/update/delete_label`, `label_*`/`unlabel_*`, `update_message_labels`, `mark_*_spam`/`unmark_*_spam`, `apply_sensitive_*_label`. Todas com o prefixo `mcp__claude_ai_Gmail__` |
+| (c) bloqueio | `--disallowedTools` com todas as de escrita (mais `Bash`, `Write`, `Edit`) funcionou; a lista fica em `core/mail/tools.mjs` e o hook `PreToolUse` nega por padrão qualquer ferramenta do Gmail fora das três de leitura |
+| (d) custo de uma busca | cerca de 10 s, 3 turnos, US$ 0,007 com Haiku. O contexto carregado é grande (cerca de 139 mil tokens), quase todo cache: o custo por rodada é dominado pelo contexto, não pelo número de e-mails |
+| (e) autorização expirada | não foi medido no spike (a autorização estava ativa); fica como pendência de observação. Tratamento: erro do `claude -p` ou saída fora do contrato vira "e-mail não conferido hoje", o cursor não avança e o `/email` explica como reativar o conector |
+
+- A saída do modelo vem dentro de uma cerca de código `json`: o parser (`stripFence`) remove a cerca.
+- O envelope sintético com as grandezas do spike está em `tests/replay/mail/spike-envelope.json` (valores
+  arredondados, sem nenhum e-mail real); serve de amostra de `usage` para o livro de tokens (F3.11).
+- Padrões de remetente e frases em pt-BR vêm de um catálogo sem dado pessoal e viram `core/mail/rules/*.json` (F3.7).
 
 ## Decisões da F2
 
