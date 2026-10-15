@@ -72,12 +72,24 @@ inesperada (campo-chave ausente) é erro nomeado, nunca lista vazia silenciosa.
 - Orçamento rígido de 10 requisições por dia, persistido em `state/`, sem `Cookie` e sem
   `Authorization`. A rota principal para o LinkedIn é o alerta por e-mail (F2.19).
 
-## Conector Gmail dentro do `claude -p` (F3.1, resultado parcial)
+## Conector Gmail dentro do `claude -p` (F3.1)
 
-- Funciona sem interação em `claude -p --model haiku` com a ferramenta de busca do conector liberada
-  e as de escrita bloqueadas. A saída do modelo vem dentro de uma cerca de código `json`: o parser do
-  contrato remove a cerca.
-- Não faz parte da F2; fica registrado porque o `daily-run` (F2.18) e os alertas (F2.19) dependem.
+Spike medido em 15/10/2026 no PC de casa, sem interação. **Decisão: GO.** O conector do claude.ai está disponível
+no `claude -p` não interativo, então a leitura de e-mail entra na rotina (subagente Haiku de somente leitura) e o
+`/email` interativo (F3.14) fica como fallback.
+
+| Verificação | Resultado |
+|---|---|
+| (a) conector em `claude -p` | disponível: `claude -p --model haiku --allowedTools mcp__claude_ai_Gmail__search_threads ...` buscou e devolveu JSON |
+| (b) ferramentas expostas | leitura: `search_threads`, `get_thread`, `get_message` (mais `get_draft`, `list_drafts`, `list_labels`); escrita: `send_message`, `reply`, `forward`, `trash_*`/`untrash_*`, `create/update/delete_draft`, `create/update/delete_label`, `label_*`/`unlabel_*`, `update_message_labels`, `mark_*_spam`/`unmark_*_spam`, `apply_sensitive_*_label`. Todas com o prefixo `mcp__claude_ai_Gmail__` |
+| (c) bloqueio | `--disallowedTools` com todas as de escrita (mais `Bash`, `Write`, `Edit`) funcionou; a lista fica em `core/mail/tools.mjs` e o hook `PreToolUse` nega por padrão qualquer ferramenta do Gmail fora das três de leitura |
+| (d) custo de uma busca | cerca de 10 s, 3 turnos, US$ 0,007 com Haiku. O contexto carregado é grande (cerca de 139 mil tokens), quase todo cache: o custo por rodada é dominado pelo contexto, não pelo número de e-mails |
+| (e) autorização expirada | não foi medido no spike (a autorização estava ativa); fica como pendência de observação. Tratamento: erro do `claude -p` ou saída fora do contrato vira "e-mail não conferido hoje", o cursor não avança e o `/email` explica como reativar o conector |
+
+- A saída do modelo vem dentro de uma cerca de código `json`: o parser (`stripFence`) remove a cerca.
+- O envelope sintético com as grandezas do spike está em `tests/replay/mail/spike-envelope.json` (valores
+  arredondados, sem nenhum e-mail real); serve de amostra de `usage` para o livro de tokens (F3.11).
+- Padrões de remetente e frases em pt-BR vêm de um catálogo sem dado pessoal e viram `core/mail/rules/*.json` (F3.7).
 
 ## Decisões da F2
 
@@ -104,3 +116,20 @@ inesperada (campo-chave ausente) é erro nomeado, nunca lista vazia silenciosa.
   para "nenhuma ferramenta" em subagente; a garantia real é o `--tools ""` do runner, coberto por teste.
 - **Medição de custo** de uma rodada de 5 vagas sintéticas (1 triagem + 2 avaliações, tokens de cache incluídos) fica no
   relatório do `eval radar --json` (`uso`).
+
+## Leitura de e-mail (F3): decisões e medição
+
+- **Três camadas contra escrita no Gmail:** frontmatter de `agents/leitor-email.md` (só `search_threads`, `get_thread`,
+  `get_message`), `--allowedTools` por fase mais `--disallowedTools` com todas as de escrita (`core/mail/tools.mjs`) e o hook
+  `PreToolUse` (`hooks/pre-tool-use.mjs`, padrão negado para o conector). O schema rejeita campo extra.
+- **Remetente:** o leitor devolve só nome exibido e domínio; o endereço completo nunca chega ao sistema.
+- **Regras antes do LLM:** `core/mail/rules/pt-br.json` (assunto, trecho e, só na fase B, corpo). O que as regras não
+  resolvem vai para a fase B (até `mail.limite_fase_b` por rodada) e, se ainda ambíguo, para o classificador Haiku.
+  Confiança nunca passa da do domínio: só domínio de portal conhecido (ou `mail.dominios_confiaveis`) avança etapa.
+- **Vínculo:** só por ID de requisição (`Job-N`, código Gupy). Sem ID fica pendente de conferência. Com o tracker real,
+  só uma fração mínima das vagas tem `requisicao_id`, então quase todo e-mail real cai em pendente de conferência até o
+  tracker ganhar esses IDs.
+- **Medição real (3 execuções somente leitura, janela de 7 a 14 dias, só portais):** 28 e 50 e-mails por rodada; as regras
+  resolveram 54% e 56%; 46% e 44% foram ambíguos; fase B limitada a 3 e 5 mensagens; custo por rodada de US$ 0,10 a 0,12
+  (cerca de 460 mil a 670 mil tokens, quase todos de cache de contexto). O orçamento padrão `mail.orcamento_tokens` ficou
+  em 1.000.000. A consulta com 50 resultados bate o limite padrão (`mail.limite_resultados`).

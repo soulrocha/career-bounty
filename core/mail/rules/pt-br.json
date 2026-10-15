@@ -1,0 +1,26 @@
+{
+  "versao": 1,
+  "descricao": "Padrões genéricos de e-mail de processo seletivo (pt-BR e en). Aplicados sobre texto sem acento e em minúsculas. Nenhuma empresa nomeada; candidatos a upstream (F8.2).",
+  "regras": [
+    { "id": "ruido-privacidade", "classe": "ruido", "campo": "assunto", "idioma": "en", "padroes": ["personal data privacy", "aviso de privacidade", "politica de privacidade atualizada"] },
+    { "id": "ruido-newsletter", "classe": "ruido", "campo": "assunto", "idioma": "pt", "padroes": ["newsletter", "webinar", "obrigad[oa] por se cadastrar", "resumo do mes", "dicas de carreira"] },
+    { "id": "alerta-vagas", "classe": "alerta", "campo": "assunto", "idioma": "pt", "padroes": ["novas vagas para", "vagas que combinam", "vagas recomendadas", "vagas sugeridas", "job alert", "new jobs for"] },
+    { "id": "oferta-assunto", "classe": "oferta", "campo": "assunto", "idioma": "pt", "padroes": ["proposta de trabalho", "carta[- ]oferta", "offer letter", "job offer", "oferta de emprego"] },
+    { "id": "oferta-trecho", "classe": "oferta", "campo": "trecho", "idioma": "pt", "padroes": ["temos o prazer de apresentar nossa proposta", "pleased to offer you"] },
+    { "id": "entrevista-assunto", "classe": "entrevista_agendada", "campo": "assunto", "idioma": "pt", "padroes": ["convite para (a )?entrevista", "entrevista (esta )?agendada", "agendamento de entrevista", "interview (scheduled|invitation|confirmation)"] },
+    { "id": "entrevista-trecho", "classe": "entrevista_agendada", "campo": "trecho", "idioma": "pt", "padroes": ["sua entrevista (esta )?agendada para", "your interview is scheduled"] },
+    { "id": "negativa-assunto", "classe": "negativa", "campo": "assunto", "idioma": "pt", "padroes": ["agradecimento de participacao no processo seletivo", "nao seguiremos com (a )?sua candidatura"] },
+    { "id": "negativa-trecho", "classe": "negativa", "campo": "trecho", "idioma": "pt", "padroes": ["optamos por seguir com outros perfis", "decidimos nao avancar com (a )?sua candidatura", "not selected for further consideration", "move forward with other candidates"] },
+    { "id": "etapa-assunto", "classe": "etapa_liberada", "campo": "assunto", "idioma": "pt", "padroes": ["proxima etapa (ja )?(esta )?disponivel", "nova tentativa concedida", "falta um passo"] },
+    { "id": "etapa-trecho", "classe": "etapa_liberada", "campo": "trecho", "idioma": "pt", "padroes": ["realize (o|a) (teste|case|video|desafio|entrevista)", "entrevista voce esta aqui", "complete (the|your) (assessment|test|challenge)"] },
+    { "id": "acao-necessaria", "classe": "acao_necessaria", "campo": "assunto", "idioma": "pt", "padroes": ["ultima chamada", "proximo de alavancar", "nao fique de fora"] },
+    { "id": "confirmacao-assunto", "classe": "confirmacao", "campo": "assunto", "idioma": "pt", "padroes": ["confirmacao de inscricao", "candidatura (efetuada|completa) com sucesso", "voce esta participando do processo seletivo", "thank you for applying", "application (received|submitted)"] },
+    { "id": "confirmacao-trecho", "classe": "confirmacao", "campo": "trecho", "idioma": "pt", "padroes": ["recebemos (a )?sua (inscricao|candidatura)", "recebemos a sua candidatura", "we received your application", "candidatura (foi )?(efetuada|enviada) com sucesso", "sua candidatura foi enviada para", "your application was sent to"] },
+    { "id": "ambiguo-assunto", "classe": null, "campo": "assunto", "idioma": "pt", "padroes": ["obrigad[oa] pelo interesse", "obrigad[oa] por dedicar tempo", "feedback processo seletivo", "atualizacao sobre sua candidatura", "retorno do processo seletivo", "retorno sobre sua candidatura", "update on your application", "^your application$"] },
+    { "id": "corpo-negativa", "classe": "negativa", "campo": "corpo", "precisa_corpo": true, "idioma": "pt", "padroes": ["decidimos nao avancar com (a )?sua candidatura", "optamos por seguir com outros (perfis|candidatos)", "move forward with other candidates", "nao foi selecionad[oa]"] },
+    { "id": "corpo-entrevista", "classe": "entrevista_agendada", "campo": "corpo", "precisa_corpo": true, "idioma": "pt", "padroes": ["gostariamos de (convidar|agendar)", "convidar voce para uma entrevista", "agendar uma (conversa|entrevista)"] },
+    { "id": "corpo-etapa", "classe": "etapa_liberada", "campo": "corpo", "precisa_corpo": true, "idioma": "pt", "padroes": ["proxima etapa (do processo )?(para .+ )?(ja )?(esta )?disponivel", "realize (o|a) (teste|case|video|desafio)"] },
+    { "id": "corpo-oferta", "classe": "oferta", "campo": "corpo", "precisa_corpo": true, "idioma": "pt", "padroes": ["proposta para a posicao", "temos o prazer de apresentar nossa proposta"] },
+    { "id": "corpo-confirmacao", "classe": "confirmacao", "campo": "corpo", "precisa_corpo": true, "idioma": "pt", "padroes": ["recebemos (a )?sua (inscricao|candidatura)", "we received your application"] }
+  ]
+}

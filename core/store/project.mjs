@@ -5,6 +5,7 @@ import { applyDescarte, applyMarcacao, aplicadaDe, descartadaDe, requisicaoKey }
 import { chavesCanonicas } from '../dedup/keys.mjs';
 import { localDay } from './schema.mjs';
 import { portalCandidatura } from '../apply/portal.mjs';
+import { reducersEmail } from '../mail/reducer.mjs';
 
 const clone = value => structuredClone(value);
 export const EMAILS = 'eventos_email_sem_requisicao';
@@ -137,6 +138,7 @@ const vaga = entity('vagas');
 const email = entity('emails');
 
 const reducers = {
+  ...reducersEmail,
   'legado.importado': (state, event) => fromDocument(event.dados.legado),
   'pipeline.raiz': (state, event) => {
     Object.assign(state.raiz, clone(event.dados.campos));
