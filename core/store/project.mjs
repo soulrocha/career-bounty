@@ -84,6 +84,8 @@ function entity(collection) {
 
 // Vaga descoberta pelo radar entra no formato do pipeline; descobertas repetidas só acrescentam aparições
 // e atualizam o texto quando o hash muda. Nada que a pessoa marcou é tocado.
+const aparicoesDe = (event, dia) => (event.dados.aparicoes?.length ? event.dados.aparicoes : [{ fonte: event.dados.vaga.fonte, url: event.dados.vaga.url }]).map(item => ({ ...item, em: dia }));
+
 function discovered(state, event) {
   const nova = event.dados.vaga;
   const dia = localDay(event.ts);
@@ -91,18 +93,18 @@ function discovered(state, event) {
   if (!state.raiz.atualizado) state.raiz.atualizado = dia;
   if (!atual) {
     const vaga = { id: event.entidade_id, empresa: nova.empresa, cargo: nova.cargo, url: nova.url, local: nova.local, modalidade: nova.modalidade,
-      regime: nova.regime, salario: null, salario_min: nova.salario_min, salario_max: nova.salario_max, requisicao_id: nova.requisicao_id, portal_origem: nova.portal,
+      regime: nova.regime, salario: null, salario_min: nova.salario_min, salario_max: nova.salario_max, requisicao_id: nova.requisicao_id && nova.portal ? `${nova.portal}:${nova.requisicao_id}` : nova.requisicao_id, portal_origem: nova.portal,
       descricao_completa: nova.descricao, descricao_hash: nova.descricao_hash, publicado_em: nova.publicado_em, consultado_em: dia,
-      fontes: [nova.fonte], aparicoes: [{ fonte: nova.fonte, url: nova.url, em: dia }], status: 'avaliada-sem-envio', url_status: 'aberta', aderencia: 'pendente' };
+      fontes: [...new Set(aparicoesDe(event, dia).map(a => a.fonte))], aparicoes: aparicoesDe(event, dia), destino_pendente: event.dados.destino_pendente === true, possivel_duplicata: event.dados.possivel_duplicata ?? [], status: 'avaliada-sem-envio', url_status: 'aberta', aderencia: 'pendente' };
     vaga.portal_candidatura = portalCandidatura(vaga);
     state.vagas.set(event.entidade_id, vaga);
     return state;
   }
   const next = { ...atual };
   const aparicoes = [...(next.aparicoes ?? [])];
-  if (!aparicoes.some(item => item.fonte === nova.fonte && item.url === nova.url)) aparicoes.push({ fonte: nova.fonte, url: nova.url, em: dia });
+  for (const item of aparicoesDe(event, dia)) if (!aparicoes.some(a => a.fonte === item.fonte && a.url === item.url)) aparicoes.push(item);
   next.aparicoes = aparicoes;
-  next.fontes = [...new Set([...(next.fontes ?? []), nova.fonte])];
+  next.fontes = [...new Set([...(next.fontes ?? []), ...aparicoes.map(a => a.fonte)])];
   if (nova.descricao_hash && next.descricao_hash !== nova.descricao_hash) {
     next.descricao_completa = nova.descricao;
     next.descricao_hash = nova.descricao_hash;
