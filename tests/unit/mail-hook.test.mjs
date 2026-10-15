@@ -3,7 +3,7 @@ import test from 'node:test';
 import { decidirFerramenta } from '../../core/mail/hook.mjs';
 import { ehEscritaMcp, GMAIL_LEITURA } from '../../core/mail/tools.mjs';
 
-const nega = nome => decidirFerramenta({ tool_name: nome })?.hookSpecificOutput?.permissionDecision === 'deny';
+const nega = nome => decidirFerramenta({ tool_name: nome }, { leitor: true })?.hookSpecificOutput?.permissionDecision === 'deny';
 
 test('o hook nega ferramenta desconhecida com verbo de escrita em qualquer servidor', () => {
   for (const nome of ['send', 'forward', 'reply', 'trash', 'delete', 'draft', 'label', 'modify', 'move', 'archive', 'spam', 'envio', 'apagar']) {

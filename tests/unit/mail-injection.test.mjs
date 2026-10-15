@@ -21,8 +21,8 @@ const AGORA = new Date('2026-10-14T15:00:00-03:00');
 const vagas = [{ id: 'v1', empresa: 'Empresa Alfa', cargo: 'Analista', requisicao_id: 'job:48213', candidatura_email: { aplicada: true, etapa: 'inscrita' } }];
 const hoje = e => ({ message_id: e.message_id, data: '2026-10-13', remetente_nome: e.remetente_nome, remetente_dominio: e.remetente_dominio, assunto: e.assunto, trecho: e.trecho });
 
-function hook(entrada) {
-  const r = spawnSync(process.execPath, [path.join(repoRoot, 'hooks', 'pre-tool-use.mjs')], { input: typeof entrada === 'string' ? entrada : JSON.stringify(entrada), encoding: 'utf8' });
+function hook(entrada, argumentos = ['--leitor'], env = {}) {
+  const r = spawnSync(process.execPath, [path.join(repoRoot, 'hooks', 'pre-tool-use.mjs'), ...argumentos], { input: typeof entrada === 'string' ? entrada : JSON.stringify(entrada), encoding: 'utf8', env: { ...process.env, CAREER_BOUNTY_MAIL_READER: '', ...env } });
   return { status: r.status, saida: r.stdout.trim() ? JSON.parse(r.stdout) : null };
 }
 
@@ -40,7 +40,16 @@ test('o hook PreToolUse nega toda ferramenta de escrita do Gmail e deixa a leitu
   assert.equal(hook({ tool_name: 'mcp__claude_ai_Gmail__ferramenta_nova', tool_input: {} }).saida.hookSpecificOutput.permissionDecision, 'deny');
   assert.equal(hook({ tool_name: 'mcp__outro-servidor__reply', tool_input: {} }).saida.hookSpecificOutput.permissionDecision, 'deny');
   assert.equal(hook('lixo que não é json').saida.hookSpecificOutput.permissionDecision, 'deny');
-  assert.equal(decidirFerramenta({}).hookSpecificOutput.permissionDecision, 'deny');
+  assert.equal(decidirFerramenta({}, { leitor: true }).hookSpecificOutput.permissionDecision, 'deny');
+});
+
+test('fora do leitor o hook do plugin não decide nada: delete_event e a escrita do Gmail seguem o fluxo normal da sessão', () => {
+  for (const ferramenta of ['mcp__x__delete_event', 'mcp__claude_ai_Gmail__send_message', 'mcp__ai-memory__memory_write_page']) {
+    assert.equal(hook({ tool_name: ferramenta, tool_input: {} }, []).saida, null, ferramenta);
+    assert.equal(decidirFerramenta({ tool_name: ferramenta }), null, ferramenta);
+  }
+  assert.equal(hook('lixo', []).saida, null);
+  assert.equal(hook({ tool_name: 'mcp__x__delete_event' }, [], { CAREER_BOUNTY_MAIL_READER: '1' }).saida.hookSpecificOutput.permissionDecision, 'deny', 'a variável dedicada também ativa o modo leitor');
 });
 
 test('defesa em profundidade: frontmatter sem escrita, comando com --disallowedTools e hook registrado no plugin', async () => {
