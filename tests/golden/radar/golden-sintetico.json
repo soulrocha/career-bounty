@@ -1,0 +1,57 @@
+{
+  "versao": 1,
+  "kb": "persona-ficticia",
+  "descricao": "5 vagas sintéticas com rótulo, só para testar o cálculo de concordância. O golden real fica fora do repositório.",
+  "vagas": [
+    {
+      "id": "golden-s1",
+      "empresa": "Empresa Alfa",
+      "cargo": "Analista de Produto Pleno",
+      "local": "Brasil",
+      "modalidade": "remoto",
+      "regime": "CLT",
+      "descricao": "Atuar no desenho de fluxos de atendimento e triagem de chamados, definir métricas de tempo de resposta e priorizar melhorias com a equipe de operações. Requisitos obrigatórios: experiência comprovada em redesenho de fluxos operacionais; Inglês avançado. Desejável: certificação em gestão de produtos.",
+      "rotulo_saulo": "media"
+    },
+    {
+      "id": "golden-s2",
+      "empresa": "Empresa Beta",
+      "cargo": "Diretor de Engenharia de Software",
+      "local": "Brasil",
+      "modalidade": "remoto",
+      "regime": "CLT",
+      "descricao": "Liderar mais de 80 engenheiros, definir a arquitetura corporativa em nuvem e responder ao conselho. Requisitos obrigatórios: 12 anos de experiência em gestão de engenharia; MBA; inglês fluente.",
+      "rotulo_saulo": "baixa"
+    },
+    {
+      "id": "golden-s3",
+      "empresa": "Empresa Gama",
+      "cargo": "Operador de Empilhadeira",
+      "local": "Brasil",
+      "modalidade": "presencial",
+      "regime": "CLT",
+      "descricao": "Movimentar cargas no galpão, conferir notas e manter a área organizada. Requisito obrigatório: curso de operador de empilhadeira.",
+      "rotulo_saulo": "baixa"
+    },
+    {
+      "id": "golden-s4",
+      "empresa": "Empresa Delta",
+      "cargo": "Designer Gráfico Júnior",
+      "local": "Brasil",
+      "modalidade": "remoto",
+      "regime": "CLT",
+      "descricao": "Criar peças para redes sociais e materiais impressos. Requisitos: domínio de ferramentas de edição de imagem e portfólio.",
+      "rotulo_saulo": "baixa"
+    },
+    {
+      "id": "golden-s5",
+      "empresa": "Empresa Épsilon",
+      "cargo": "Product Owner",
+      "local": "Brasil",
+      "modalidade": "remoto",
+      "regime": "CLT",
+      "descricao": "Cuidar do backlog de um time de seis pessoas, priorizar entregas com a operação e acompanhar indicadores de tempo de atendimento. Requisitos obrigatórios: experiência com backlog e priorização; experiência liderando pequenos grupos. Desejável: certificação em gestão de produtos.",
+      "rotulo_saulo": "alta"
+    }
+  ]
+}

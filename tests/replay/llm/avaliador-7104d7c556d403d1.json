@@ -1,0 +1,42 @@
+{
+  "hash": "7104d7c556d403d17e2f982153c8d90c95cc5dde450d91f6d15b14b7a0afcde3",
+  "agente": "avaliador",
+  "modelo": "sonnet",
+  "versaoPrompt": "4f39812e7c32",
+  "entrada": {
+    "afirmacoes": [
+      {
+        "id": "AF-001",
+        "texto": "Reduziu o tempo de triagem de chamados de 5 dias para 2 dias ao redesenhar o fluxo de classificação.",
+        "nivel_prova": "entregue"
+      },
+      {
+        "id": "AF-002",
+        "texto": "Liderou um grupo de 4 pessoas na migração de relatórios manuais para um painel único.",
+        "nivel_prova": "relato"
+      },
+      {
+        "id": "AF-003",
+        "texto": "Concluiu a certificação fictícia de Gestão de Produtos em 2025.",
+        "nivel_prova": "verificado"
+      }
+    ],
+    "vaga": {
+      "id": "golden-s5",
+      "cargo": "Product Owner",
+      "empresa": "Empresa Épsilon",
+      "local": "Brasil",
+      "modalidade": "remoto",
+      "regime": "CLT",
+      "descricao": "<dado_nao_confiavel>Cuidar do backlog de um time de seis pessoas, priorizar entregas com a operação e acompanhar indicadores de tempo de atendimento. Requisitos obrigatórios: experiência com backlog e priorização; experiência liderando pequenos grupos. Desejável: certificação em gestão de produtos.</dado_nao_confiavel>"
+    }
+  },
+  "saida": "{\"vaga_id\":\"golden-s5\",\"requisitos\":[{\"requisito\":\"Experiência com backlog e priorização\",\"tipo\":\"obrigatorio\",\"avaliacao\":\"parcial\",\"afirmacoes\":[\"AF-001\"],\"observacao\":\"AF-001 mostra redesenho de fluxo de classificação de chamados, o que é adjacente, mas não comprova gestão de backlog nem priorização de entregas.\"},{\"requisito\":\"Experiência liderando pequenos grupos\",\"tipo\":\"obrigatorio\",\"avaliacao\":\"parcial\",\"afirmacoes\":[\"AF-002\"],\"observacao\":\"AF-002 relata a liderança de 4 pessoas, mas tem nível 'relato' e não prova o requisito sozinha.\"},{\"requisito\":\"Acompanhar indicadores de tempo de atendimento\",\"tipo\":\"desejavel\",\"avaliacao\":\"atendido\",\"afirmacoes\":[\"AF-001\"],\"observacao\":\"AF-001, entregue, mostra redução do tempo de triagem de 5 para 2 dias.\"},{\"requisito\":\"Certificação em gestão de produtos\",\"tipo\":\"desejavel\",\"avaliacao\":\"atendido\",\"afirmacoes\":[\"AF-003\"],\"observacao\":\"AF-003, verificado, comprova a conclusão da certificação de Gestão de Produtos em 2025.\"}],\"aderencia_sugerida\":\"media\",\"resumo\":\"Os dois requisitos obrigatórios estão apenas parcialmente comprovados: não há prova direta de backlog e priorização, e a liderança de grupo aparece só como relato. Os itens desejáveis de indicadores de tempo de atendimento e certificação estão atendidos com provas entregue e verificada.\",\"pendencias\":[\"Confirmar experiência direta com gestão de backlog e priorização de entregas\",\"Obter evidência da liderança do grupo de 4 pessoas (AF-002) para além do relato\"]}",
+  "uso": {
+    "tokens_in": 2,
+    "tokens_out": 649,
+    "tokens_cache_leitura": 637,
+    "tokens_cache_criacao": 1160,
+    "custo_usd": 0.011261399999999998
+  }
+}
