@@ -1,7 +1,8 @@
 // Quadrantes dado x currículo. Determinístico: nenhuma chamada a LLM.
 //   (a) dado e CV conferem     (c) CV sem dado (ou que não confere)
-//   (b) dado fora do CV        (d) lacuna    -> acrescentados na F4.5
+//   (b) dado fora do CV        (d) lacuna (fila com peso e pergunta sugerida)
 import { chaveNumero, numerosDaAfirmacao } from '../cv/numeros.mjs';
+import { calcularLacunas } from './gaps.mjs';
 import { NIVEIS_COM_PROVA } from './schema.mjs';
 
 const COM_PROVA = new Set(NIVEIS_COM_PROVA);
@@ -44,4 +45,30 @@ export function classificarItens({ afirmacoes, itens }) {
     else a.push({ ...base, afirmacoes: ligadas.map(af => ({ id: af.id, nivel_prova: af.nivel_prova })) });
   }
   return { a, c };
+}
+
+const FORCA = { verificado: 2, entregue: 1 };
+const resumo = (texto, max = 140) => (texto.length > max ? `${texto.slice(0, max - 1).trimEnd()}…` : texto);
+
+// (b) dado fora do CV: afirmação com uso CV, com prova e publicável que nenhum bullet cita; e arco ou história sem afirmação ligada.
+export function classificarForaDoCv({ afirmacoes, itens, historias = [], arcos = [], cvCarregado }) {
+  const avisos = [];
+  const b = [];
+  if (cvCarregado) {
+    const citadas = new Set(itens.flatMap(item => item.claim_ids));
+    const candidatas = afirmacoes.filter(af => af.uso?.includes('CV') && COM_PROVA.has(af.nivel_prova) && af.publicavel !== 'nao' && !citadas.has(af.id));
+    candidatas.sort((x, y) => FORCA[y.nivel_prova] - FORCA[x.nivel_prova] || numerosDaAfirmacao(y).length - numerosDaAfirmacao(x).length || x.id.localeCompare(y.id, 'pt-BR', { numeric: true }));
+    for (const af of candidatas) b.push({ tipo: 'afirmacao', id: af.id, nivel_prova: af.nivel_prova, texto: resumo(af.texto), motivo: 'afirmação liberada para CV que nenhum bullet cita' });
+  } else avisos.push('nenhum modelo de CV carregado: o (b) de afirmações não foi calculado.');
+  for (const arco of [...historias, ...arcos]) {
+    if ((arco.afirmacoes ?? []).length === 0) b.push({ tipo: 'arco', id: arco.id, titulo: arco.titulo ?? null, motivo: 'arco ou história sem afirmação ligada' });
+  }
+  return { b, avisos };
+}
+
+export function calcularQuadrantes({ afirmacoes, evidencias = [], historias = [], arcos = [], itens = [], cvCarregado = itens.length > 0, vagas = [], hoje, buracoMeses, freqMinima }) {
+  const { a, c } = classificarItens({ afirmacoes, itens });
+  const { b, avisos } = classificarForaDoCv({ afirmacoes, itens, historias, arcos, cvCarregado });
+  const d = calcularLacunas({ afirmacoes, evidencias, vagas, hoje, buracoMeses, freqMinima });
+  return { a, b, c, d, contagem: { a: a.length, b: b.length, c: c.length, d: d.length }, avisos };
 }
