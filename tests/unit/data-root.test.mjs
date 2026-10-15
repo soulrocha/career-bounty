@@ -47,7 +47,7 @@ test('setup cria o esqueleto quando config.yml não existe e doctor não escreve
   await assert.rejects(readdir(dataRoot), { code: 'ENOENT' });
   const setup = run(['setup', '--json'], { dataRoot });
   assert.equal(setup.status, 0);
-  assert.deepEqual((await readdir(dataRoot)).sort(), [...SKELETON, 'config.yml'].sort());
+  assert.deepEqual((await readdir(dataRoot)).sort(), [...SKELETON, 'config.yml', 'identity.yml'].sort());
   assert.deepEqual(JSON.parse(await readFile(path.join(dataRoot, 'config.yml'), 'utf8')), {});
 });
 
@@ -89,4 +89,18 @@ test('chaves pessoais só vêm de DATA_ROOT/config.yml', async t => {
   assert.equal(settings.envio.padrao, 'parar_antes_de_enviar');
   await writeFile(path.join(dataRoot, 'config.yml'), JSON.stringify({ vault_root: path.join(root, 'outro-vault') }));
   assert.equal((await loadSettings({ dataRoot, env })).vault_root, path.join(root, 'outro-vault'));
+});
+
+test('setup cria identity.yml como modelo vazio com instrução, sem dados, e nunca sobrescreve', async t => {
+  const dataRoot = path.join(await tempDir(t), 'dados');
+  assert.equal(run(['setup', '--json'], { dataRoot }).status, 0);
+  const file = path.join(dataRoot, 'identity.yml');
+  const model = JSON.parse(await readFile(file, 'utf8'));
+  assert.equal(typeof model._instrucao, 'string');
+  const valores = Object.entries(model).filter(([k]) => !k.startsWith('_')).map(([, v]) => v);
+  assert.ok(valores.length > 0);
+  assert.ok(valores.every(v => v === ''));
+  await writeFile(file, JSON.stringify({ nome: 'Mantido Ficticio' }));
+  assert.equal(run(['setup', '--json'], { dataRoot }).status, 0);
+  assert.equal(JSON.parse(await readFile(file, 'utf8')).nome, 'Mantido Ficticio');
 });

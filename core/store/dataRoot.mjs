@@ -5,6 +5,15 @@ import { privateDestination } from '../migration/paths.mjs';
 
 export const SKELETON_DIRS = ['kb', 'events', 'state', 'projections', 'artifacts', 'cache', 'secrets', 'outbox', 'templates'];
 
+// Modelo vazio: o setup nunca grava dado pessoal. A chave _instrucao é ignorada pelo scan.
+const IDENTITY_TEMPLATE = JSON.stringify({
+  _instrucao: 'Preencha com os seus dados reais (JSON). Este arquivo é a camada pessoal do pre-commit: bloqueia commits que contenham esses valores. Nunca versione este arquivo.',
+  nome: '',
+  email: '',
+  telefone: '',
+  documento: '',
+}, null, 2) + String.fromCharCode(10);
+
 export function resolveDataRoot({ env = process.env, home = homedir() } = {}) {
   const chosen = env.DATA_ROOT || path.join(home, '.career-bounty');
   return path.resolve(chosen);
@@ -22,6 +31,10 @@ export async function ensureSkeleton(dataRoot) {
   try {
     await writeFile(path.join(dataRoot, 'config.yml'), '{}\n', { flag: 'wx' });
     created.push('config.yml');
+  } catch (error) { if (error.code !== 'EEXIST') throw error; }
+  try {
+    await writeFile(path.join(dataRoot, 'identity.yml'), IDENTITY_TEMPLATE, { flag: 'wx' });
+    created.push('identity.yml');
   } catch (error) { if (error.code !== 'EEXIST') throw error; }
   return created;
 }
