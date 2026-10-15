@@ -1,13 +1,13 @@
 // Estágio 1 do radar, sem LLM: coleta, identifica o que é novo e grava `vaga.descoberta`.
-import { idFor } from '../dedup/keys.mjs';
+import { consolidar, classificar } from '../dedup/consolidar.mjs';
 import { runSources } from '../sources/index.mjs';
 import { buildSources } from '../sources/registry.mjs';
 import { buildPlan } from '../sources/plan.mjs';
 import { appendEvents, readEvents } from '../store/events.mjs';
 import { projectEvents } from '../store/project.mjs';
 
-export function descobertaEvent(vaga, id, ts) {
-  return { id: `descoberta:${id}:${vaga.descricao_hash.slice(0, 12)}`, ts, ator: 'radar', tipo: 'vaga.descoberta', entidade: 'vaga', entidade_id: id, dados: { vaga } };
+export function descobertaEvent(vaga, id, ts, aparicoes = [], extra = {}) {
+  return { id: `descoberta:${id}:${vaga.descricao_hash.slice(0, 12)}`, ts, ator: 'radar', tipo: 'vaga.descoberta', entidade: 'vaga', entidade_id: id, dados: { vaga, aparicoes, ...extra } };
 }
 
 export async function collect({ settings, only, dryRun = false, now = new Date(), sources, host }) {
@@ -20,23 +20,15 @@ export async function collect({ settings, only, dryRun = false, now = new Date()
   const conhecidas = new Map();
   for (const vaga of projetado.vagas) {
     const portal = vaga.portal_origem;
-    if (portal && vaga.requisicao_id) conhecidas.set(portal, (conhecidas.get(portal) ?? new Set()).add(String(vaga.requisicao_id)));
+    if (portal && vaga.requisicao_id) conhecidas.set(portal, (conhecidas.get(portal) ?? new Set()).add(String(vaga.requisicao_id).replace(`${portal}:`, '')));
   }
   const coleta = await runSources(lista, { janela: window, plano, config: settings.fontes, now, dataRoot: settings.dataRoot, conhecidas }, { timeoutMs: settings.radar.timeout_fonte_ms });
-  const idsConhecidos = new Set(projetado.vagas.map(vaga => vaga.id));
-  const vistas = new Set();
-  const descobertas = [];
-  for (const vaga of coleta.vagas) {
-    const id = idFor(vaga);
-    if (vistas.has(id)) continue;
-    vistas.add(id);
-    descobertas.push({ id, vaga });
-  }
-  const novas = descobertas.filter(item => !idsConhecidos.has(item.id));
+  const descobertas = classificar(consolidar(coleta.vagas), projetado.vagas);
+  const novas = descobertas.filter(item => item.situacao === 'nova');
   const ts = now.toISOString();
   let gravados = 0;
   if (!dryRun) {
-    const result = await appendEvents(settings.dataRoot, descobertas.map(item => descobertaEvent(item.vaga, item.id, ts)), { ...(host ? { host } : {}), now: ts });
+    const result = await appendEvents(settings.dataRoot, descobertas.map(item => descobertaEvent(item.vaga, item.id, ts, item.aparicoes, { destino_pendente: item.destino_pendente, possivel_duplicata: item.possivel_duplicata })), { ...(host ? { host } : {}), now: ts });
     gravados = result.events.length;
   }
   return { dry_run: dryRun, janela: window, fontes: coleta.fontes, coletadas: coleta.vagas.length, novas: novas.length, delta: novas.length, eventos_gravados: gravados };
