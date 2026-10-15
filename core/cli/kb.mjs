@@ -1,8 +1,7 @@
 // Subcomandos da base de conhecimento: kb sync, kb quadrants, kb suggest, kb candidatos.
 import path from 'node:path';
 import { loadSettings } from '../config.mjs';
-import { createRunner } from '../llm/runner.mjs';
-import { loadIdentityValues } from '../privacy/redact.mjs';
+import { runnerDasOpcoes } from './llm.mjs';
 import { analisarBase, resumoQuadrantes } from '../kb/analise.mjs';
 import { candidatosAiMemory, carregarFontes } from '../kb/fontes.mjs';
 import { sugerirMarcas } from '../kb/suggest.mjs';
@@ -35,13 +34,10 @@ export const kbCommands = {
     }
     if (sub === 'suggest') {
       const values = parseFlags(flags, { allowed: ['--live', '--replay', '--gravar'], withValue: ['--replay'] });
-      if (!values['--live'] && !values['--replay']) throw new Error('Informe --live (chamada real ao Claude, cobrada) ou --replay <pasta de gravações>.');
-      if (values['--live'] && values['--replay']) throw new Error('Use --live ou --replay, não os dois.');
       const settings = await loadSettings();
+      const runner = await runnerDasOpcoes(values, settings);
       const { hash } = await kbSync(settings);
       const { base, itens } = await analisarBase({ dataRoot: settings.dataRoot, settings });
-      const runner = createRunner({ modo: values['--live'] ? 'live' : 'replay', dataRoot: settings.dataRoot, replayDir: values['--replay'] ? path.resolve(values['--replay']) : path.join(settings.dataRoot, 'golden', 'replay'),
-        identity: await loadIdentityValues(), env: { ...process.env, ...(values['--live'] ? { LIVE: '1' } : {}) }, gravar: Boolean(values['--gravar']), maxChamadasLive: 1 });
       const result = await sugerirMarcas({ runner, dataRoot: settings.dataRoot, base, itens, snapshotHash: hash });
       const texto = [`${result.propostas.length} proposta(s) de marca, ${result.mapear_a_mao.length} para mapear à mão${result.do_cache ? ' (do cache)' : ''}`, ...(result.arquivo ? [`proposta em ${result.arquivo}`] : [])];
       return { result, text: texto.join(NL) };

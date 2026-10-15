@@ -27,12 +27,16 @@ export async function lerManifesto(dataRoot) {
   return manifesto;
 }
 
+// Pasta Markdown da base (padrão DATA_ROOT/kb): onde a entrevista grava claims.local.md depois da aprovação.
+export async function raizMarkdown(dataRoot) {
+  const pasta = (await lerManifesto(dataRoot)).markdown_folder?.raiz ?? 'kb';
+  return path.isAbsolute(pasta) ? pasta : path.join(dataRoot, pasta);
+}
+
 export async function carregarFontes({ dataRoot, settings } = {}) {
   const manifesto = await lerManifesto(dataRoot);
   const config = settings ?? await loadSettings({ dataRoot });
-  const pasta = manifesto.markdown_folder?.raiz ?? 'kb';
-  const raizKb = path.isAbsolute(pasta) ? pasta : path.join(dataRoot, pasta);
-  const fontes = [{ nome: 'markdown-folder', fonte: createMarkdownFolder(raizKb) }];
+  const fontes = [{ nome: 'markdown-folder', fonte: createMarkdownFolder(await raizMarkdown(dataRoot)) }];
   if (manifesto.obsidian_vault) {
     const raiz = manifesto.obsidian_vault.raiz ?? config.vault_root;
     if (!raiz) throw new Error('fontes.yml: obsidian_vault exige a raiz do vault (vault_root em config.yml ou raiz em fontes.yml).');
