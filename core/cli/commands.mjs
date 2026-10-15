@@ -1,4 +1,5 @@
-import { loadSettings } from '../config.mjs';
+import { describeDefaults, loadSettings } from '../config.mjs';
+import { planApply } from '../apply/plan.mjs';
 import { ensureSkeleton, resolveDataRoot } from '../store/dataRoot.mjs';
 import { formatFindings, scanMessageFile, scanStaged, scanTracked } from '../privacy/scan.mjs';
 import { buildDenylist, loadPrivacyContext } from '../privacy/context.mjs';
@@ -24,7 +25,9 @@ async function privacy(rest, { parseFlags }) {
 export const commands = {
   async doctor() {
     const settings = await loadSettings();
-    return { result: { dataRoot: settings.dataRoot, ok: true } };
+    const padroes = describeDefaults(settings);
+    return { result: { dataRoot: settings.dataRoot, ok: true, padroes }, text: `${padroes}
+ok` };
   },
   async setup() {
     const dataRoot = resolveDataRoot();
@@ -32,4 +35,9 @@ export const commands = {
     return { result: { dataRoot, created, ok: true } };
   },
   privacy,
+  async apply(rest, { parseFlags }) {
+    if (rest[0] !== 'plan') throw new Error(`Subcomando apply desconhecido: ${rest[0] ?? ''}`.trim());
+    parseFlags(rest.slice(1), { allowed: [] });
+    return { result: planApply(await loadSettings()) };
+  },
 };

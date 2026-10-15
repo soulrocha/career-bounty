@@ -48,6 +48,13 @@ export function validateSettings(raw) {
   }
   if (envio.regras !== undefined) {
     if (!Array.isArray(envio.regras)) throw invalid('envio.regras', 'deve ser lista');
+    envio.regras.forEach((regra, index) => {
+      const key = `envio.regras[${index}]`;
+      if (!isObject(regra)) throw invalid(key, 'deve ser objeto');
+      if (regra.acao === 'enviar_automatico' && (!Number.isInteger(regra.limite_dia) || regra.limite_dia < 1)) {
+        throw invalid(`${key}.limite_dia`, 'é obrigatório (inteiro >= 1) em regra enviar_automatico');
+      }
+    });
     settings.envio.regras = envio.regras;
   }
 
@@ -55,6 +62,9 @@ export function validateSettings(raw) {
   for (const key of ['ativo', 'aceite_termos']) {
     if (guest[key] !== undefined && typeof guest[key] !== 'boolean') throw invalid(`fontes.linkedin_guest.${key}`, 'deve ser booleano');
     if (guest[key] !== undefined) settings.fontes.linkedin_guest[key] = guest[key];
+  }
+  if (settings.fontes.linkedin_guest.ativo && !settings.fontes.linkedin_guest.aceite_termos) {
+    throw invalid('fontes.linkedin_guest.ativo', 'exige aceite_termos: true no mesmo bloco; o coletor guest pode violar os termos de uso do LinkedIn e a responsabilidade é sua');
   }
 
   const panel = section(raw.panel, 'panel');
@@ -67,6 +77,14 @@ export function validateSettings(raw) {
     settings.panel.base_files = panel.base_files;
   }
   return settings;
+}
+
+export const activeRules = settings => settings.envio.regras.filter(regra => regra.ativo !== false);
+
+export function describeDefaults(settings) {
+  const rules = activeRules(settings);
+  const envio = rules.length ? `automático (${rules.length} ${rules.length === 1 ? 'regra ativa' : 'regras ativas'})` : 'manual';
+  return `envio: ${envio}; LinkedIn guest: ${settings.fontes.linkedin_guest.ativo ? 'ligado' : 'desligado'}`;
 }
 
 async function readRawConfig(dataRoot) {
