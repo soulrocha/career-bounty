@@ -130,3 +130,13 @@ test('bin kb suggest exige --live ou --replay e recusa os dois juntos; sem grava
   assert.equal(vazio.status, 2);
   assert.match(vazio.json.error, /Sem gravação para mapeador/);
 });
+
+test('replay gravado com a persona fictícia: o bullet sem número vai para mapear à mão e a proposta sai em outbox/marcas', async t => {
+  const dataRoot = await tempDir(t);
+  assert.equal(run(['setup', '--json'], { dataRoot }).status, 0);
+  await cp(kbDir, path.join(dataRoot, 'kb'), { recursive: true });
+  const r = run(['kb', 'suggest', '--replay', path.join(repoRoot, 'tests', 'replay', 'llm'), '--json'], { dataRoot });
+  assert.equal(r.status, 0, r.stderr || r.stdout);
+  assert.equal(r.json.propostas.length + r.json.mapear_a_mao.length, 1);
+  assert.match(r.json.arquivo.replaceAll('\\', '/'), /\/outbox\/marcas\/sugestoes-[0-9a-f]{16}\.md$/);
+});

@@ -164,3 +164,13 @@ test('o comando /entrevista só chama a CLI e manda confirmar cada afirmação a
   assert.match(md, /nunca (invente|estime)/i);
   assert.ok(md.includes('Vault'));
 });
+
+test('replay gravado com a persona fictícia: perguntar devolve até 3 perguntas validadas, sem chamada real', async t => {
+  const dataRoot = await tempDir(t);
+  assert.equal(run(['setup', '--json'], { dataRoot }).status, 0);
+  await cp(kbDir, path.join(dataRoot, 'kb'), { recursive: true });
+  const r = run(['entrevista', 'perguntar', '--lacuna', 'sem_fonte:AF-106', '--replay', path.join(repoRoot, 'tests', 'replay', 'llm'), '--json'], { dataRoot });
+  assert.equal(r.status, 0, r.stderr || r.stdout);
+  assert.ok(r.json.perguntas.length >= 1 && r.json.perguntas.length <= 3);
+  assert.ok(r.json.perguntas.every(p => typeof p === 'string' && p.endsWith('?')));
+});
