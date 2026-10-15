@@ -17,6 +17,6 @@ export function hardFilter(vaga, criterios = {}) {
   // Sem região configurada, presença física não elimina: o piso de região vira o próprio local da vaga.
   const regiao = criterios.regiao_presencial?.length ? criterios.regiao_presencial.map(fold) : [fold(vaga.local)];
   const condicoes = constraints(vaga, { regiao_presencial: regiao, clt: { onsite_min: null, remote_hybrid_min: null, ...criterios.clt }, pj: { min: null, ...criterios.pj } });
-  if (condicoes.situacao === 'incompativel') motivos.push(...condicoes.motivos.filter(motivo => /fora de|abaixo do piso|não elegível/i.test(motivo)));
+  if (condicoes.situacao === 'incompativel') motivos.push(...condicoes.motivos.filter(motivo => /fora d[ea]|abaixo do piso|não elegível/i.test(motivo)));
   return { descartada: motivos.length > 0, motivos, condicoes };
 }
