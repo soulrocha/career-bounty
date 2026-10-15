@@ -25,14 +25,16 @@ export async function lerCursor(dataRoot, { now = new Date() } = {}) {
 }
 
 // Segunda fase: chamada só depois de os efeitos serem gravados. `itens` são os do digest validado.
-export async function confirmarCursor(dataRoot, { itens, now = new Date() }) {
+// `ate` limita o avanço (consulta que bateu o limite de resultados): por padrão o cursor vai até hoje.
+export async function confirmarCursor(dataRoot, { itens, now = new Date(), ate }) {
   const atual = await lerArquivoBruto(dataRoot);
   const limite = localDay(new Date(now.getTime() - MEMORIA_DIAS * DIA));
   const vistos = Object.fromEntries(Object.entries(atual).filter(([, dia]) => typeof dia === 'string' && dia >= limite));
   for (const item of itens) vistos[item.message_id] = item.data;
   const hoje = localDay(now);
-  await atomicJson(arquivo(dataRoot), { ate: hoje, atualizado_em: now.toISOString(), vistos });
-  return { ate: hoje, vistos: Object.keys(vistos).length };
+  const destino = ate && ate < hoje ? ate : hoje;
+  await atomicJson(arquivo(dataRoot), { ate: destino, atualizado_em: now.toISOString(), vistos });
+  return { ate: destino, vistos: Object.keys(vistos).length };
 }
 
 async function lerArquivoBruto(dataRoot) {

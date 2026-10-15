@@ -10,11 +10,12 @@ const pendente = motivo => ({ classe: 'pendente', confianca: 'baixa', origem: 'p
 
 // abrir(ids) -> { itens: [{ message_id, corpo }], adiados: [ids] }   (fase B)
 // classificarLlm(itens) -> Map(message_id -> { classe, confianca, origem, motivo })
-export async function processarItens({ itens, vagas, abrir, classificarLlm, config = {}, now = new Date() }) {
+// prioritarios: ids que reabrem primeiro (fila de itens adiados pela fase B em rodadas anteriores).
+export async function processarItens({ itens, vagas, abrir, classificarLlm, config = {}, now = new Date(), prioritarios = new Set() }) {
   const opcoes = { extras: config.portais_extras ?? [], confiaveis: config.dominios_confiaveis ?? [] };
   const limpos = itens.map(item => ({ ...item, assunto: sanitizarCampo(item.assunto, 300, { extras: opcoes.extras }), trecho: sanitizarCampo(item.trecho, 300, { extras: opcoes.extras }) }));
   const regras = new Map(limpos.map(item => [item.message_id, classificar(item, opcoes)]));
-  const precisaAbrir = limpos.filter(item => regras.get(item.message_id).precisa_abrir).sort((a, b) => b.data.localeCompare(a.data) || a.message_id.localeCompare(b.message_id)).map(item => item.message_id);
+  const precisaAbrir = limpos.filter(item => regras.get(item.message_id).precisa_abrir).sort((a, b) => Number(prioritarios.has(b.message_id)) - Number(prioritarios.has(a.message_id)) || b.data.localeCompare(a.data) || a.message_id.localeCompare(b.message_id)).map(item => item.message_id);
 
   const corpos = new Map();
   let adiados = [];
