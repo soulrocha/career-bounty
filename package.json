@@ -10,6 +10,7 @@
     "career-bounty": "bin/career-bounty.mjs"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "prepare": "git config core.hooksPath .githooks || exit 0"
   }
 }
