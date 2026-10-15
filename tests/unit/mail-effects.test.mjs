@@ -7,13 +7,13 @@ import { aplicarEfeitos, extrairEntrevista, extrairPrazo } from '../../core/mail
 
 const AGORA = new Date('2026-10-14T18:00:00Z');
 const vagas = [
-  { id: 'v1', empresa: 'Empresa Alfa', cargo: 'Analista de Dados', requisicao_id: 'job:31790' },
-  { id: 'v2', empresa: 'Empresa Alfa', cargo: 'Analista de Dados', requisicao_id: 'job:31375' },
+  { id: 'v1', empresa: 'Empresa Alfa', cargo: 'Analista de Dados', requisicao_id: 'job:48213' },
+  { id: 'v2', empresa: 'Empresa Alfa', cargo: 'Analista de Dados', requisicao_id: 'job:47105' },
 ];
 const alta = classe => ({ classe, confianca: 'alta', origem: 'regra' });
 const msg = (id, data, classe, vaga = 'v1', extra = {}) => ({
   item: { message_id: id, data, remetente_dominio: 'gupy.com.br', assunto: extra.assunto ?? 'Assunto', trecho: extra.trecho ?? '' },
-  classificacao: extra.classificacao ?? alta(classe), vinculo: { status: 'vinculado', vaga_id: vaga, requisicao: 'job:31790' }, corpo: extra.corpo,
+  classificacao: extra.classificacao ?? alta(classe), vinculo: { status: 'vinculado', vaga_id: vaga, requisicao: 'job:48213' }, corpo: extra.corpo,
 });
 const tipos = eventos => eventos.map(e => e.tipo);
 const importar = (id, vaga, n = 0) => ({ id: `imp-${id}`, ts: `2026-10-01T00:00:0${n}Z`, ator: 'teste', tipo: 'vaga.importada', entidade: 'vaga', entidade_id: id, dados: { legado: vaga } });
