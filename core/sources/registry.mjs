@@ -6,6 +6,7 @@ import { createFreehire } from './freehire.mjs';
 import { createJobSpy } from './jobspy.mjs';
 import { createInhire } from './inhire.mjs';
 import { createLinkedinGuest } from './linkedinGuest.mjs';
+import { createLinkedinAlertas } from './linkedinAlerts.mjs';
 import { createSolides } from './solides.mjs';
 
 const FACTORIES = {
@@ -16,6 +17,7 @@ const FACTORIES = {
   inhire: (settings, deps) => createInhire(settings.fontes.inhire ?? {}, deps),
   solides: (settings, deps) => createSolides(settings.fontes.solides ?? {}, deps),
   linkedin_guest: (settings, deps) => createLinkedinGuest(settings.fontes.linkedin_guest, deps),
+  linkedin_alertas: (settings, deps) => createLinkedinAlertas(settings.fontes.linkedin_alertas ?? {}, deps),
   careerops: settings => createCareerOps(settings.fontes.careerops ?? {}),
 };
 
