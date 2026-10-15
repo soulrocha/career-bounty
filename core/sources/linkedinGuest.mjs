@@ -55,7 +55,7 @@ export function createLinkedinGuest(config = {}, deps = {}) {
         if (!primeira) await sleep(Math.round((min + random() * (max - min)) * 1000));
         primeira = false;
         const query = new URLSearchParams({ keywords: termo, location: config.local ?? 'Brazil', f_TPR: config.f_TPR ?? 'r86400', start: '0' });
-        const resposta = await getText(`${base}${SEARCH_PATH}?${query}`, { fetch: doFetch, sleep, retries: 0, retryOn: () => false, headers: { Accept: 'text/html' }, signal: ctx.signal });
+        const resposta = await getText(`${base}${SEARCH_PATH}?${query}`, { fetch: doFetch, sleep, retries: 0, retryOn: () => false, headers: { Accept: 'text/html' }, signal: ctx.signal, gastar: () => budget.consume() });
         if (resposta.status === 429 || resposta.status === 999 || resposta.status === 403 || DESAFIO.test(resposta.text)) {
           await budget.blockForDay();
           throw new SourceError('bloqueio', `LinkedIn respondeu com bloqueio ou desafio (HTTP ${resposta.status}); parado até amanhã`);
