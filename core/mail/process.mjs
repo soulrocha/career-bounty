@@ -44,7 +44,7 @@ export async function processarItens({ itens, vagas, abrir, classificarLlm, conf
   const vinculados = limpos.map(item => {
     const classificacao = classificados.get(item.message_id);
     const corpo = corpos.get(item.message_id);
-    return { item, classificacao, corpo, vinculo: vincular({ classe: classificacao.classe, item, corpo }, vagas) };
+    return { item, classificacao, corpo, vinculo: vincular({ classe: classificacao.classe, item, corpo, extras: opcoes.extras }, vagas) };
   });
   const { eventos, resumo } = aplicarEfeitos({ itens: vinculados, vagas, now });
   const porOrigem = {};

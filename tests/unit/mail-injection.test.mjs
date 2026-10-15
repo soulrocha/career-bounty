@@ -18,7 +18,7 @@ import { MARCA_ABRE, MARCA_FECHA } from '../../core/privacy/untrusted.mjs';
 const dir = path.join(repoRoot, 'tests', 'fixtures', 'injecao-email');
 const emails = await Promise.all((await readdir(dir)).sort().map(async nome => JSON.parse(await readFile(path.join(dir, nome), 'utf8'))));
 const AGORA = new Date('2026-10-14T15:00:00-03:00');
-const vagas = [{ id: 'v1', empresa: 'Empresa Alfa', cargo: 'Analista', requisicao_id: 'job:31790', candidatura_email: { aplicada: true, etapa: 'inscrita' } }];
+const vagas = [{ id: 'v1', empresa: 'Empresa Alfa', cargo: 'Analista', requisicao_id: 'job:48213', candidatura_email: { aplicada: true, etapa: 'inscrita' } }];
 const hoje = e => ({ message_id: e.message_id, data: '2026-10-13', remetente_nome: e.remetente_nome, remetente_dominio: e.remetente_dominio, assunto: e.assunto, trecho: e.trecho });
 
 function hook(entrada) {
