@@ -15,7 +15,7 @@ const HOOK = fileURLToPath(new URL('../../hooks/pre-tool-use.mjs', import.meta.u
 export async function escreverSettingsLeitor({ dir, node = process.execPath, hook = HOOK }) {
   await mkdir(dir, { recursive: true });
   const arquivo = path.join(dir, 'leitor-email.settings.json');
-  const comando = `"${node}" "${hook}"`;
+  const comando = `"${node}" "${hook}" --leitor`;
   await writeFile(arquivo, `${JSON.stringify({ hooks: { PreToolUse: [{ matcher: 'mcp__.*', hooks: [{ type: 'command', command: comando }] }] } }, null, 2)}\n`);
   return arquivo;
 }

@@ -8,6 +8,7 @@ process.stdin.on('data', pedaco => { texto += pedaco; });
 process.stdin.on('end', () => {
   let entrada = null;
   try { entrada = JSON.parse(texto); } catch { /* entrada ilegível: decidirFerramenta nega */ }
-  const decisao = decidirFerramenta(entrada);
+  const leitor = process.argv.includes('--leitor') || process.env.CAREER_BOUNTY_MAIL_READER === '1';
+  const decisao = decidirFerramenta(entrada, { leitor });
   if (decisao) process.stdout.write(`${JSON.stringify(decisao)}\n`);
 });
