@@ -14,10 +14,16 @@ export async function collect({ settings, only, dryRun = false, now = new Date()
   const lista = sources ?? buildSources(settings, { only });
   const plano = buildPlan(settings.radar, now);
   const window = plano.janela;
-  const coleta = await runSources(lista, { janela: window, plano, config: settings.fontes, now, dataRoot: settings.dataRoot }, { timeoutMs: settings.radar.timeout_fonte_ms });
   const { eventos, avisos } = await readEvents(settings.dataRoot);
   if (avisos.length) throw new Error(`Log de eventos truncado ou corrompido (${avisos.length} aviso(s)); revisão necessária.`);
-  const conhecidas = new Set(projectEvents(eventos).vagas.map(vaga => vaga.id));
+  const projetado = projectEvents(eventos);
+  const conhecidas = new Map();
+  for (const vaga of projetado.vagas) {
+    const portal = vaga.portal_origem;
+    if (portal && vaga.requisicao_id) conhecidas.set(portal, (conhecidas.get(portal) ?? new Set()).add(String(vaga.requisicao_id)));
+  }
+  const coleta = await runSources(lista, { janela: window, plano, config: settings.fontes, now, dataRoot: settings.dataRoot, conhecidas }, { timeoutMs: settings.radar.timeout_fonte_ms });
+  const idsConhecidos = new Set(projetado.vagas.map(vaga => vaga.id));
   const vistas = new Set();
   const descobertas = [];
   for (const vaga of coleta.vagas) {
@@ -26,7 +32,7 @@ export async function collect({ settings, only, dryRun = false, now = new Date()
     vistas.add(id);
     descobertas.push({ id, vaga });
   }
-  const novas = descobertas.filter(item => !conhecidas.has(item.id));
+  const novas = descobertas.filter(item => !idsConhecidos.has(item.id));
   const ts = now.toISOString();
   let gravados = 0;
   if (!dryRun) {

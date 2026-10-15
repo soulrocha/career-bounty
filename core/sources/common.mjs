@@ -34,7 +34,7 @@ export function diaDe(valor) {
 export const antesDaJanela = (dia, janela) => Boolean(dia) && dia < janela.inicio;
 
 export function semHtml(html) {
-  return String(html ?? '').replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ').replace(/<br\s*\/?>|<\/(p|div|li|h\d)>/gi, '\n').replace(/<[^>]+>/g, ' ')
+  return String(html ?? '').replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ').replace(/<br\s*\/?>|<\/(p|div|li|h\d)>/gi, '\n').replace(/<\/?(b|strong|i|em|u|span|a|small|sup|sub|font)(\s[^>]*)?>/gi, '').replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
     .replace(/[ \t]+/g, ' ').replace(/\s*\n\s*/g, '\n').trim();
 }
