@@ -73,3 +73,21 @@ test('acao da regra é comparada sem diferenciar maiúsculas', async t => {
     await assert.rejects(loadSettings({ dataRoot: await withConfig(t, semLimite) }), /limite_dia/, acao);
   }
 });
+
+test('perfil.pdfs_base: href relativo curriculos/<arquivo>.pdf e listado em panel.base_files; senão o link morreria em 404', () => {
+  const base = { panel: { base_files: ['ats/base.pdf'] } };
+  const ok = validateSettings({ ...base, perfil: { pdfs_base: [{ texto: 'ATS', href: 'curriculos/ats/base.pdf' }] } });
+  assert.deepEqual(ok.perfil.pdfs_base, [{ texto: 'ATS', href: 'curriculos/ats/base.pdf' }]);
+  for (const href of ['curriculos/outro.pdf', 'ats/base.pdf', 'https://x.test/base.pdf', '/curriculos/ats/base.pdf', 'curriculos/../ats/base.pdf', 'curriculos/ats/base.txt']) {
+    assert.throws(() => validateSettings({ ...base, perfil: { pdfs_base: [{ texto: 'x', href }] } }), /pdfs_base/, href);
+  }
+  assert.throws(() => validateSettings({ perfil: { pdfs_base: [{ texto: 'x', href: 'curriculos/a.pdf' }] } }), /pdfs_base/, 'sem base_files, nada é permitido');
+});
+
+test('portais_extras e backups_retidos: padrões seguros e validação', () => {
+  const padrao = validateSettings({});
+  assert.deepEqual(padrao.portais_extras, {});
+  assert.equal(padrao.backups_retidos, 3);
+  assert.deepEqual(validateSettings({ portais_extras: { 'Portal Exemplo': ['empresa-exemplo.test'] }, backups_retidos: 5 }).portais_extras, { 'Portal Exemplo': ['empresa-exemplo.test'] });
+  for (const ruim of [[], 'texto', { A: 'host' }, { A: [1] }, { A: ['https://x.test/'] }, { A: ['x.test/caminho'] }, { A: [''] }]) assert.throws(() => validateSettings({ portais_extras: ruim }), /portais_extras/, JSON.stringify(ruim));
+});

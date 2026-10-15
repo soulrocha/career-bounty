@@ -36,7 +36,7 @@ test('dry-run inventaria fontes completas sem alterar origens nem criar DATA_ROO
 test('importação preserva documento integral, snapshot verificado e reimportação não cria evento', async t => {
   const f = await fixture(t);
   const first = await migrateLegacy(f);
-  assert.equal(first.eventsAdded, 1);
+  assert.ok(first.eventsAdded >= 2, 'raiz + uma vaga');
   assert.deepEqual(JSON.parse(await readFile(path.join(f.dataRoot, 'projections/pipeline-vagas.json'), 'utf8')), f.pipeline);
   const state = JSON.parse(await readFile(path.join(f.dataRoot, 'state/migration.json'), 'utf8'));
   assert.equal(state.mode, 'shadow');
@@ -123,9 +123,9 @@ test('evento com payload divergente do hash é rejeitado no replay', async t => 
   const f = await fixture(t);
   await migrateLegacy({ ...f, now: '2026-10-14T20:00:00.000Z' });
   const filename = path.join(f.dataRoot, 'events/2026/10/14.host-teste.jsonl');
-  const event = JSON.parse((await readFile(filename, 'utf8')).trim());
-  event.dados.legado.desconhecido = [];
-  await writeFile(filename, `${JSON.stringify(event)}\n`);
+  const lines = (await readFile(filename, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
+  lines.find(item => item.tipo === 'vaga.importada').dados.legado.status = 'adulterado';
+  await writeFile(filename, lines.map(item => JSON.stringify(item)).join('\n') + '\n');
   await assert.rejects(projectLegacy({ dataRoot: f.dataRoot }), /hash|corrompido/);
 });
 

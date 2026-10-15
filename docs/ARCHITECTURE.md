@@ -47,6 +47,30 @@ Testes vivem nestas fronteiras públicas, nunca em detalhes internos.
 
 Estado atual: S1, S5 e S6 (em modo sombra) têm implementação; os demais entram nas fatias seguintes.
 
+## Painel: desvio deliberado do contrato
+
+O painel mantém `/api/candidaturas` (GET e POST) com o formato do cliente legado, em vez de um nome novo
+por recurso. Motivo: o HTML do legado e o template público já chamam essa rota; renomear quebraria o
+painel antigo durante a sombra. A rota continua protegida por Host local, Origin, token efêmero e limite de
+tamanho. `/api/status` informa o modo real (`shadow` ou `ativo`). Toda resposta leva CSP restritiva
+(sem origem externa), `Referrer-Policy: no-referrer`, `X-Frame-Options` e `nosniff`.
+
+## Migração: regras de segurança
+
+- Em modo `ativo` o painel grava marcações como evento; por isso `migrate` (com ou sem `--shadow`) e
+  `migrate --from` recusam reimportar, e nunca devolvem o modo para `shadow`. Para voltar à sombra, faça o
+  rollback antes. Estado ilegível também bloqueia (falha fechada).
+- Snapshots em `backups/`: só os `backups_retidos` mais recentes ficam (padrão 3; o do estado atual nunca
+  é apagado). Se nada mudou, o snapshot existente é reaproveitado e nada é copiado.
+- Vaga que sumiu do legado nunca é apagada. Por padrão a importação recusa; `--aceitar-ausentes` aceita a
+  diferença e lista os IDs em `ausentes_aceitas`.
+- `migrate --rollback --out <legado> --confirmo-vault` copia o legado atual para `rollback-backups/`, respeita o
+  lock do legado e recusa se o legado mudou depois da última importação.
+- Locks de arquivo: arquivo vazio ou JSON inválido (após 2 s), dono morto, lock com mais de 30 min ou PID
+  reaproveitado (processo que começou depois do lock) são recuperados.
+- `perfil.pdfs_base[].href` deve ser `curriculos/<arquivo>.pdf` e o arquivo precisa estar em `panel.base_files`.
+  Portais privados de recrutamento entram em `portais_extras` no `config.yml`, nunca no código.
+
 ## Isolamento de modelo
 
 O modelo e o conector de e-mail nunca rodam em `npm test`. O contrato é JSON validado por schema;

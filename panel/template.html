@@ -1,0 +1,95 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Radar de oportunidades</title><style>
+:root{--ink:#14253b;--muted:#5d6c7e;--blue:#155ab6;--line:#dce3e9;--cyan:#00b7e5}
+*{box-sizing:border-box}body{margin:0;font:15px/1.55 "Segoe UI",Arial,sans-serif;background:#f4f5f6;color:var(--ink)}
+header{background:#0b1c33;color:white;padding:32px max(28px,calc((100vw - 1120px)/2));border-bottom:3px solid var(--cyan)}
+.masthead{display:flex;align-items:center;gap:22px}.avatar{width:84px;height:84px;border-radius:50%;border:2px solid var(--cyan);background:#102a48;color:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;flex:none}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:2px;color:var(--cyan);margin:0 0 5px;text-transform:uppercase}h1{font-size:32px;letter-spacing:-.9px;font-weight:650;margin:0}.specialty{font-size:14px;color:#c2cedd;margin:7px 0 0}
+.edition{margin-left:auto;text-align:right;font-size:11px;color:#95a9c0;white-space:nowrap}.edition strong{font-weight:500;color:#dce7f4}
+main{max-width:1176px;padding:28px;margin:auto}.stats{display:flex;gap:0;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:0 0 22px}.stats div{padding:0 40px 0 0;color:var(--muted);font-size:12px}.stats strong{display:block;font-size:30px;line-height:1.2;color:var(--ink);font-weight:650}
+.notice{border-left:2px solid #a7b7c7;color:var(--muted);padding:0 0 0 14px;margin:22px 0;font-size:12px;max-width:1000px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;padding:18px;background:white;border:1px solid var(--line);border-radius:5px;margin:16px 0 22px}
+input,select,button{font:inherit;font-size:12px;padding:9px 10px;border:1px solid #d3dce5;border-radius:4px;background:white}
+.filters input{flex-basis:100%;padding:12px;font-size:14px;background:#f7f9fb}.filters select{flex:1;min-width:145px}button{cursor:pointer;color:var(--muted)}
+#count{font-size:12px;color:var(--muted);margin:0 0 12px;font-weight:600}
+.grid{background:white;border:1px solid var(--line);border-radius:5px;overflow:hidden}.card{border-bottom:1px solid var(--line);padding:26px 30px}.card:last-child{border-bottom:0}
+.card .badges{float:right;max-width:42%;text-align:right}.company{font-size:12px;letter-spacing:.7px;font-weight:700;text-transform:uppercase;margin-bottom:5px;color:#53708c}.card h2{font-size:23px;letter-spacing:-.5px;font-weight:650;max-width:75%;line-height:1.25;margin:0 0 10px}
+.card>p{max-width:100ch;margin:7px 0;font-size:14px}.meta{font-size:12px!important;color:var(--muted)}
+.badge{border-radius:3px;font-size:10px;padding:4px 7px;font-weight:600;margin:0 0 3px 3px;background:#eef1f5;color:#63738a;display:inline-block}.badge.alta{background:#e0f1ec;color:#22614e}.badge.boa{background:#e5eef8;color:#24558c}.badge.condicional{background:#fff0d8;color:#83580a}.badge.incompativel{background:#ffe9e7;color:#922e2e}
+details{font-size:12px;padding:8px 0}summary{cursor:pointer;font-weight:500;color:#355777}details[open]{border-top:1px solid #e6ebf0;margin-top:10px}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}.links a{display:inline-block;border:1px solid #b8c9df;border-radius:4px;padding:8px 12px;text-decoration:none;color:var(--blue);font-size:13px;font-weight:600}
+.card.applied-card{background:#f8fcfa;border-left:3px solid #408871}.card.discarded-card{opacity:.6}
+.application-control{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:18px}.application-control label{font-size:12px;display:flex;align-items:center;gap:8px}.application-control input[type=date]{width:140px}.application-feedback{font-size:11px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left}.table-wrap{overflow:auto}
+.empty{padding:32px;text-align:center;font-size:14px}footer{margin:26px 0;color:var(--muted);font-size:11px;padding:15px 0;border-top:1px solid var(--line)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #00a4d7;outline-offset:3px}
+@media(max-width:640px){header{padding:24px 18px}.masthead{gap:12px}.avatar{width:58px;height:58px;font-size:20px}h1{font-size:24px}.edition{display:none}main{padding:18px}.card{padding:22px 18px}.card .badges{float:none;max-width:100%;text-align:left;margin-bottom:10px}.card h2{max-width:100%;font-size:21px}}
+</style></head><body>
+<header><div class="masthead"><div class="avatar" id="avatar" aria-hidden="true"></div><div><p class="eyebrow" id="nome"></p><h1>Radar de oportunidades</h1><p class="specialty" id="especialidade"></p></div><span class="edition"><span id="regiao"></span><br><strong>Atualizado em __STAMP__</strong></span></div></header>
+<main>
+<div class="stats" id="stats"></div><div class="notice" id="notice"></div>
+<div class="filters"><input id="search" aria-label="Pesquisar vagas" placeholder="Empresa, responsabilidades ou tecnologia">
+<select id="fit" aria-label="Filtrar aderência"><option value="">Todas as aderências</option><option value="alta">Alta aderência</option><option value="boa">Boa aderência</option><option value="condicional">Condicional</option><option value="incompativel">Incompatível</option></select>
+<select id="mode" aria-label="Filtrar modalidade"><option value="">Todas as modalidades</option><option value="remot">Remoto</option><option value="hibr">Híbrido</option><option value="presencial">Presencial</option></select>
+<select id="contract" aria-label="Filtrar regime"><option value="">Todos os regimes</option><option value="CLT">CLT</option><option value="PJ">PJ</option><option value="pendente">Regime pendente</option></select>
+<select id="portal" aria-label="Filtrar portal de candidatura"><option value="">Todos os portais</option></select>
+<select id="applied" aria-label="Filtrar candidatura"><option value="">Todas as candidaturas</option><option value="sim">Já me candidatei</option><option value="nao">Ainda não me candidatei</option></select>
+<select id="discard" aria-label="Filtrar descarte"><option value="nao">Sem descartadas</option><option value="sim">Somente descartadas</option><option value="todas">Todas, incluindo descartadas</option></select>
+<select id="scope" aria-label="Filtrar histórico"><option value="novas">Novas oportunidades</option><option value="todas">Todas, incluindo histórico</option><option value="historico">Somente histórico</option></select>
+<select id="status" aria-label="Filtrar situação"><option value="ativas">Ativas e sem incompatibilidade</option><option value="pendentes">Disponibilidade pendente</option><option value="encerradas">Encerradas</option><option value="todas">Todos os anúncios avaliados</option></select>
+<button id="clear" type="button">Limpar filtros</button></div>
+<p class="meta" id="count" role="status"></p><div id="cards" class="grid"></div>
+<details style="margin-top:25px"><summary>Histórico de candidaturas preservado</summary><div class="table-wrap"><table><thead><tr><th>Empresa</th><th>Vaga</th><th>Status anterior</th><th>Link</th></tr></thead><tbody id="history"></tbody></table></div></details>
+<details style="margin-top:15px"><summary>Cobertura das fontes e falhas</summary><div class="table-wrap"><table><thead><tr><th>Fonte</th><th>Consulta</th><th>Resultados</th><th>Situação / limite</th></tr></thead><tbody id="coverage"></tbody></table></div></details>
+<footer>Aderência não é probabilidade de contratação. Salários não publicados permanecem pendentes. Notas de empresas são retratos datados. Nenhuma candidatura ou mensagem é enviada por este painel.</footer>
+</main>
+<script>
+const DATA=__DATA__;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const fitLabel={alta:'Alta aderência',boa:'Boa aderência',condicional:'Condicional',incompativel:'Incompatível'};
+const link=(u,text)=>/^https?:\/\//.test(u||'')?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(text)}</a>`:'';
+const relLink=(u,text)=>/^curriculos\/[^\\%?#:]+\.pdf$/.test(u||'')&&!u.split('/').includes('..')?`<a href="/${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(text)}</a>`:'';
+const salary=v=>v==null?'Salário não divulgado':typeof v==='number'?'R$ '+v.toLocaleString('pt-BR')+'/mês':esc(v);
+const perfil=DATA.perfil||{};
+document.getElementById('nome').textContent=perfil.nome||'';
+document.getElementById('avatar').textContent=(perfil.nome||'?').split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
+document.getElementById('especialidade').textContent=perfil.especialidade||'';
+document.getElementById('regiao').textContent=perfil.regiao||'';
+document.getElementById('notice').textContent=(perfil.aviso||'')+' '+DATA.queue+' anúncios de metadados aguardam leitura e validação; não são apresentados como vagas aderentes.';
+const ids=['search','fit','mode','contract','portal','applied','discard','scope','status'];
+const portalSelect=document.getElementById('portal');
+[...new Set(DATA.vagas.map(j=>j.portal_candidatura||'Pendente'))].sort((a,b)=>a.localeCompare(b,'pt-BR')).forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;portalSelect.append(o);});
+document.getElementById('stats').innerHTML=[['Avaliadas',DATA.vagas.length],['Alta aderência',DATA.vagas.filter(j=>j.aderencia==='alta').length],['Histórico',DATA.historico.length]].map(([t,n])=>`<div><strong>${n}</strong>${t}</div>`).join('');
+const markers=new Map();
+const api=window.PAINEL_API||null;
+const marked=j=>{const m=markers.get(j.id);return m?m.aplicada:Boolean(j.candidatura_usuario&&j.candidatura_usuario.aplicada);};
+const discarded=j=>{const m=markers.get(j.id);return m?m.descartada:Boolean(j.descarte_usuario&&j.descarte_usuario.descartada);};
+const materialLinks=j=>(perfil.pdfs_base||[]).map(p=>relLink(p.href,p.texto)).join('');
+function card(j){const done=marked(j),gone=discarded(j);
+return `<article class="card${done?' applied-card':''}${gone?' discarded-card':''}" data-vaga-id="${esc(j.id)}"><div class="badges"><span class="badge ${esc(j.aderencia)}">${esc(fitLabel[j.aderencia]||j.aderencia||'')}</span> <span class="badge">${esc(j.url_status)}</span> <span class="badge">Candidatura: ${esc(j.portal_candidatura||'Pendente')}</span>${j.historico?' <span class="badge">Histórico</span>':''}${gone?' <span class="badge">Descartada</span>':''}</div><div class="company">${esc(j.empresa)}</div><h2>${esc(j.cargo)}</h2><p class="meta">${esc(j.modalidade)} · ${esc(j.local)} · ${esc(j.regime||'Regime pendente')} · Condições: ${esc((j.condicoes&&j.condicoes.situacao)||'pendente')}</p><p><strong>${salary(j.salario)}</strong></p><p>${esc(j.descricao)}</p><p class="meta"><strong>Por que considerar:</strong> ${esc((j.motivos||[]).join('; '))}</p><details><summary>Requisitos, lacunas e condições</summary><p>${esc((j.lacunas||[]).join('; ')||'Sem lacuna obrigatória identificada')}</p><p>${esc([...(j.pendencias||[]),...((j.condicoes&&j.condicoes.motivos)||[])].join('; '))}</p><ul>${(j.requisitos||[]).map(r=>`<li>${esc(r.requisito)}: <strong>${esc(r.avaliacao)}</strong> (${esc(r.tipo)})</li>`).join('')}</ul></details><div class="links">${link(j.url,'Abrir vaga')}${materialLinks(j)}</div><div class="application-control"><label><input type="checkbox" class="applied-box" ${done?'checked':''}> Já me candidatei</label><label class="date-label">Data <input type="date" class="applied-date" value="${esc((markers.get(j.id)&&markers.get(j.id).data)||(j.candidatura_usuario&&j.candidatura_usuario.data)||'')}"></label><button type="button" class="discard-btn">${gone?'Restaurar vaga':'Descartar vaga'}</button><span class="application-feedback" role="status"></span></div><p class="meta">${esc(j.status)} · Consultada em ${esc(j.consultado_em)}</p></article>`;}
+function render(){const v=Object.fromEntries(ids.map(id=>[id,document.getElementById(id).value]));
+const jobs=DATA.vagas.filter(j=>(v.scope==='todas'||(v.scope==='historico'?j.historico:!j.historico))&&(v.status==='todas'||(v.status==='ativas'?j.url_status==='aberta'&&j.aderencia!=='incompativel':v.status==='encerradas'?j.url_status==='encerrada':j.url_status!=='aberta'&&j.url_status!=='encerrada'))&&(!v.portal||(j.portal_candidatura||'Pendente')===v.portal)&&(!v.fit||j.aderencia===v.fit)&&(!v.mode||norm(j.modalidade).includes(v.mode))&&(!v.contract||(v.contract==='pendente'?!['CLT','PJ'].includes(j.regime):j.regime===v.contract))&&(!v.applied||(v.applied==='sim')===marked(j))&&(v.discard==='todas'||(v.discard==='sim')===discarded(j))&&(!v.search||norm([j.empresa,j.cargo,j.descricao,...(j.motivos||[]),...(j.lacunas||[])].join(' ')).includes(norm(v.search))));
+document.getElementById('count').textContent=`${jobs.length} vagas exibidas`;
+document.getElementById('cards').innerHTML=jobs.map(card).join('')||'<p class="empty">Nenhuma vaga com esses filtros.</p>';}
+async function send(route,body,feedback){
+if(!api){feedback.textContent='Abra o painel pelo servidor local para salvar.';return null;}
+try{const r=await fetch('/api/'+route,{method:'POST',headers:{'Content-Type':'application/json','X-Painel-Token':api.token},body:JSON.stringify(body)});const out=await r.json();
+if(r.status===409){feedback.textContent=out.erro||'Gravação desligada.';return null;}
+if(!r.ok){feedback.textContent=out.erro||'Não foi possível salvar.';return null;}
+markers.set(out.id,out);feedback.textContent='Salvo.';return out;}catch(e){feedback.textContent='Servidor local indisponível.';return null;}}
+document.getElementById('cards').addEventListener('change',async e=>{
+const box=e.target.closest('.applied-box'),date=e.target.closest('.applied-date');if(!box&&!date)return;
+const el=e.target.closest('.card'),feedback=el.querySelector('.application-feedback'),input=el.querySelector('.applied-box'),when=el.querySelector('.applied-date');
+if(input.checked&&!when.value){feedback.textContent='Informe a data da candidatura.';return;}
+const out=await send('candidaturas',{id:el.dataset.vagaId,aplicada:input.checked,...(input.checked?{data:when.value}:{})},feedback);
+if(out)render();else input.checked=marked(DATA.vagas.find(x=>x.id===el.dataset.vagaId));});
+document.getElementById('cards').addEventListener('click',async e=>{
+const btn=e.target.closest('.discard-btn');if(!btn)return;const el=btn.closest('.card'),feedback=el.querySelector('.application-feedback');
+const j=DATA.vagas.find(x=>x.id===el.dataset.vagaId);const out=await send('descarte',{id:j.id,descartada:!discarded(j)},feedback);if(out)render();});
+ids.forEach(id=>document.getElementById(id).addEventListener(id==='search'?'input':'change',render));
+document.getElementById('clear').onclick=()=>{ids.forEach(id=>document.getElementById(id).value=id==='scope'?'novas':id==='status'?'ativas':id==='discard'?'nao':'');render();};
+document.getElementById('history').innerHTML=DATA.historico.map(j=>`<tr><td>${esc(j.empresa)}</td><td>${esc(j.cargo)}</td><td>${esc(j.status)}</td><td>${link(j.url,'Vaga')}</td></tr>`).join('');
+document.getElementById('coverage').innerHTML=DATA.coverage.map(c=>`<tr><td>${esc(c.fonte)}</td><td>${esc(c.consulta)}</td><td>${esc(c.resultados??'—')}</td><td>${esc(c.status||c.limite||'Consulta manual')}</td></tr>`).join('');
+if(api){fetch('/api/candidaturas',{headers:{'X-Painel-Token':api.token}}).then(r=>r.ok?r.json():null).then(d=>{if(d)d.vagas.forEach(m=>markers.set(m.id,m));render();}).catch(()=>{});}
+render();
+</script></body></html>

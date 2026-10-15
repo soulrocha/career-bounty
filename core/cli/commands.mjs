@@ -5,6 +5,7 @@ import { planApply } from '../apply/plan.mjs';
 import { ensureSkeleton, resolveDataRoot } from '../store/dataRoot.mjs';
 import { formatFindings, scanMessageFile, scanStaged, scanTracked } from '../privacy/scan.mjs';
 import { buildDenylist, loadPrivacyContext } from '../privacy/context.mjs';
+import { auditTemplateFile } from '../privacy/auditTemplate.mjs';
 
 async function privacy(rest, { parseFlags }) {
   const [sub, ...flags] = rest;
@@ -40,6 +41,15 @@ export const commands = {
     return { result: { dataRoot, created, ok: true } };
   },
   privacy,
+  async 'audit-template'(rest, { parseFlags }) {
+    const [file, ...flags] = rest;
+    if (!file || file.startsWith('--')) throw new Error('Uso: audit-template <arquivo>');
+    parseFlags(flags, { allowed: [] });
+    const report = await auditTemplateFile(file, await loadPrivacyContext());
+    const lines = [`verificado: ${report.verificados.join(', ')}`, ...report.avisos.map(aviso => `aviso: ${aviso}`),
+      ...report.achados.map(a => `bloqueado: linha ${a.linha}${a.coluna ? `, coluna ${a.coluna}` : ''} (${a.tipo})`), report.ok ? 'ok' : 'falha'];
+    return { result: report, exitCode: report.ok ? 0 : 1, text: lines.join(String.fromCharCode(10)) };
+  },
   async plugin(rest, { parseFlags }) {
     if (rest[0] !== 'validate') throw new Error(`Subcomando plugin desconhecido: ${rest[0] ?? ''}`.trim());
     parseFlags(rest.slice(1), { allowed: [] });
