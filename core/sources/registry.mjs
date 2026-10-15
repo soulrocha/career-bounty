@@ -3,11 +3,13 @@ import { createFake } from './fake.mjs';
 import { createGupy } from './gupy.mjs';
 import { createCareerOps } from './careerOps.mjs';
 import { createFreehire } from './freehire.mjs';
+import { createJobSpy } from './jobspy.mjs';
 
 const FACTORIES = {
   fake: settings => createFake(settings.fontes.fake?.vagas ?? []),
   gupy: (settings, deps) => createGupy(settings.fontes.gupy ?? {}, deps),
   freehire: (settings, deps) => createFreehire(settings.fontes.freehire ?? {}, deps),
+  jobspy: settings => createJobSpy(settings.fontes.jobspy ?? {}),
   careerops: settings => createCareerOps(settings.fontes.careerops ?? {}),
 };
 
