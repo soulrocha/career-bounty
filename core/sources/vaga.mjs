@@ -2,7 +2,7 @@
 import { createHash } from 'node:crypto';
 
 export const CAMPOS_VAGA = ['fonte', 'portal', 'requisicao_id', 'empresa', 'cargo', 'local', 'modalidade', 'regime',
-  'salario_min', 'salario_max', 'url', 'publicado_em', 'descricao', 'descricao_hash'];
+  'salario_min', 'salario_max', 'url', 'publicado_em', 'descricao', 'descricao_hash', 'aparicao'];
 
 const clean = value => (typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : value);
 
@@ -25,6 +25,7 @@ export function makeVaga(raw) {
     salario_min: numberOrNull(raw.salario_min), salario_max: numberOrNull(raw.salario_max),
     url: textOrNull(raw.url) ?? '', publicado_em: textOrNull(raw.publicado_em), descricao,
     descricao_hash: descricaoHash(descricao),
+    ...(raw.aparicao === true ? { aparicao: true } : {}),
   };
 }
 
