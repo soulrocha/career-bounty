@@ -16,6 +16,7 @@ export async function tempDir(t, prefix = 'career-bounty-') {
 export function run(args, { dataRoot, env = {}, cwd, input } = {}) {
   const base = { CAREER_BOUNTY_REPO_ROOT: tmpdir(), ...process.env, ...env };
   delete base.DATA_ROOT;
+  delete base.IDENTITY_FILE;
   if (dataRoot) base.DATA_ROOT = dataRoot;
   const result = spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8', env: base, cwd, input });
   let json;

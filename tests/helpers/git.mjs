@@ -3,8 +3,17 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { repoRoot, tempDir } from './cli.mjs';
 
+// Variáveis que mudam o comportamento da privacidade nunca vazam do ambiente do desenvolvedor para os testes.
+export const ISOLATED_ENV = ['IDENTITY_FILE', 'DATA_ROOT'];
+
+export function cleanEnv(extra = {}) {
+  const base = { ...process.env };
+  for (const name of ISOLATED_ENV) delete base[name];
+  return { ...base, ...extra };
+}
+
 export function git(cwd, args, { env = {}, input } = {}) {
-  return spawnSync('git', args, { cwd, encoding: 'utf8', env: { ...process.env, ...env }, input });
+  return spawnSync('git', args, { cwd, encoding: 'utf8', env: cleanEnv(env), input });
 }
 
 // Repositório temporário com os hooks do projeto ligados.
