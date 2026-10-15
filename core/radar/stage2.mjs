@@ -25,13 +25,16 @@ export async function runStage2({ dataRoot, runner, afirmacoes, brief, now = new
   const primeiro = calcularDelta(await projetar(), versoes);
   if (primeiro.triar.length) {
     const lote = primeiro.triar.map(vaga => ({ id: vaga.id, vaga: { cargo: vaga.cargo, empresa: vaga.empresa, local: vaga.local, modalidade: vaga.modalidade, regime: vaga.regime, descricao: vaga.descricao_completa ?? '', descricao_hash: vaga.descricao_hash } }));
-    const { decisoes, doCache } = await triar({ runner, dataRoot, vagas: lote, brief });
+    // Cada lote vira evento assim que fica pronto; a rodada interrompida no lote N mantém os anteriores.
+    const gravar = async decisoes => {
+      await appendEvents(dataRoot, [...decisoes].map(([id, d]) => {
+        const vaga = primeiro.triar.find(item => item.id === id);
+        return evento('vaga.triada', id, `${vaga.descricao_hash.slice(0, 12)}:${triador.versaoPrompt}`, ts, { decisao: d.decisao, motivo: d.motivo, descricao_hash: vaga.descricao_hash, versaoPrompt: triador.versaoPrompt });
+      }), opcoes);
+      resultado.triadas += decisoes.size;
+    };
+    const { doCache } = await triar({ runner, dataRoot, vagas: lote, brief, aoConcluirLote: gravar });
     resultado.doCache = doCache;
-    await appendEvents(dataRoot, [...decisoes].map(([id, d]) => {
-      const vaga = primeiro.triar.find(item => item.id === id);
-      return evento('vaga.triada', id, `${vaga.descricao_hash.slice(0, 12)}:${triador.versaoPrompt}`, ts, { decisao: d.decisao, motivo: d.motivo, descricao_hash: vaga.descricao_hash, versaoPrompt: triador.versaoPrompt });
-    }), opcoes);
-    resultado.triadas = decisoes.size;
   }
 
   const { avaliar: aAvaliar } = calcularDelta(await projetar(), versoes);

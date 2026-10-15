@@ -5,6 +5,9 @@ import { atomicJson } from '../store/atomicWrite.mjs';
 import { withLock } from '../store/lock.mjs';
 import { localDay } from '../store/schema.mjs';
 
+// Relógio que não é o real (--now, testes) usa arquivo próprio: simular outro dia nunca apaga nem gasta o orçamento verdadeiro.
+const TOLERANCIA_MS = 60 * 60 * 1000;
+const nomeDe = (nome, now) => (Math.abs(now.getTime() - Date.now()) <= TOLERANCIA_MS ? nome : `${nome}-simulado`);
 const file = (dataRoot, nome) => path.join(dataRoot, 'state', `orcamento-${nome}.json`);
 
 async function read(dataRoot, nome, dia) {
@@ -16,7 +19,8 @@ async function read(dataRoot, nome, dia) {
 }
 
 // `limite` é um teto rígido: gastar além dele devolve false sem efeito colateral.
-export function createBudget({ dataRoot, nome, limite, now = new Date() }) {
+export function createBudget({ dataRoot, nome: nomeBase, limite, now = new Date() }) {
+  const nome = nomeDe(nomeBase, now);
   const dia = localDay(now);
   const lock = path.join(dataRoot, 'state', `orcamento-${nome}.lock`);
   const mutate = update => withLock(lock, { timeoutMs: 5000 }, async () => {

@@ -19,7 +19,7 @@ const ctx = { janela: { inicio: '2026-10-08', fim: '2026-10-15' }, config: {}, n
 test('collect --dry-run --json com fonte fake devolve a vaga e não escreve eventos', async t => {
   const dataRoot = await tempDir(t);
   await configurar(dataRoot, [vaga()]);
-  const result = run(['collect', '--dry-run', '--json', '--source', 'fake', '--now', '2026-10-15T21:00:00Z'], { dataRoot });
+  const result = run(['collect', '--dry-run', '--json', '--source', 'fake', '--teste', '--now', '2026-10-15T21:00:00Z'], { dataRoot });
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.equal(result.json.dry_run, true);
   assert.equal(result.json.coletadas, 1);
@@ -32,12 +32,12 @@ test('collect --dry-run --json com fonte fake devolve a vaga e não escreve even
 test('collect sem --dry-run grava vaga.descoberta e a projeção mostra a vaga', async t => {
   const dataRoot = await tempDir(t);
   await configurar(dataRoot, [vaga()]);
-  const collected = run(['collect', '--json', '--source', 'fake', '--now', '2026-10-15T21:00:00Z'], { dataRoot });
+  const collected = run(['collect', '--json', '--source', 'fake', '--teste', '--now', '2026-10-15T21:00:00Z'], { dataRoot });
   assert.equal(collected.status, 0, collected.stdout + collected.stderr);
   assert.equal(collected.json.eventos_gravados, 1);
   const projected = run(['project', '--json'], { dataRoot });
   assert.equal(projected.json.vagas, 1);
-  const again = run(['collect', '--json', '--source', 'fake', '--now', '2026-10-15T21:00:00Z'], { dataRoot });
+  const again = run(['collect', '--json', '--source', 'fake', '--teste', '--now', '2026-10-15T21:00:00Z'], { dataRoot });
   assert.equal(again.json.eventos_gravados, 0, 'a mesma descoberta não duplica');
   assert.equal(run(['project', '--json'], { dataRoot }).json.vagas, 1);
 });
@@ -71,8 +71,8 @@ test('timeout por fonte encerra só aquela fonte', async () => {
 test('saída de collect --json tem schema estável', async t => {
   const dataRoot = await tempDir(t);
   await configurar(dataRoot, [vaga()]);
-  const { json } = run(['collect', '--dry-run', '--json', '--source', 'fake', '--now', '2026-10-15T21:00:00Z'], { dataRoot });
-  assert.deepEqual(Object.keys(json).sort(), ['coletadas', 'delta', 'dry_run', 'eventos_gravados', 'fontes', 'janela', 'novas']);
+  const { json } = run(['collect', '--dry-run', '--json', '--source', 'fake', '--teste', '--now', '2026-10-15T21:00:00Z'], { dataRoot });
+  assert.deepEqual(Object.keys(json).sort(), ['coletadas', 'delta', 'dry_run', 'eventos_gravados', 'fontes', 'janela', 'novas', 'pendentes_conferencia']);
   assert.deepEqual(Object.keys(json.fontes[0]).sort(), ['estado', 'id', 'vagas']);
   assert.deepEqual(json.janela, { inicio: '2026-10-08', fim: '2026-10-15' });
 });
@@ -88,4 +88,12 @@ test('fonte desconhecida em --source falha com mensagem clara', async t => {
   const result = run(['collect', '--dry-run', '--json', '--source', 'inexistente'], { dataRoot });
   assert.equal(result.status, 2);
   assert.match(result.json.error, /Fonte desconhecida/);
+});
+
+test('collect informa quantas vagas ficaram pendentes de conferência em vez de novas', async t => {
+  const dataRoot = await tempDir(t);
+  await configurar(dataRoot, [vaga()]);
+  const result = run(['collect', '--dry-run', '--json', '--source', 'fake', '--teste', '--now', '2026-10-15T21:00:00Z'], { dataRoot });
+  assert.equal(result.json.pendentes_conferencia, 0);
+  assert.equal(result.json.novas, 1);
 });

@@ -63,3 +63,10 @@ test('registrarRodada grava o evento e o comando digest o lê', async t => {
   assert.equal(r.json.vazio, true);
   assert.match(r.json.texto, /Sem novidades/);
 });
+
+test('rodada interrompida por falha de estágio conta como falha: não avança o contador de rodadas sem altas', () => {
+  const sem = ts => ({ ts, fontes: [{ id: 'gupy', estado: 'ok', vagas: 1 }], novas_ids: [], avaliadas_ids: [] });
+  const interrompida = { ts: '2026-10-14T21:00:00.000Z', fontes: [], novas_ids: [], avaliadas_ids: [], falha: { estagio: 2, erro: 'queda' } };
+  assert.equal(contarRodadasSemAltas([sem('2026-10-13T21:00:00.000Z'), interrompida, sem('2026-10-15T21:00:00.000Z')], []), 2);
+  assert.equal(contarRodadasSemAltas([interrompida], []), 0);
+});

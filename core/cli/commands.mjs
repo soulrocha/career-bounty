@@ -30,6 +30,15 @@ import { projectEvents } from '../store/project.mjs';
 import { mail } from './mail.mjs';
 import { report } from './report.mjs';
 
+// Relógio simulado só com --teste: sem a flag, --now é recusado para não gravar marcador, rodada ou orçamento num dia que não é o real.
+function relogio(values) {
+  if (!values['--now']) return new Date();
+  if (!values['--teste']) throw new Error('--now só é aceito junto com --teste (relógio simulado, para testes).');
+  const now = new Date(values['--now']);
+  if (Number.isNaN(now.getTime())) throw new Error('Opção inválida: --now deve ser uma data ISO.');
+  return now;
+}
+
 async function privacy(rest, { parseFlags }) {
   const [sub, ...flags] = rest;
   if (sub === 'build-denylist') {
@@ -82,13 +91,12 @@ export const commands = {
     return { result, exitCode: result.ok ? 0 : 1, text: result.ok ? 'ok' : result.errors.join('\n') };
   },
   async collect(rest, { parseFlags }) {
-    const values = parseFlags(rest, { allowed: ['--dry-run', '--source', '--now'], withValue: ['--source', '--now'] });
-    const now = values['--now'] ? new Date(values['--now']) : new Date();
-    if (Number.isNaN(now.getTime())) throw new Error('Opção inválida: --now deve ser uma data ISO.');
+    const values = parseFlags(rest, { allowed: ['--dry-run', '--source', '--now', '--teste'], withValue: ['--source', '--now'] });
+    const now = relogio(values);
     const only = values['--source'] ? values['--source'].split(',').map(id => id.trim()).filter(Boolean) : undefined;
     const { novas_ids, ...result } = await collect({ settings: await loadSettings(), only, dryRun: Boolean(values['--dry-run']), now });
     const falhas = result.fontes.filter(fonte => fonte.estado === 'erro').length;
-    const linhas = [`coletadas: ${result.coletadas}; novas: ${result.novas}; eventos gravados: ${result.eventos_gravados}`,
+    const linhas = [`coletadas: ${result.coletadas}; novas: ${result.novas}; pendentes de conferência: ${result.pendentes_conferencia}; eventos gravados: ${result.eventos_gravados}`,
       ...result.fontes.map(fonte => `${fonte.id}: ${fonte.estado}${fonte.erro ? ` (${fonte.erro})` : ` (${fonte.vagas})`}`)];
     return { result, text: linhas.join(String.fromCharCode(10)), exitCode: falhas && falhas === result.fontes.length ? 1 : 0 };
   },
@@ -102,9 +110,8 @@ export const commands = {
     return { result, text: result.texto };
   },
   async 'daily-run'(rest, { parseFlags }) {
-    const values = parseFlags(rest, { allowed: ['--dry-run', '--now', '--host'], withValue: ['--now', '--host'] });
-    const now = values['--now'] ? new Date(values['--now']) : new Date();
-    if (Number.isNaN(now.getTime())) throw new Error('Opção inválida: --now deve ser uma data ISO.');
+    const values = parseFlags(rest, { allowed: ['--dry-run', '--now', '--host', '--teste'], withValue: ['--now', '--host'] });
+    const now = relogio(values);
     const settings = await loadSettings();
     const host = values['--host'] ?? hostname();
     const kbRoot = path.join(settings.dataRoot, 'kb');

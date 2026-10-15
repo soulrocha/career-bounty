@@ -13,16 +13,35 @@ export function safeHeaders(headers = {}) {
 }
 
 // Repete 429 e 5xx com espera crescente e limitada; depois vira SourceError.
-export async function getText(url, { fetch: doFetch = globalThis.fetch, headers, retries = 2, backoffMs = 500, maxBackoffMs = 4000, timeoutMs = 20000, signal, sleep = realSleep, retryOn = status => status === 429 || status >= 500 } = {}) {
+// Redirect é manual: cada salto confere o host contra a allowlist (`hosts`, por padrão só o host do pedido), respeita `maxSaltos`
+// e gasta uma unidade do orçamento da fonte (`gastar`) antes de ser seguido. Rebaixar de https para http é recusado.
+const REDIRECTS = new Set([301, 302, 303, 307, 308]);
+
+export async function getText(url, { fetch: doFetch = globalThis.fetch, hosts, maxSaltos = 3, gastar, headers, retries = 2, backoffMs = 500, maxBackoffMs = 4000, timeoutMs = 20000, signal, sleep = realSleep, retryOn = status => status === 429 || status >= 500 } = {}) {
   const h = safeHeaders(headers);
   let espera = backoffMs;
+  let atual = new URL(url);
+  const permitidos = new Set((hosts ?? [atual.host]).map(host => host.toLowerCase()));
+  let saltos = 0;
   for (let tentativa = 0; ; tentativa++) {
     let response;
     try {
-      response = await doFetch(url, { headers: h, redirect: 'follow', signal: signal ?? AbortSignal.timeout(timeoutMs) });
+      response = await doFetch(atual.href, { headers: h, redirect: 'manual', signal: signal ?? AbortSignal.timeout(timeoutMs) });
     } catch (error) {
       if (signal?.aborted) throw new SourceError('timeout', 'requisição cancelada por tempo esgotado');
       throw new SourceError('rede', `falha de rede: ${error.cause?.code ?? error.message}`);
+    }
+    if (REDIRECTS.has(response.status) && response.headers.get('location')) {
+      let destino;
+      try { destino = new URL(response.headers.get('location'), atual); } catch { throw new SourceError('redirect_bloqueado', 'redirect com endereço inválido'); }
+      if (!permitidos.has(destino.host.toLowerCase())) throw new SourceError('redirect_bloqueado', `redirect para host fora da allowlist (${destino.hostname})`);
+      if (atual.protocol === 'https:' && destino.protocol !== 'https:') throw new SourceError('redirect_bloqueado', 'redirect rebaixa HTTPS para HTTP');
+      if (saltos >= maxSaltos) throw new SourceError('redirect_bloqueado', `mais de ${maxSaltos} saltos de redirect`);
+      if (gastar && !(await gastar())) throw new SourceError('limite', 'orçamento da fonte esgotado no redirect');
+      saltos += 1;
+      atual = destino;
+      tentativa -= 1;
+      continue;
     }
     if (retryOn(response.status)) {
       if (tentativa >= retries) throw new SourceError(response.status === 429 ? 'limite' : 'http', `HTTP ${response.status}`);

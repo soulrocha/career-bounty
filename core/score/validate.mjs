@@ -6,7 +6,13 @@ export const AVALIACOES = ['atendido', 'parcial', 'lacuna'];
 export const TIPOS = ['obrigatorio', 'desejavel'];
 export const ADERENCIAS = ['alta', 'media', 'baixa'];
 const PROVA = new Set(['verificado', 'entregue']);
-const CRITICO = /fluen|ingles (avancado|fluente)|english|certifica|\bpmp\b|\bcsm\b|\d+\s*\+?\s*anos.{0,40}(gestao|lideranca|gerencia)/;
+// Requisito crítico não se infere: sem prova vira lacuna. Vale por categoria (idioma, tempo de experiência, certificação e registro profissional), sem lista de termos pontuais.
+const CRITICOS = [
+  /\b(fluen\w*|bilingue|proficien\w*|idiomas?|ingles|english|espanhol|spanish|frances|french|alemao|german|italiano|mandarim)\b/,
+  /\b\d+\s*\+?\s*(a\s*\d+\s*)?(anos?|years?)\b|\banos de experiencia\b/,
+  /certifica\w*|\bcertified\b|\b(pmp|csm|psm|cissp|cism|itil|cfa|cbap|togaf|prince2)\b|\bscrum master\b|\bhabilitacao\b|\bregistro (ativo )?(no|em|na)\b|\b(crea|crc|oab|crm|cro)\b/,
+];
+const critico = texto => CRITICOS.some(regra => regra.test(fold(texto)));
 
 const only = (objeto, permitidos, onde) => {
   const extra = Object.keys(objeto).find(key => !permitidos.includes(key));
@@ -53,8 +59,7 @@ export function refinarAvaliacao(json, niveis) {
     const novo = { ...item, afirmacoes: [...item.afirmacoes] };
     const comProva = novo.afirmacoes.some(id => PROVA.has(niveis.get(id)));
     if (novo.avaliacao === 'atendido' && !comProva) {
-      const critico = CRITICO.test(fold(novo.requisito));
-      novo.avaliacao = critico ? 'lacuna' : 'parcial';
+      novo.avaliacao = critico(novo.requisito) ? 'lacuna' : 'parcial';
       ajustes.push(`${novo.requisito}: atendido sem prova virou ${novo.avaliacao}`);
     }
     if (novo.afirmacoes.some(id => niveis.get(id) === 'relato')) novo.nao_verificado = true;
