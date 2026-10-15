@@ -5,6 +5,7 @@ import { atomicJson } from '../store/atomicWrite.mjs';
 import { localDay } from '../store/schema.mjs';
 import { registrarRodada } from '../score/digest.mjs';
 import { shouldRun } from './shouldRun.mjs';
+import { emSombra } from '../radar/collect.mjs';
 
 const stateFile = dataRoot => path.join(dataRoot, 'state', 'daily-run.json');
 
@@ -14,6 +15,8 @@ export async function readState(dataRoot) {
 }
 
 export async function dailyRun({ dataRoot, config = {}, host, now = new Date(), estagio1, estagio2, dryRun = false }) {
+  // Em sombra a coleta não grava; a rotina nem marca o dia nem registra rodada, para não gerar falha falsa.
+  if (await emSombra(dataRoot)) return dryRun ? { dry_run: true, executaria: false, motivo: 'modo_sombra', retomada: false } : { executou: false, motivo: 'modo_sombra' };
   const ultima = await readState(dataRoot);
   const decisao = shouldRun({ now, ultima, config, host });
   if (dryRun) return { dry_run: true, executaria: decisao.run, motivo: decisao.motivo, retomada: decisao.retomada === true };
