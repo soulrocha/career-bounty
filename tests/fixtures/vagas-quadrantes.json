@@ -1,0 +1,182 @@
+{
+  "vagas": [
+    {
+      "id": "vaga-sintetica-01",
+      "empresa": "Empresa 01",
+      "cargo": "Analista de Operações",
+      "aderencia": "alta",
+      "requisitos": [
+        {
+          "requisito": "Python avançado",
+          "tipo": "obrigatorio",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        },
+        {
+          "requisito": "Inglês fluente",
+          "tipo": "obrigatorio",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        },
+        {
+          "requisito": "Gestão de pessoas",
+          "tipo": "obrigatorio",
+          "avaliacao": "atendido",
+          "afirmacoes": [
+            "AF-103"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vaga-sintetica-02",
+      "empresa": "Empresa 02",
+      "cargo": "Analista de Operações",
+      "aderencia": "media",
+      "requisitos": [
+        {
+          "requisito": "Python avançado",
+          "tipo": "obrigatorio",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        },
+        {
+          "requisito": "SQL",
+          "tipo": "desejavel",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        }
+      ]
+    },
+    {
+      "id": "vaga-sintetica-03",
+      "empresa": "Empresa 03",
+      "cargo": "Analista de Operações",
+      "aderencia": "alta",
+      "requisitos": [
+        {
+          "requisito": "python avançado",
+          "tipo": "obrigatorio",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        },
+        {
+          "requisito": "Inglês fluente",
+          "tipo": "obrigatorio",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        }
+      ]
+    },
+    {
+      "id": "vaga-sintetica-04",
+      "empresa": "Empresa 04",
+      "cargo": "Analista de Operações",
+      "aderencia": "media",
+      "requisitos": [
+        {
+          "requisito": "Inglês fluente",
+          "tipo": "obrigatorio",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        },
+        {
+          "requisito": "Python avançado",
+          "tipo": "obrigatorio",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        }
+      ]
+    },
+    {
+      "id": "vaga-sintetica-05",
+      "empresa": "Empresa 05",
+      "cargo": "Analista de Operações",
+      "aderencia": "baixa",
+      "requisitos": [
+        {
+          "requisito": "Python avançado",
+          "tipo": "obrigatorio",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        },
+        {
+          "requisito": "Kubernetes",
+          "tipo": "obrigatorio",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        }
+      ]
+    },
+    {
+      "id": "vaga-sintetica-06",
+      "empresa": "Empresa 06",
+      "cargo": "Analista de Operações",
+      "aderencia": "baixa",
+      "requisitos": [
+        {
+          "requisito": "Kubernetes",
+          "tipo": "obrigatorio",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        }
+      ]
+    },
+    {
+      "id": "vaga-sintetica-07",
+      "empresa": "Empresa 07",
+      "cargo": "Analista de Operações",
+      "aderencia": "alta",
+      "requisitos": [
+        {
+          "requisito": "Kubernetes",
+          "tipo": "desejavel",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        }
+      ]
+    },
+    {
+      "id": "vaga-sintetica-08",
+      "empresa": "Empresa 08",
+      "cargo": "Analista de Operações",
+      "aderencia": "boa",
+      "requisitos": [
+        {
+          "requisito": "Liderança de squads",
+          "tipo": "desejavel",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        }
+      ]
+    },
+    {
+      "id": "vaga-sintetica-09",
+      "empresa": "Empresa 09",
+      "cargo": "Analista de Operações",
+      "aderencia": "media",
+      "requisitos": [
+        {
+          "requisito": "Liderança de squads",
+          "tipo": "desejavel",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        }
+      ]
+    },
+    {
+      "id": "vaga-sintetica-10",
+      "empresa": "Empresa 10",
+      "cargo": "Analista de Operações",
+      "aderencia": "incompativel",
+      "requisitos": [
+        {
+          "requisito": "Python avançado",
+          "tipo": "obrigatorio",
+          "avaliacao": "nao-atendido",
+          "afirmacoes": []
+        }
+      ]
+    }
+  ]
+}
