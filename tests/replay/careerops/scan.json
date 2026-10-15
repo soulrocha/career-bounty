@@ -1,0 +1,36 @@
+{
+  "jobs": [
+    {
+      "title": "Gerente de Engenharia",
+      "url": "https://empresa-alfa.gupy.io/jobs/1234567",
+      "company": "Empresa Alfa",
+      "location": "Remoto, Belo Horizonte, Minas Gerais",
+      "description": "Texto sintetico.",
+      "postedAt": 1791979200000,
+      "campo_novo": {
+        "x": 1
+      }
+    },
+    {
+      "title": "Gerente de Engenharia",
+      "url": "https://empresa-alfa.gupy.io/job/eyJqb2JJZCI6MTIzNDU2Nywic291cmNlIjoiZ3VweV9wb3J0YWwifQ==",
+      "company": "Empresa Alfa",
+      "location": "Remoto",
+      "description": "Texto sintetico.",
+      "postedAt": 1791979200000
+    },
+    {
+      "title": "Tech Lead",
+      "url": "https://boards.exemplo.test/empresa-beta/3f0a1c52-1111-4222-8333-444455556666",
+      "company": "Empresa Beta",
+      "location": "Hibrido, Sao Paulo, SP",
+      "description": "Outro texto.",
+      "postedAt": 1791806400000
+    },
+    {
+      "title": "",
+      "url": "https://x.exemplo.test/1",
+      "company": "Empresa Gama"
+    }
+  ]
+}
