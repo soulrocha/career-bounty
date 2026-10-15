@@ -112,3 +112,12 @@ test('PRIVACY lista o que nunca entra no repositório e onde ficam os dados', as
   for (const item of ['config.yml', 'identity.yml', 'denylist.txt', 'secrets/', 'DATA_ROOT', 'kb/', 'events/']) assert.ok(text.includes(item), item);
   assert.match(text, /nunca entra/i);
 });
+
+test('CI roda gitleaks com o .gitleaks.toml e o scan de privacidade em todos os arquivos', async () => {
+  const ci = await readFile(path.join(repoRoot, '.github/workflows/ci.yml'), 'utf8');
+  assert.match(ci, /gitleaks\/gitleaks-action@v2/);
+  assert.match(ci, /GITHUB_TOKEN:\s*\$\{\{\s*secrets\.GITHUB_TOKEN\s*\}\}/);
+  assert.match(ci, /GITLEAKS_CONFIG:\s*\.gitleaks\.toml/);
+  assert.match(ci, /fetch-depth:\s*0/);
+  assert.match(ci, /node bin\/career-bounty\.mjs privacy scan --all/);
+});
