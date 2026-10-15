@@ -95,11 +95,12 @@ test('config.mail: padrões seguros, validação e rejeição de domínio com ca
 
 test('CLI mail query --json monta a consulta sem chamar o Gmail', async t => {
   const dataRoot = await tempDir(t);
-  const r = run(['mail', 'query', '--now', '2026-10-14T15:00:00-03:00', '--json'], { dataRoot });
+  const r = run(['mail', 'query', '--now', '2026-10-14T15:00:00-03:00', '--teste', '--json'], { dataRoot });
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.json.after, '2026/10/07');
   assert.match(r.json.query, /from:\(/);
   assert.equal(r.json.limite, 50);
-  assert.equal(run(['mail', 'query', '--now', 'lixo', '--json'], { dataRoot }).status, 2);
+  assert.equal(run(['mail', 'query', '--now', 'lixo', '--teste', '--json'], { dataRoot }).status, 2);
+  assert.equal(run(['mail', 'query', '--now', '2026-10-14T15:00:00-03:00', '--json'], { dataRoot }).status, 2, '--now sem --teste');
   assert.equal(run(['mail', 'inexistente', '--json'], { dataRoot }).status, 2);
 });
