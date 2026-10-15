@@ -1,5 +1,11 @@
 // Subcomandos de `mail`: leitura de e-mail pelo conector Gmail (somente leitura) e reconciliação com o tracker.
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createRunner } from '../llm/runner.mjs';
+import { loadIdentityValues } from '../privacy/redact.mjs';
+import { sincronizarEmail } from '../mail/sync.mjs';
 import { loadSettings } from '../config.mjs';
 import { itensDoCorpus, LIMIARES, replayItens } from '../mail/replay.mjs';
 import { lerCursor } from '../mail/cursor.mjs';
@@ -29,6 +35,33 @@ export async function mail(rest, { parseFlags }) {
     const cursor = await lerCursor(settings.dataRoot, { now });
     const consulta = buildQuery({ mail: config, cursor, now });
     return { result: consulta, text: `${consulta.query}\n(limite ${consulta.limite}${consulta.avisos.length ? `; avisos: ${consulta.avisos.join('; ')}` : ''})` };
+  }
+  if (sub === 'sync') {
+    const values = parseFlags(flags, { allowed: ['--dry-run', '--salvar-em', '--janela-dias', '--so-portais', '--fase-b', '--now', '--teste'], withValue: ['--salvar-em', '--janela-dias', '--fase-b', '--now'] });
+    const now = agora(values);
+    const settings = await loadSettings();
+    const mailConfig = { ...settings.mail, ...(values['--so-portais'] ? { so_portais: true } : {}) };
+    for (const [flag, chave, max] of [['--janela-dias', 'janela_dias', 60], ['--fase-b', 'limite_fase_b', 50]]) {
+      if (values[flag] === undefined) continue;
+      const n = Number(values[flag]);
+      if (!Number.isInteger(n) || n < 1 || n > max) throw new Error(`Opção inválida: ${flag} deve ficar entre 1 e ${max}.`);
+      mailConfig[chave] = n;
+    }
+    const dryRun = Boolean(values['--dry-run']);
+    const raiz = fileURLToPath(new URL('../../', import.meta.url));
+    const salvarEm = values['--salvar-em'] ? path.resolve(values['--salvar-em']) : null;
+    const relativo = salvarEm ? path.relative(raiz, salvarEm) : null;
+    if (salvarEm && !relativo.startsWith('..') && !path.isAbsolute(relativo)) throw new Error('--salvar-em não pode apontar para dentro do repositório (o resultado real fica fora do git).');
+    if (salvarEm && !dryRun) throw new Error('--salvar-em só vale junto com --dry-run.');
+    const ledgerRoot = dryRun ? (salvarEm ? path.join(salvarEm, 'ledger') : await mkdtemp(path.join(tmpdir(), 'cb-mail-'))) : settings.dataRoot;
+    try {
+      const runner = createRunner({ modo: 'live', dataRoot: ledgerRoot, identity: await loadIdentityValues(), env: { ...process.env, LIVE: '1' }, timeoutMs: 300000, now: () => now });
+      const result = await sincronizarEmail({ dataRoot: settings.dataRoot, ledgerRoot, settings: { ...settings, mail: mailConfig }, runner, now, dryRun, salvarEm });
+      const texto = result.ok
+        ? [`itens: ${result.itens}; novos: ${result.novos}; abertos na fase B: ${result.abertos}; ${dryRun ? 'simulação (nada gravado)' : 'gravado'}`, ...result.avisos].join(String.fromCharCode(10))
+        : [`e-mail não conferido: ${result.falha.erro}`, result.falha.instrucao].filter(Boolean).join(String.fromCharCode(10));
+      return { result, text: texto, exitCode: result.ok ? 0 : 1 };
+    } finally { if (dryRun && !salvarEm) await rm(ledgerRoot, { recursive: true, force: true }); }
   }
   if (sub === 'replay') {
     const values = parseFlags(flags, { allowed: ['--days', '--corpus', '--labels', '--now', '--teste'], withValue: ['--days', '--corpus', '--labels', '--now'] });

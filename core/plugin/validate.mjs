@@ -3,6 +3,7 @@ import path from 'node:path';
 import { parseFrontmatter } from '../kb/schema.mjs';
 import { buildContext, scanText } from '../privacy/scan.mjs';
 import { commandNames } from '../cli/commands.mjs';
+import { ehEscritaGmail } from '../mail/tools.mjs';
 
 const WRITE_TOOLS = ['Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'Bash'];
 const READ_ONLY_AGENTS = /triador|leitor|classificador/;
@@ -64,6 +65,20 @@ export async function validatePlugin(root) {
     if (!tools.length) errors.push(`${file}: lista explícita de tools ausente.`);
     if (READ_ONLY_AGENTS.test(path.basename(name, '.md')) && tools.some(t => WRITE_TOOLS.includes(t))) {
       errors.push(`${file}: agente de leitura não pode ter ferramenta de escrita.`);
+    }
+    for (const t of tools.filter(ehEscritaGmail)) errors.push(`${file}: ferramenta de escrita do Gmail (${t}) não é permitida.`);
+  }
+
+  // Skills: nenhuma lista de ferramentas pode liberar escrita no Gmail.
+  for (const entry of await readdir(path.join(root, 'skills'), { withFileTypes: true }).catch(() => [])) {
+    if (!entry.isDirectory()) continue;
+    const file = `skills/${entry.name}/SKILL.md`;
+    const texto = await readFile(path.join(root, file), 'utf8').catch(() => null);
+    if (texto === null) continue;
+    const { data } = parseFrontmatter(texto);
+    for (const campo of ['allowed-tools', 'tools']) {
+      const lista = typeof data[campo] === 'string' ? data[campo].split(/,(?![^(]*\))/).map(t => t.trim()).filter(Boolean) : [];
+      for (const t of lista.filter(ehEscritaGmail)) errors.push(`${file}: ferramenta de escrita do Gmail (${t}) não é permitida.`);
     }
   }
 
