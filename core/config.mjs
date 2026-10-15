@@ -15,7 +15,7 @@ export function defaultSettings() {
     ai_memory: { url: null },
     envio: { padrao: 'parar_antes_de_enviar', regras: [] },
     fontes: { linkedin_guest: { ativo: false, aceite_termos: false } },
-    radar: { janela_dias: 7, timeout_fonte_ms: 60000 },
+    radar: { janela_dias: 7, timeout_fonte_ms: 60000, termos: [], empresas_monitoradas: [] },
     panel: { port: 8880, base_files: [], app_name: 'career-bounty' },
     perfil: { nome: '', especialidade: '', regiao: '', aviso: '', pdfs_base: [] },
   };
@@ -102,6 +102,13 @@ export function validateSettings(raw) {
     if (radar[key] !== undefined) {
       if (!Number.isInteger(radar[key]) || radar[key] < 1) throw invalid(`radar.${key}`, 'deve ser inteiro >= 1');
       settings.radar[key] = radar[key];
+    }
+  }
+
+  for (const key of ['termos', 'empresas_monitoradas']) {
+    if (radar[key] !== undefined) {
+      if (!Array.isArray(radar[key]) || radar[key].some(item => typeof item !== 'string')) throw invalid(`radar.${key}`, 'deve ser lista de textos');
+      settings.radar[key] = [...radar[key]];
     }
   }
 
