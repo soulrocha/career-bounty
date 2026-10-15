@@ -15,10 +15,14 @@ export function defaultSettings() {
     ai_memory: { url: null },
     envio: { padrao: 'parar_antes_de_enviar', regras: [] },
     fontes: { linkedin_guest: { ativo: false, aceite_termos: false } },
+    radar: { janela_dias: 7, timeout_fonte_ms: 60000, termos: [], empresas_monitoradas: [], criterios: {} },
     panel: { port: 8880, base_files: [], app_name: 'career-bounty' },
     perfil: { nome: '', especialidade: '', regiao: '', aviso: '', pdfs_base: [] },
   };
 }
+
+// Fontes de vagas que aceitam bloco próprio em `fontes` (linkedin_guest tem validação própria abaixo).
+export const FONTES_CONHECIDAS = ['fake', 'gupy', 'careerops', 'freehire', 'inhire', 'solides', 'jobspy', 'linkedin_alertas'];
 
 const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const invalid = (key, rule) => new Error(`Configuração inválida: ${key} ${rule}.`);
@@ -80,6 +84,75 @@ export function validateSettings(raw) {
   }
   if (settings.fontes.linkedin_guest.ativo && !settings.fontes.linkedin_guest.aceite_termos) {
     throw invalid('fontes.linkedin_guest.ativo', 'exige aceite_termos: true no mesmo bloco; o coletor guest pode violar os termos de uso do LinkedIn e a responsabilidade é sua');
+  }
+
+  const fontesRaw = section(raw.fontes, 'fontes');
+  for (const [id, bloco] of Object.entries(fontesRaw)) {
+    if (id === 'linkedin_guest') continue;
+    if (!FONTES_CONHECIDAS.includes(id)) throw invalid(`fontes.${id}`, `não é uma fonte conhecida (${FONTES_CONHECIDAS.join(', ')})`);
+    if (!isObject(bloco)) throw invalid(`fontes.${id}`, 'deve ser objeto');
+    settings.fontes[id] = structuredClone(bloco);
+  }
+  for (const key of Object.keys(guest)) {
+    if (!['ativo', 'aceite_termos'].includes(key)) settings.fontes.linkedin_guest[key] = structuredClone(guest[key]);
+  }
+
+  const radar = section(raw.radar, 'radar');
+  for (const key of ['janela_dias', 'timeout_fonte_ms']) {
+    if (radar[key] !== undefined) {
+      if (!Number.isInteger(radar[key]) || radar[key] < 1) throw invalid(`radar.${key}`, 'deve ser inteiro >= 1');
+      settings.radar[key] = radar[key];
+    }
+  }
+
+  for (const key of ['termos', 'empresas_monitoradas']) {
+    if (radar[key] !== undefined) {
+      if (!Array.isArray(radar[key]) || radar[key].some(item => typeof item !== 'string')) throw invalid(`radar.${key}`, 'deve ser lista de textos');
+      settings.radar[key] = [...radar[key]];
+    }
+  }
+
+  if (radar.agenda !== undefined) {
+    const a = section(radar.agenda, 'radar.agenda');
+    const agenda = { hora_inicio: 18, feriados: [], host_agendador: null };
+    if (a.hora_inicio !== undefined) {
+      if (!Number.isInteger(a.hora_inicio) || a.hora_inicio < 0 || a.hora_inicio > 23) throw invalid('radar.agenda.hora_inicio', 'deve ser hora inteira entre 0 e 23');
+      agenda.hora_inicio = a.hora_inicio;
+    }
+    if (a.feriados !== undefined) {
+      if (!Array.isArray(a.feriados) || a.feriados.some(dia => typeof dia !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dia))) throw invalid('radar.agenda.feriados', 'deve ser lista de datas AAAA-MM-DD');
+      agenda.feriados = [...a.feriados];
+    }
+    if (a.host_agendador !== undefined && a.host_agendador !== null) {
+      if (typeof a.host_agendador !== 'string' || !a.host_agendador) throw invalid('radar.agenda.host_agendador', 'deve ser texto');
+      agenda.host_agendador = a.host_agendador;
+    }
+    settings.radar.agenda = agenda;
+  }
+
+  if (radar.criterios !== undefined) {
+    const c = section(radar.criterios, 'radar.criterios');
+    const out = {};
+    for (const key of ['regiao_presencial', 'titulos_alvo', 'palavras_chave', 'palavras_negativas']) {
+      if (c[key] === undefined) continue;
+      if (!Array.isArray(c[key]) || c[key].some(item => typeof item !== 'string')) throw invalid(`radar.criterios.${key}`, 'deve ser lista de textos');
+      out[key] = [...c[key]];
+    }
+    if (c.corte_prescore !== undefined) {
+      if (typeof c.corte_prescore !== 'number' || c.corte_prescore < 0 || c.corte_prescore > 1) throw invalid('radar.criterios.corte_prescore', 'deve ser número entre 0 e 1');
+      out.corte_prescore = c.corte_prescore;
+    }
+    for (const [key, campos] of [['clt', ['onsite_min', 'remote_hybrid_min']], ['pj', ['min']]]) {
+      if (c[key] === undefined) continue;
+      const bloco = section(c[key], `radar.criterios.${key}`);
+      out[key] = {};
+      for (const campo of campos) {
+        if (bloco[campo] === undefined) continue;
+        if (typeof bloco[campo] !== 'number' || bloco[campo] < 0) throw invalid(`radar.criterios.${key}.${campo}`, 'deve ser número >= 0');
+        out[key][campo] = bloco[campo];
+      }
+    }
+    settings.radar.criterios = out;
   }
 
   const perfil = section(raw.perfil, 'perfil');

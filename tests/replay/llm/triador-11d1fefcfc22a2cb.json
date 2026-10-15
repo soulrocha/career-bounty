@@ -1,0 +1,59 @@
+{
+  "hash": "11d1fefcfc22a2cb868aec1ff11934f20775bb67261b8fa7627bd08bc1b39e7b",
+  "agente": "triador",
+  "modelo": "haiku",
+  "versaoPrompt": "ace1a4b65933",
+  "entrada": {
+    "brief": "Analista de produto fictícia, usada somente em testes e exemplos. Nenhum dado\ndeste diretório descreve uma pessoa real.",
+    "vagas": [
+      {
+        "id": "golden-s1",
+        "cargo": "Analista de Produto Pleno",
+        "empresa": "Empresa Alfa",
+        "local": "Brasil",
+        "modalidade": "remoto",
+        "resumo": "<dado_nao_confiavel>Atuar no desenho de fluxos de atendimento e triagem de chamados, definir métricas de tempo de resposta e priorizar melhorias com a equipe de operações. Requisitos obrigatórios: experiência comprovada em redesenho de fluxos operacionais; Inglês avançado. Desejável: certificação em gestão de produtos.</dado_nao_confiavel>"
+      },
+      {
+        "id": "golden-s2",
+        "cargo": "Diretor de Engenharia de Software",
+        "empresa": "Empresa Beta",
+        "local": "Brasil",
+        "modalidade": "remoto",
+        "resumo": "<dado_nao_confiavel>Liderar mais de 80 engenheiros, definir a arquitetura corporativa em nuvem e responder ao conselho. Requisitos obrigatórios: 12 anos de experiência em gestão de engenharia; MBA; inglês fluente.</dado_nao_confiavel>"
+      },
+      {
+        "id": "golden-s3",
+        "cargo": "Operador de Empilhadeira",
+        "empresa": "Empresa Gama",
+        "local": "Brasil",
+        "modalidade": "presencial",
+        "resumo": "<dado_nao_confiavel>Movimentar cargas no galpão, conferir notas e manter a área organizada. Requisito obrigatório: curso de operador de empilhadeira.</dado_nao_confiavel>"
+      },
+      {
+        "id": "golden-s4",
+        "cargo": "Designer Gráfico Júnior",
+        "empresa": "Empresa Delta",
+        "local": "Brasil",
+        "modalidade": "remoto",
+        "resumo": "<dado_nao_confiavel>Criar peças para redes sociais e materiais impressos. Requisitos: domínio de ferramentas de edição de imagem e portfólio.</dado_nao_confiavel>"
+      },
+      {
+        "id": "golden-s5",
+        "cargo": "Product Owner",
+        "empresa": "Empresa Épsilon",
+        "local": "Brasil",
+        "modalidade": "remoto",
+        "resumo": "<dado_nao_confiavel>Cuidar do backlog de um time de seis pessoas, priorizar entregas com a operação e acompanhar indicadores de tempo de atendimento. Requisitos obrigatórios: experiência com backlog e priorização; experiência liderando pequenos grupos. Desejável: certificação em gestão de produtos.</dado_nao_confiavel>"
+      }
+    ]
+  },
+  "saida": "{\"resultados\":[{\"id\":\"golden-s1\",\"decisao\":\"avaliar\",\"motivo\":\"Cargo de análise de produto com foco em fluxos operacionais e métricas, aderente ao perfil; a experiência em redesenho de fluxos e o inglês avançado precisam ser checados na análise completa.\"},{\"id\":\"golden-s2\",\"decisao\":\"descartar\",\"motivo\":\"Exige 12 anos em gestão de engenharia, liderança de mais de 80 engenheiros e MBA, muito acima do nível de analista pleno.\"},{\"id\":\"golden-s3\",\"decisao\":\"descartar\",\"motivo\":\"Operação de empilhadeira em galpão está fora da área de produto.\"},{\"id\":\"golden-s4\",\"decisao\":\"descartar\",\"motivo\":\"Design gráfico júnior está fora da área de produto.\"},{\"id\":\"golden-s5\",\"decisao\":\"avaliar\",\"motivo\":\"Product owner com backlog, priorização e indicadores de atendimento é aderente ao perfil; a experiência liderando pequenos grupos precisa ser confirmada na análise completa.\"}]}",
+  "uso": {
+    "tokens_in": 2,
+    "tokens_out": 1041,
+    "tokens_cache_leitura": 0,
+    "tokens_cache_criacao": 2108,
+    "custo_usd": 0.0009423000000000001
+  }
+}
