@@ -89,11 +89,16 @@ test('sem identity.yml roda só as regras genéricas e avisa', async t => {
   assert.equal(blocked.commit().status, 1);
 });
 
-test('arquivo binário é ignorado sem erro', async t => {
-  const repo = await setup(t);
-  const bytes = Buffer.concat([Buffer.from([0, 1, 2, 0]), Buffer.from(IDENTITY.email)]);
-  await repo.write('imagem.bin', bytes);
-  assert.equal(repo.commit().status, 0);
+test('binário sem texto legível passa; binário com texto da identidade é bloqueado; imagem é ignorada', async t => {
+  const limpo = await setup(t);
+  await limpo.write('dados.bin', Buffer.from([0, 1, 2, 0, 255, 254, 0, 9]));
+  assert.equal(limpo.commit().status, 0);
+  const sujo = await setup(t);
+  await sujo.write('dados.bin', Buffer.concat([Buffer.from([0, 1, 2, 0]), Buffer.from(IDENTITY.email)]));
+  assert.equal(sujo.commit().status, 1);
+  const imagem = await setup(t);
+  await imagem.write('imagem.png', Buffer.concat([Buffer.from([0, 1, 2, 0]), Buffer.from(IDENTITY.email)]));
+  assert.equal(imagem.commit().status, 0);
 });
 
 test('denylist de empresas em DATA_ROOT/privacy bloqueia ocorrência sem imprimir o nome', async t => {
