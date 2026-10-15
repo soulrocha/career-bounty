@@ -89,11 +89,11 @@ test('estágio 1 falha: o estágio 2 não roda e o digest diz por quê', async t
 test('--dry-run decide e informa sem escrever nada', async t => {
   const dataRoot = await tempDir(t);
   await writeFile(path.join(dataRoot, 'config.yml'), JSON.stringify({ radar: { agenda: { feriados: [], host_agendador: 'pc-casa' } } }));
-  const r = run(['daily-run', '--dry-run', '--json', '--now', quando('2026-10-14', '18:30').toISOString(), '--host', 'pc-casa'], { dataRoot });
+  const r = run(['daily-run', '--dry-run', '--json', '--teste', '--now', quando('2026-10-14', '18:30').toISOString(), '--host', 'pc-casa'], { dataRoot });
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.deepEqual([r.json.executaria, r.json.dry_run], [true, true]);
   assert.equal((await readState(dataRoot)), null);
-  const outro = run(['daily-run', '--dry-run', '--json', '--now', quando('2026-10-14', '18:30').toISOString(), '--host', 'outro'], { dataRoot });
+  const outro = run(['daily-run', '--dry-run', '--json', '--teste', '--now', quando('2026-10-14', '18:30').toISOString(), '--host', 'outro'], { dataRoot });
   assert.equal(outro.status, 0);
   assert.equal(outro.json.executaria, false);
 });
