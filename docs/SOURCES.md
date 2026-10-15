@@ -116,3 +116,20 @@ no `claude -p` não interativo, então a leitura de e-mail entra na rotina (suba
   para "nenhuma ferramenta" em subagente; a garantia real é o `--tools ""` do runner, coberto por teste.
 - **Medição de custo** de uma rodada de 5 vagas sintéticas (1 triagem + 2 avaliações, tokens de cache incluídos) fica no
   relatório do `eval radar --json` (`uso`).
+
+## Leitura de e-mail (F3): decisões e medição
+
+- **Três camadas contra escrita no Gmail:** frontmatter de `agents/leitor-email.md` (só `search_threads`, `get_thread`,
+  `get_message`), `--allowedTools` por fase mais `--disallowedTools` com todas as de escrita (`core/mail/tools.mjs`) e o hook
+  `PreToolUse` (`hooks/pre-tool-use.mjs`, padrão negado para o conector). O schema rejeita campo extra.
+- **Remetente:** o leitor devolve só nome exibido e domínio; o endereço completo nunca chega ao sistema.
+- **Regras antes do LLM:** `core/mail/rules/pt-br.json` (assunto, trecho e, só na fase B, corpo). O que as regras não
+  resolvem vai para a fase B (até `mail.limite_fase_b` por rodada) e, se ainda ambíguo, para o classificador Haiku.
+  Confiança nunca passa da do domínio: só domínio de portal conhecido (ou `mail.dominios_confiaveis`) avança etapa.
+- **Vínculo:** só por ID de requisição (`Job-N`, código Gupy). Sem ID fica pendente de conferência. Com o tracker real,
+  só uma fração mínima das vagas tem `requisicao_id`, então quase todo e-mail real cai em pendente de conferência até o
+  tracker ganhar esses IDs.
+- **Medição real (3 execuções somente leitura, janela de 7 a 14 dias, só portais):** 28 e 50 e-mails por rodada; as regras
+  resolveram 54% e 56%; 46% e 44% foram ambíguos; fase B limitada a 3 e 5 mensagens; custo por rodada de US$ 0,10 a 0,12
+  (cerca de 460 mil a 670 mil tokens, quase todos de cache de contexto). O orçamento padrão `mail.orcamento_tokens` ficou
+  em 1.000.000. A consulta com 50 resultados bate o limite padrão (`mail.limite_resultados`).
