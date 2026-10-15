@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { atomicJson } from '../store/atomicWrite.mjs';
 import { loadAgent } from '../llm/agents.mjs';
+import { embrulhar, limparCampoCurto, limparTextoNaoConfiavel } from '../privacy/untrusted.mjs';
 
 export const LOTE = 20;
 export const BRIEF_MAX_CHARS = 8000; // ~2 mil tokens (4 caracteres por token)
@@ -24,8 +25,8 @@ export function validarTriagem(json, idsDoLote) {
   }
 }
 
-const resumoDe = vaga => String(vaga.descricao ?? '').replace(/\s+/g, ' ').trim().slice(0, RESUMO_MAX_CHARS);
-const linhaDe = ({ id, vaga }) => ({ id, cargo: vaga.cargo, empresa: vaga.empresa, local: vaga.local ?? '', modalidade: vaga.modalidade ?? '', resumo: resumoDe(vaga) });
+const resumoDe = vaga => embrulhar(limparTextoNaoConfiavel(String(vaga.descricao ?? '').replace(/\s+/g, ' ').trim(), { max: RESUMO_MAX_CHARS }).texto);
+const linhaDe = ({ id, vaga }) => ({ id, cargo: limparCampoCurto(vaga.cargo), empresa: limparCampoCurto(vaga.empresa), local: limparCampoCurto(vaga.local ?? ''), modalidade: limparCampoCurto(vaga.modalidade ?? '', 40), resumo: resumoDe(vaga) });
 
 async function readCache(file) {
   try { return JSON.parse(await readFile(file, 'utf8')); } catch (error) { if (error.code === 'ENOENT' || error instanceof SyntaxError) return {}; throw error; }
