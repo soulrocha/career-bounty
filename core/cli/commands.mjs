@@ -4,6 +4,9 @@ import { hostname, tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSettings } from '../config.mjs';
+import { createBudget } from '../sources/budget.mjs';
+import { LIMITE_DESTINOS_DIA, montarFila, registrarBloqueio, registrarDestino, reservarDestinos } from '../sources/destino.mjs';
+import { localDay } from '../store/schema.mjs';
 import { createRunner } from '../llm/runner.mjs';
 import { loadIdentityValues } from '../privacy/redact.mjs';
 import { createMarkdownFolder } from '../kb/sources/markdownFolder.mjs';
@@ -127,6 +130,32 @@ export const commands = {
     const saida = spawnSync('schtasks', ['/Delete', '/TN', nome, '/F'], { encoding: 'utf8' });
     if (saida.status !== 0) throw new Error(`schtasks falhou: ${(saida.stderr || saida.stdout).trim().slice(0, 200)}`);
     return { result: { removido: true, nome }, text: `tarefa ${nome} removida` };
+  },
+  async destinos(rest, { parseFlags }) {
+    const [sub, ...flags] = rest;
+    const settings = await loadSettings();
+    if (sub === 'fila') {
+      parseFlags(flags, { allowed: [] });
+      const { eventos } = await readEvents(settings.dataRoot);
+      const now = new Date();
+      const usados = await createBudget({ dataRoot: settings.dataRoot, nome: 'destino', limite: LIMITE_DESTINOS_DIA, now }).state();
+      const fila = montarFila(projectEvents(eventos).vagas, { hoje: localDay(now) }).slice(0, Math.max(0, LIMITE_DESTINOS_DIA - usados.usado));
+      return { result: { limite: LIMITE_DESTINOS_DIA, usados: usados.usado, fila: fila.map(vaga => ({ id: vaga.id, cargo: vaga.cargo, empresa: vaga.empresa, url: vaga.aparicoes?.[0]?.url ?? vaga.url })) }, text: `${fila.length} vagas na fila` };
+    }
+    if (sub === 'registrar' || sub === 'bloquear') {
+      const values = parseFlags(flags, { allowed: ['--vaga', '--url', '--motivo'], withValue: ['--vaga', '--url', '--motivo'] });
+      if (!values['--vaga']) throw new Error('Informe --vaga <id>.');
+      const gasto = await reservarDestinos({ dataRoot: settings.dataRoot, quantidade: 1 });
+      if (!gasto.concedidas) throw new Error(`Limite diário de ${LIMITE_DESTINOS_DIA} destinos atingido.`);
+      if (sub === 'registrar') {
+        if (!values['--url']) throw new Error('Informe --url <destino>.');
+        const url = new URL(values['--url']);
+        if (!['http:', 'https:'].includes(url.protocol)) throw new Error('O destino deve ser http ou https.');
+        await registrarDestino(settings.dataRoot, { vagaId: values['--vaga'], applicationUrl: `${url.origin}${url.pathname}` });
+      } else await registrarBloqueio(settings.dataRoot, { vagaId: values['--vaga'], motivo: values['--motivo'] ?? 'humano' });
+      return { result: { ok: true }, text: 'ok' };
+    }
+    throw new Error(`Subcomando destinos desconhecido: ${sub ?? ''}`.trim());
   },
   async help() {
     return { result: { commands: commandNames() } };

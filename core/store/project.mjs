@@ -151,6 +151,8 @@ const reducers = {
   'vaga.atualizada': vaga.atualizada,
   'vaga.descoberta': discovered,
   'vaga.triada': onVaga(triada),
+  'vaga.destino_resolvido': onVaga((vaga, dados) => ({ ...vaga, application_url: dados.application_url, destino_pendente: false, portal_candidatura: portalCandidatura({ ...vaga, application_url: dados.application_url }) })),
+  'vaga.destino_bloqueado': onVaga((vaga, dados) => ({ ...vaga, destino_bloqueado_em: dados.dia, destino_bloqueio_motivo: dados.motivo })),
   'vaga.avaliada': onVaga(avaliada),
   'email_evento.importado': email.importada,
   'email_evento.atualizado': email.atualizada,
