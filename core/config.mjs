@@ -51,7 +51,7 @@ export function validateSettings(raw) {
     envio.regras.forEach((regra, index) => {
       const key = `envio.regras[${index}]`;
       if (!isObject(regra)) throw invalid(key, 'deve ser objeto');
-      if (regra.acao === 'enviar_automatico' && (!Number.isInteger(regra.limite_dia) || regra.limite_dia < 1)) {
+      if (String(regra.acao ?? '').trim().toLowerCase() === 'enviar_automatico' && (!Number.isInteger(regra.limite_dia) || regra.limite_dia < 1)) {
         throw invalid(`${key}.limite_dia`, 'é obrigatório (inteiro >= 1) em regra enviar_automatico');
       }
     });

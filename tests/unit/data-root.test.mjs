@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdir, writeFile, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
-import { resolveDataRoot } from '../../core/store/dataRoot.mjs';
+import { ensureSkeleton, resolveDataRoot } from '../../core/store/dataRoot.mjs';
 import { loadSettings } from '../../core/config.mjs';
 import { run, tempDir } from '../helpers/cli.mjs';
 
@@ -103,4 +103,15 @@ test('setup cria identity.yml como modelo vazio com instrução, sem dados, e nu
   await writeFile(file, JSON.stringify({ nome: 'Mantido Ficticio' }));
   assert.equal(run(['setup', '--json'], { dataRoot }).status, 0);
   assert.equal(JSON.parse(await readFile(file, 'utf8')).nome, 'Mantido Ficticio');
+});
+
+test('secrets/ é criada e reforçada com modo 0o700', async t => {
+  const dataRoot = path.join(await tempDir(t), 'dados');
+  const calls = [];
+  await ensureSkeleton(dataRoot, { chmod: async (target, mode) => { calls.push([path.relative(dataRoot, target), mode]); } });
+  assert.deepEqual(calls, [['secrets', 0o700]]);
+  if (process.platform !== 'win32') {
+    const { stat } = await import('node:fs/promises');
+    assert.equal((await stat(path.join(dataRoot, 'secrets'))).mode & 0o777, 0o700);
+  }
 });

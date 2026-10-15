@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { chmod as fsChmod, mkdir, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { privateDestination } from '../migration/paths.mjs';
@@ -20,13 +20,14 @@ export function resolveDataRoot({ env = process.env, home = homedir() } = {}) {
 }
 
 // Cria as pastas esperadas e um config.yml vazio. Idempotente: nunca sobrescreve.
-export async function ensureSkeleton(dataRoot) {
+export async function ensureSkeleton(dataRoot, { chmod = fsChmod } = {}) {
   await privateDestination(dataRoot);
   const created = [];
   for (const name of SKELETON_DIRS) {
     const dir = path.join(dataRoot, name);
-    const first = await mkdir(dir, { recursive: true });
+    const first = await mkdir(dir, { recursive: true, ...(name === 'secrets' ? { mode: 0o700 } : {}) });
     if (first) created.push(name);
+    if (name === 'secrets') await chmod(dir, 0o700);
   }
   try {
     await writeFile(path.join(dataRoot, 'config.yml'), '{}\n', { flag: 'wx' });

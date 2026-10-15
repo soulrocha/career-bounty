@@ -4,13 +4,34 @@ import path from 'node:path';
 
 const ALLOWED = /^(MIT|ISC|BSD|BSD-2-Clause|BSD-3-Clause|0BSD|Apache-2\.0)$/;
 
-// Expressão SPDX simples: "A OR B" basta uma permitida; "A AND B" (ou termo único) exige todas.
+// Expressão SPDX: "A OR B" basta uma permitida; "A AND B" (ou termo único) exige todas. Mistura de
+// OR e AND no mesmo nível, sem parênteses, é ambígua e é recusada.
 export function checkLicenseExpression(expression) {
   if (typeof expression !== 'string' || !expression.trim()) return false;
-  const text = expression.replace(/[()]/g, ' ').trim();
-  if (/\bWITH\b|commons/i.test(text)) return false;
-  const terms = text.split(/\s+(?:OR|AND)\s+/i).map(t => t.trim()).filter(Boolean);
-  return /\sOR\s/i.test(text) ? terms.some(t => ALLOWED.test(t)) : terms.every(t => ALLOWED.test(t));
+  if (/\bWITH\b|commons/i.test(expression)) return false;
+  const tokens = expression.match(/[()]|[^\s()]+/g) ?? [];
+  let pos = 0;
+  function group(nested) {
+    const operands = [];
+    const operators = new Set();
+    let term = [];
+    const flush = () => { if (term.length) { operands.push(ALLOWED.test(term.join(' '))); term = []; } };
+    while (pos < tokens.length) {
+      const token = tokens[pos++];
+      if (token === '(') { flush(); operands.push(group(true)); }
+      else if (token === ')') { if (!nested) throw new Error('parêntese sobrando'); flush(); return combine(operands, operators); }
+      else if (/^(OR|AND)$/i.test(token)) { flush(); operators.add(token.toUpperCase()); }
+      else term.push(token);
+    }
+    if (nested) throw new Error('parêntese aberto');
+    flush();
+    return combine(operands, operators);
+  }
+  function combine(operands, operators) {
+    if (!operands.length || operators.size > 1) return false;
+    return operators.has('OR') ? operands.some(Boolean) : operands.every(Boolean);
+  }
+  try { return group(false); } catch { return false; }
 }
 
 async function readPackage(fromDir, name) {

@@ -133,3 +133,9 @@ test('identity.yml ausente ou sem valores avisa e aponta o setup; preenchido fic
   await writeFile(path.join(dataRoot, 'identity.yml'), JSON.stringify({ _instrucao: 'texto', nome: '', email: '' }));
   assert.equal(check(await runDoctor({ dataRoot, ...healthyDeps }), 'identidade').status, 'aviso');
 });
+
+test('doctor recusa flag desconhecida', async t => {
+  const result = run(['doctor', '--nao-existe', '--json'], { dataRoot: await ready(t) });
+  assert.equal(result.status, 2);
+  assert.match(result.json.error, /--nao-existe/);
+});

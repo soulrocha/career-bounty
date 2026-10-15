@@ -66,3 +66,10 @@ test('doctor imprime os padrões ativos em uma linha', async t => {
   const ligado = await withConfig(t, { fontes: { linkedin_guest: { ativo: true, aceite_termos: true } }, envio: { regras: [{ id: 'r', acao: 'enviar_automatico', limite_dia: 3 }] } });
   assert.equal(run(['doctor', '--json'], { dataRoot: ligado }).json.padroes, 'envio: automático (1 regra ativa); LinkedIn guest: ligado');
 });
+
+test('acao da regra é comparada sem diferenciar maiúsculas', async t => {
+  for (const acao of ['ENVIAR_AUTOMATICO', 'Enviar_Automatico', ' enviar_automatico ']) {
+    const semLimite = { envio: { regras: [{ id: 'r1', acao }] } };
+    await assert.rejects(loadSettings({ dataRoot: await withConfig(t, semLimite) }), /limite_dia/, acao);
+  }
+});

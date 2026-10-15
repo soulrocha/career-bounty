@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { cp, writeFile } from 'node:fs/promises';
+import { cp, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
 import { repoRoot, tempDir } from '../helpers/cli.mjs';
@@ -76,4 +76,27 @@ test('aceita exatamente os níveis verificado, entregue, proposto e relato', asy
     await writeFile(path.join(dir, 'claims', 'AF-020.md'), `---\nid: AF-020\nnivel_prova: ${nivel}\n---\nTexto.\n`);
     assert.equal((await createMarkdownFolder(dir).claims()).find(c => c.id === 'AF-020').nivel_prova, nivel);
   }
+});
+
+test('afirmacoes que não é lista é erro claro citando o arquivo', async t => {
+  const dir = await copyPersona(t);
+  await writeFile(path.join(dir, 'evidence', 'EV-020.md'), '---\nid: EV-020\nafirmacoes: AF-001\n---\nTexto.\n');
+  await assert.rejects(createMarkdownFolder(dir).evidence(), /evidence\/EV-020\.md.*afirmacoes.*lista/);
+});
+
+test('id de evidência duplicado é recusado citando os dois arquivos', async t => {
+  const dir = await copyPersona(t);
+  await writeFile(path.join(dir, 'evidence', 'EV-021.md'), '---\nid: EV-001\nafirmacoes: [AF-001]\n---\nRepetida.\n');
+  await assert.rejects(createMarkdownFolder(dir).evidence(), /evidence\/EV-021\.md.*EV-001.*duplicad.*evidence\/EV-001\.md/);
+});
+
+test('id e fonte com .. são recusados citando o arquivo', async t => {
+  const dir = await copyPersona(t);
+  await writeFile(path.join(dir, 'claims', 'AF-030.md'), '---\nid: ../AF-030\nnivel_prova: relato\n---\nTexto.\n');
+  await assert.rejects(createMarkdownFolder(dir).claims(), /claims\/AF-030\.md.*id.*\.\./);
+  await rm(path.join(dir, 'claims', 'AF-030.md'));
+  await writeFile(path.join(dir, 'evidence', 'EV-030.md'), '---\nid: EV-030\nfonte: ../../segredo.md\n---\nTexto.\n');
+  await assert.rejects(createMarkdownFolder(dir).evidence(), /evidence\/EV-030\.md.*fonte.*\.\./);
+  await writeFile(path.join(dir, 'evidence', 'EV-030.md'), '---\nid: ../EV-030\n---\nTexto.\n');
+  await assert.rejects(createMarkdownFolder(dir).evidence(), /evidence\/EV-030\.md.*id.*\.\./);
 });

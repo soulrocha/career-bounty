@@ -74,3 +74,8 @@ test('nenhum documento cita empresa real, caminho de usuário nem dado pessoal',
     assert.deepEqual(hosts, [], file);
   }
 });
+
+test('CLAUDE.md e docs/SETUP.md falam em handoff do projeto, sem citar ferramenta de memória pessoal', async () => {
+  for (const file of ['CLAUDE.md', 'docs/SETUP.md']) assert.doesNotMatch(await read(file), /ai[-_ ]?memory/i, file);
+  assert.match(await read('docs/SETUP.md'), /handoff do projeto/);
+});
