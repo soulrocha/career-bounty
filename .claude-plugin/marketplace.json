@@ -1,0 +1,11 @@
+{
+  "name": "career-bounty",
+  "owner": { "name": "CareerBounty" },
+  "plugins": [
+    {
+      "name": "career-bounty",
+      "source": "./",
+      "description": "Busca de vagas e candidaturas assistidas no Claude Code."
+    }
+  ]
+}

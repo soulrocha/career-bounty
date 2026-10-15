@@ -1,0 +1,5 @@
+# Complementa o scan de dado pessoal do pre-commit; usa as regras padrão do gitleaks.
+title = "career-bounty"
+
+[extend]
+useDefault = true
