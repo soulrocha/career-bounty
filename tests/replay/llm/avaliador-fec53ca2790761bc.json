@@ -1,0 +1,42 @@
+{
+  "hash": "fec53ca2790761bcef3ea95b2c3fc5d222597b69138ac91fb29a37fc96d39e31",
+  "agente": "avaliador",
+  "modelo": "sonnet",
+  "versaoPrompt": "4f39812e7c32",
+  "entrada": {
+    "afirmacoes": [
+      {
+        "id": "AF-001",
+        "texto": "Reduziu o tempo de triagem de chamados de 5 dias para 2 dias ao redesenhar o fluxo de classificação.",
+        "nivel_prova": "entregue"
+      },
+      {
+        "id": "AF-002",
+        "texto": "Liderou um grupo de 4 pessoas na migração de relatórios manuais para um painel único.",
+        "nivel_prova": "relato"
+      },
+      {
+        "id": "AF-003",
+        "texto": "Concluiu a certificação fictícia de Gestão de Produtos em 2025.",
+        "nivel_prova": "verificado"
+      }
+    ],
+    "vaga": {
+      "id": "golden-s1",
+      "cargo": "Analista de Produto Pleno",
+      "empresa": "Empresa Alfa",
+      "local": "Brasil",
+      "modalidade": "remoto",
+      "regime": "CLT",
+      "descricao": "<dado_nao_confiavel>Atuar no desenho de fluxos de atendimento e triagem de chamados, definir métricas de tempo de resposta e priorizar melhorias com a equipe de operações. Requisitos obrigatórios: experiência comprovada em redesenho de fluxos operacionais; Inglês avançado. Desejável: certificação em gestão de produtos.</dado_nao_confiavel>"
+    }
+  },
+  "saida": "{\"vaga_id\":\"golden-s1\",\"requisitos\":[{\"requisito\":\"Experiência comprovada em redesenho de fluxos operacionais\",\"tipo\":\"obrigatorio\",\"avaliacao\":\"atendido\",\"afirmacoes\":[\"AF-001\"],\"observacao\":\"AF-001 (nível entregue) comprova o redesenho do fluxo de classificação de chamados, reduzindo a triagem de 5 para 2 dias.\"},{\"requisito\":\"Inglês avançado\",\"tipo\":\"obrigatorio\",\"avaliacao\":\"lacuna\",\"afirmacoes\":[],\"observacao\":\"Nenhuma afirmação comprova fluência em inglês, e idioma não é inferido.\"},{\"requisito\":\"Certificação em gestão de produtos\",\"tipo\":\"desejavel\",\"avaliacao\":\"atendido\",\"afirmacoes\":[\"AF-003\"],\"observacao\":\"AF-003 (nível verificado) registra a conclusão de certificação em Gestão de Produtos em 2025, descrita como fictícia, o que merece confirmação.\"},{\"requisito\":\"Definir métricas de tempo de resposta e priorizar melhorias com a equipe de operações\",\"tipo\":\"desejavel\",\"avaliacao\":\"parcial\",\"afirmacoes\":[\"AF-001\",\"AF-002\"],\"observacao\":\"AF-001 mostra melhoria medida em tempo de triagem, mas não há prova direta de definição de métricas de tempo de resposta nem de priorização com operações; AF-002 é apenas relato.\"}],\"aderencia_sugerida\":\"media\",\"resumo\":\"A pessoa comprova experiência em redesenho de fluxos operacionais com resultado mensurável e possui certificação em gestão de produtos. Há lacuna no requisito obrigatório de inglês avançado, sem nenhuma afirmação que o sustente. Por isso a aderência é média.\",\"pendencias\":[\"Confirmar nível de inglês com evidência (certificado ou teste de proficiência)\",\"Confirmar a validade da certificação em Gestão de Produtos, descrita como fictícia\",\"Verificar experiência na definição de métricas de tempo de resposta e priorização com equipes de operações\"]}",
+  "uso": {
+    "tokens_in": 2,
+    "tokens_out": 733,
+    "tokens_cache_leitura": 0,
+    "tokens_cache_criacao": 1816,
+    "custo_usd": 0.014598
+  }
+}

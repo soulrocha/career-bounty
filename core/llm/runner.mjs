@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { appendEvents } from '../store/events.mjs';
 import { redact } from '../privacy/redact.mjs';
+import { resolveClaudeBin } from './claudeBin.mjs';
 
 export class LlmSaidaInvalida extends Error {
   constructor(message, { agente, tentativas } = {}) {
@@ -61,9 +62,10 @@ function runClaude({ bin, args, input, cwd, timeoutMs, env }) {
   });
 }
 
-export function createRunner({ modo, dataRoot, fake, replayDir, identity = [], env = process.env, gravar = false, claudeBin = 'claude', timeoutMs = 180000, now = () => new Date() } = {}) {
+export function createRunner({ modo, dataRoot, fake, replayDir, identity = [], env = process.env, gravar = false, maxChamadasLive = Infinity, claudeBin, timeoutMs = 180000, now = () => new Date() } = {}) {
   if (!['fake', 'replay', 'live'].includes(modo)) throw new Error(`Modo de LLM inválido: ${modo}`);
   let seq = 0;
+  let chamadasLive = 0;
 
   async function chamar({ agente, modelo, versaoPrompt, entrada, sistema, tentativa, hash }) {
     if (modo === 'fake') {
@@ -82,8 +84,10 @@ export function createRunner({ modo, dataRoot, fake, replayDir, identity = [], e
     }
     if (env.CI) throw new Error('O modo live não roda dentro da CI.');
     if (env.LIVE !== '1') throw new Error('O modo live exige LIVE=1 (chamada real cobrada).');
+    if (chamadasLive >= maxChamadasLive) throw new Error(`Limite de ${maxChamadasLive} chamadas live atingido; nada foi enviado.`);
+    chamadasLive += 1;
     const prompt = `Entrada (JSON):\n${JSON.stringify(entrada)}\nResponda somente com o JSON do contrato.`;
-    const stdout = await runClaude({ bin: claudeBin, args: buildLiveArgs({ modelo, sistema }), input: prompt, cwd: tmpdir(), timeoutMs, env });
+    const stdout = await runClaude({ bin: claudeBin ?? await resolveClaudeBin({ env }), args: buildLiveArgs({ modelo, sistema }), input: prompt, cwd: tmpdir(), timeoutMs, env });
     const resultado = parseEnvelope(stdout);
     if (gravar && replayDir) {
       await mkdir(replayDir, { recursive: true });

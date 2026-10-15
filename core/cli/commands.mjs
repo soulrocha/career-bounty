@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { writeFile, rm } from 'node:fs/promises';
+import { access, mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { hostname, tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,6 +8,7 @@ import { createBudget } from '../sources/budget.mjs';
 import { LIMITE_DESTINOS_DIA, montarFila, registrarBloqueio, registrarDestino, reservarDestinos } from '../sources/destino.mjs';
 import { localDay } from '../store/schema.mjs';
 import { createRunner } from '../llm/runner.mjs';
+import { avaliarGolden, MINIMO_PADRAO } from '../eval/radar.mjs';
 import { loadIdentityValues } from '../privacy/redact.mjs';
 import { createMarkdownFolder } from '../kb/sources/markdownFolder.mjs';
 import { loadBrief } from '../kb/brief.mjs';
@@ -130,6 +131,33 @@ export const commands = {
     const saida = spawnSync('schtasks', ['/Delete', '/TN', nome, '/F'], { encoding: 'utf8' });
     if (saida.status !== 0) throw new Error(`schtasks falhou: ${(saida.stderr || saida.stdout).trim().slice(0, 200)}`);
     return { result: { removido: true, nome }, text: `tarefa ${nome} removida` };
+  },
+  async eval(rest, { parseFlags }) {
+    if (rest[0] !== 'radar') throw new Error(`Subcomando eval desconhecido: ${rest[0] ?? ''}`.trim());
+    const values = parseFlags(rest.slice(1), { allowed: ['--golden', '--live', '--gravar', '--min', '--max-chamadas'], withValue: ['--golden', '--min', '--max-chamadas'] });
+    const settings = await loadSettings();
+    const raiz = fileURLToPath(new URL('../../', import.meta.url));
+    const privado = path.join(settings.dataRoot, 'golden', 'golden-20.json');
+    const arquivo = values['--golden'] ?? (await access(privado).then(() => privado, () => path.join(raiz, 'tests', 'golden', 'radar', 'golden-sintetico.json')));
+    const golden = JSON.parse(await readFile(arquivo, 'utf8'));
+    const real = golden.kb !== 'persona-ficticia';
+    const kbRoot = real ? path.join(settings.dataRoot, 'kb') : path.join(raiz, 'examples', 'persona-ficticia');
+    const replayDir = real ? path.join(settings.dataRoot, 'golden', 'replay') : path.join(raiz, 'tests', 'replay', 'llm');
+    const minimo = values['--min'] !== undefined ? Number(values['--min']) : MINIMO_PADRAO;
+    if (!Number.isFinite(minimo) || minimo < 0 || minimo > 1) throw new Error('Opção inválida: --min deve ficar entre 0 e 1.');
+    if (!golden.vagas?.some(vaga => ['alta', 'media', 'baixa'].includes(vaga.rotulo_saulo))) {
+      return { result: { ok: false, motivo: 'golden sem rótulos', concordancia: null }, text: 'O golden set ainda não tem rótulos (rotulo_saulo: pendente).', exitCode: 3 };
+    }
+    const ledger = await mkdtemp(path.join(tmpdir(), 'cb-eval-'));
+    try {
+      const runner = createRunner({ modo: values['--live'] ? 'live' : 'replay', dataRoot: ledger, replayDir, identity: await loadIdentityValues(), env: { ...process.env, LIVE: values['--live'] ? '1' : process.env.LIVE },
+        gravar: Boolean(values['--gravar']), maxChamadasLive: values['--max-chamadas'] ? Number(values['--max-chamadas']) : Infinity });
+      const resultado = await avaliarGolden({ golden, runner, dataRoot: ledger, afirmacoes: await createMarkdownFolder(kbRoot).claims(), brief: await loadBrief(kbRoot) });
+      const ok = resultado.concordancia !== null && resultado.concordancia >= minimo;
+      const linhas = [`concordância: ${resultado.concordancia === null ? 'n/d' : `${(resultado.concordancia * 100).toFixed(1)}%`} (${resultado.acertos}/${resultado.rotuladas}); mínimo ${(minimo * 100).toFixed(0)}%`,
+        ...resultado.discordancias.map(item => `- ${item.id}: esperado ${item.esperado}, obtido ${item.obtido} (${item.motivo})`), ok ? 'ok' : 'abaixo do mínimo'];
+      return { result: { ok, minimo, ...resultado }, text: linhas.join(String.fromCharCode(10)), exitCode: ok ? 0 : 1 };
+    } finally { await rm(ledger, { recursive: true, force: true }); }
   },
   async destinos(rest, { parseFlags }) {
     const [sub, ...flags] = rest;
