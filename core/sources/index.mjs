@@ -32,7 +32,7 @@ async function runOne(source, ctx, timeoutMs) {
     return { info, vagas };
   } catch (error) {
     const codigo = error instanceof SourceError ? error.codigo : 'erro';
-    return { info: { id: source.id, estado: codigo === 'indisponivel' ? 'indisponivel' : 'erro', codigo, erro: String(error.message ?? error).slice(0, 300), vagas: 0 }, vagas: [] };
+    return { info: { id: source.id, estado: codigo === 'indisponivel' ? 'indisponivel' : codigo === 'desligada' ? 'desligada' : 'erro', codigo, erro: String(error.message ?? error).slice(0, 300), vagas: 0 }, vagas: [] };
   }
 }
 
