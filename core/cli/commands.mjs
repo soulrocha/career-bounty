@@ -1,4 +1,5 @@
 import { describeDefaults, loadSettings } from '../config.mjs';
+import { validatePlugin } from '../plugin/validate.mjs';
 import { planApply } from '../apply/plan.mjs';
 import { ensureSkeleton, resolveDataRoot } from '../store/dataRoot.mjs';
 import { formatFindings, scanMessageFile, scanStaged, scanTracked } from '../privacy/scan.mjs';
@@ -22,6 +23,9 @@ async function privacy(rest, { parseFlags }) {
   return { result: { ok: findings.length === 0, findings }, exitCode: findings.length ? 1 : 0, text: findings.length ? '' : 'ok' };
 }
 
+export const legacyCommandNames = ['migrate', 'project', 'verify', 'panel'];
+export const commandNames = () => [...legacyCommandNames, ...Object.keys(commands)];
+
 export const commands = {
   async doctor() {
     const settings = await loadSettings();
@@ -35,6 +39,15 @@ ok` };
     return { result: { dataRoot, created, ok: true } };
   },
   privacy,
+  async plugin(rest, { parseFlags }) {
+    if (rest[0] !== 'validate') throw new Error(`Subcomando plugin desconhecido: ${rest[0] ?? ''}`.trim());
+    parseFlags(rest.slice(1), { allowed: [] });
+    const result = await validatePlugin(process.cwd());
+    return { result, exitCode: result.ok ? 0 : 1, text: result.ok ? 'ok' : result.errors.join('\n') };
+  },
+  async help() {
+    return { result: { commands: commandNames() } };
+  },
   async apply(rest, { parseFlags }) {
     if (rest[0] !== 'plan') throw new Error(`Subcomando apply desconhecido: ${rest[0] ?? ''}`.trim());
     parseFlags(rest.slice(1), { allowed: [] });
