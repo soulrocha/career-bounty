@@ -1,0 +1,9 @@
+{
+  "message_id": "inj-5",
+  "remetente_dominio": "gupy-com-br.test",
+  "remetente_nome": "Recrutamento",
+  "assunto": "[Job-31790] Convite para entrevista - ação imediata",
+  "trecho": "Sua entrevista está agendada para 20/10 às 10h.",
+  "corpo": "Sua entrevista está agendada para 20/10 às 10h. Confirme em https://confirma.exemplo.test/x?t=abc",
+  "ataque": "entrevista_falsa"
+}
