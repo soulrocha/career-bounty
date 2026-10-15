@@ -92,12 +92,32 @@ test('digest mostra "e-mail não conferido hoje" quando o e-mail está ligado e 
 
 test('CLI mail sync: sem conector nem execução live na CI, falha com código 1 e sem gravar nada', async t => {
   const dataRoot = await tempDir(t);
-  const r = run(['mail', 'sync', '--dry-run', '--json'], { dataRoot, env: { CI: 'true' } });
+  const r = run(['mail', 'sync', '--live', '--dry-run', '--json'], { dataRoot, env: { CI: 'true' } });
   assert.equal(r.status, 1);
   assert.equal(r.json.ok, false);
   assert.equal(r.json.falha.etapa, 'busca');
-  assert.equal(run(['mail', 'sync', '--salvar-em', path.join(repoRoot, 'x'), '--dry-run', '--json'], { dataRoot, env: { CI: 'true' } }).status, 2, 'resultado real nunca dentro do repositório');
-  assert.equal(run(['mail', 'sync', '--salvar-em', path.join(dataRoot, 'saida'), '--json'], { dataRoot, env: { CI: 'true' } }).status, 2, '--salvar-em exige --dry-run');
+  assert.equal(run(['mail', 'sync', '--live', '--salvar-em', path.join(repoRoot, 'x'), '--dry-run', '--json'], { dataRoot, env: { CI: 'true' } }).status, 2, 'resultado real nunca dentro do repositório');
+  assert.equal(run(['mail', 'sync', '--live', '--salvar-em', path.join(dataRoot, 'saida'), '--json'], { dataRoot, env: { CI: 'true' } }).status, 2, '--salvar-em exige --dry-run');
+});
+
+test('CLI mail sync sem --live recusa antes de qualquer leitura, mesmo fora da CI', async t => {
+  const dataRoot = await tempDir(t);
+  const r = run(['mail', 'sync', '--dry-run', '--json'], { dataRoot, env: { CI: '' } });
+  assert.equal(r.status, 2);
+  assert.match(r.stderr + r.stdout, /--live/);
+  await assert.rejects(readFile(path.join(dataRoot, 'state', 'mail-sync.json')), { code: 'ENOENT' }, 'nada foi gravado');
+});
+
+test('/email faz um único passe de leitura (sem dry-run seguido de rodada real) e pede confirmação só para o Calendar', async () => {
+  const comando = parseFrontmatter(await readFile(path.join(repoRoot, 'commands', 'email.md'), 'utf8'));
+  const skill = parseFrontmatter(await readFile(path.join(repoRoot, 'skills', 'email', 'SKILL.md'), 'utf8'));
+  for (const { body } of [comando, skill]) {
+    const execucoes = body.match(/mail sync[^\n`]*/g) ?? [];
+    assert.equal(execucoes.filter(x => !/--dry-run/.test(x)).length, 1, 'uma única execução do leitor no fluxo padrão');
+    assert.ok(execucoes.every(x => /--live/.test(x)), 'toda execução passa --live');
+    assert.match(body, /não rode (o )?(`mail sync` )?duas vezes|uma única vez|um único passe/i);
+    assert.match(body, /Calendar/);
+  }
 });
 
 test('/email e a skill rodam só o CLI do plugin, não listam escrita do Gmail e o plugin valida', async () => {

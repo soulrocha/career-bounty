@@ -2,10 +2,12 @@
 description: Lê os e-mails de processo seletivo pelo conector Gmail (só leitura) e atualiza o tracker
 allowed-tools: Bash(node "${CLAUDE_PLUGIN_ROOT}/bin/career-bounty.mjs":*)
 ---
-Rode `node "${CLAUDE_PLUGIN_ROOT}/bin/career-bounty.mjs" mail sync --dry-run --json` para ver o que mudaria sem gravar nada.
-Se o resumo estiver correto, rode o mesmo comando sem `--dry-run` para gravar. Resuma só as mudanças (quantos e-mails
-novos, etapas que avançaram, pendências de conferência, propostas de entrevista e prazos), sem copiar assunto,
-remetente nem trecho de e-mail.
+Rode UMA vez `node "${CLAUDE_PLUGIN_ROOT}/bin/career-bounty.mjs" mail sync --live --json`. É um único passe de leitura
+(o leitor consulta o Gmail e grava no tracker); não rode o comando duas vezes (cada passe é uma chamada cobrada).
+Para só ver o que mudaria, a pessoa precisa pedir a simulação: aí rode uma vez com `--dry-run` e pare, sem repetir
+o passe real na mesma conversa sem pedido. Resuma só as mudanças (quantos e-mails novos, etapas que avançaram,
+pendências de conferência, propostas de entrevista e prazos), sem copiar assunto, remetente nem trecho de e-mail.
+Criar evento no Calendar é o único passo que pede confirmação da pessoa.
 
 Regras:
 

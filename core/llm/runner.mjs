@@ -82,8 +82,12 @@ export function createRunner({ modo, dataRoot, fake, replayDir, identity = [], e
       if (gravacao.hash !== hash) throw new Error(`Gravação de ${agente} não confere com o hash atual: rode npm run record.`);
       return { texto: gravacao.saida, uso: gravacao.uso ?? { tokens_in: 0, tokens_out: 0 } };
     }
-    if (env.CI) throw new Error('O modo live não roda dentro da CI.');
-    if (env.LIVE !== '1') throw new Error('O modo live exige LIVE=1 (chamada real cobrada).');
+    // Chamada real cobrada: precisa de opt-in explícito (CAREER_BOUNTY_LIVE=1, posto pelo CLI só com --live ou na rotina agendada) e nunca roda na CI.
+    // Binário injetado (claudeBin, só por código) não é o claude real e não passa por esta trava.
+    if (!claudeBin) {
+      if (env.CI) throw new Error('O modo live não roda dentro da CI.');
+      if (env.CAREER_BOUNTY_LIVE !== '1') throw new Error('O modo live exige CAREER_BOUNTY_LIVE=1 (chamada real cobrada; no CLI, passe --live).');
+    }
     if (chamadasLive >= maxChamadasLive) throw new Error(`Limite de ${maxChamadasLive} chamadas live atingido; nada foi enviado.`);
     chamadasLive += 1;
     const prompt = `Entrada (JSON):\n${JSON.stringify(entrada)}\nResponda somente com o JSON do contrato.`;

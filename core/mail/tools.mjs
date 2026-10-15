@@ -23,3 +23,13 @@ export function ehEscritaGmail(ferramenta) {
   if (/gmail/i.test(servidor)) return !GMAIL_LEITURA.includes(ferramenta);
   return ACOES_ESCRITA.includes(acao);
 }
+
+// Verbos de escrita: ferramenta desconhecida de qualquer servidor MCP com um destes no nome é negada (padrão negado).
+const VERBOS_ESCRITA = /send|forward|reply|trash|delete|draft|label|modify|move|archive|spam|envio|apagar/i;
+
+export function ehEscritaMcp(ferramenta) {
+  if (ehEscritaGmail(ferramenta)) return true;
+  const partes = String(ferramenta ?? '').split('__');
+  if (partes[0] !== 'mcp' || partes.length < 3) return false;
+  return VERBOS_ESCRITA.test(partes.slice(2).join('__'));
+}

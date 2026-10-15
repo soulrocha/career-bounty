@@ -37,8 +37,9 @@ export async function mail(rest, { parseFlags }) {
     return { result: consulta, text: `${consulta.query}\n(limite ${consulta.limite}${consulta.avisos.length ? `; avisos: ${consulta.avisos.join('; ')}` : ''})` };
   }
   if (sub === 'sync') {
-    const values = parseFlags(flags, { allowed: ['--dry-run', '--salvar-em', '--janela-dias', '--so-portais', '--fase-b', '--now', '--teste'], withValue: ['--salvar-em', '--janela-dias', '--fase-b', '--now'] });
+    const values = parseFlags(flags, { allowed: ['--live', '--dry-run', '--salvar-em', '--janela-dias', '--so-portais', '--fase-b', '--now', '--teste'], withValue: ['--salvar-em', '--janela-dias', '--fase-b', '--now'] });
     const now = agora(values);
+    if (!values['--live']) throw new Error('mail sync lê o Gmail pelo Claude real (chamada cobrada): passe --live para confirmar.');
     const settings = await loadSettings();
     const mailConfig = { ...settings.mail, ...(values['--so-portais'] ? { so_portais: true } : {}) };
     for (const [flag, chave, max] of [['--janela-dias', 'janela_dias', 60], ['--fase-b', 'limite_fase_b', 50]]) {
@@ -55,7 +56,7 @@ export async function mail(rest, { parseFlags }) {
     if (salvarEm && !dryRun) throw new Error('--salvar-em só vale junto com --dry-run.');
     const ledgerRoot = dryRun ? (salvarEm ? path.join(salvarEm, 'ledger') : await mkdtemp(path.join(tmpdir(), 'cb-mail-'))) : settings.dataRoot;
     try {
-      const runner = createRunner({ modo: 'live', dataRoot: ledgerRoot, identity: await loadIdentityValues(), env: { ...process.env, LIVE: '1' }, timeoutMs: 300000, now: () => now });
+      const runner = createRunner({ modo: 'live', dataRoot: ledgerRoot, identity: await loadIdentityValues(), env: { ...process.env, CAREER_BOUNTY_LIVE: '1' }, timeoutMs: 300000, now: () => now });
       const result = await sincronizarEmail({ dataRoot: settings.dataRoot, ledgerRoot, settings: { ...settings, mail: mailConfig }, runner, now, dryRun, salvarEm });
       const texto = result.ok
         ? [`itens: ${result.itens}; novos: ${result.novos}; abertos na fase B: ${result.abertos}; ${dryRun ? 'simulação (nada gravado)' : 'gravado'}`, ...result.avisos].join(String.fromCharCode(10))
