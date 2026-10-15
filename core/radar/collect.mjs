@@ -2,7 +2,7 @@
 import { idFor } from '../dedup/keys.mjs';
 import { runSources } from '../sources/index.mjs';
 import { buildSources } from '../sources/registry.mjs';
-import { janela } from '../sources/plan.mjs';
+import { buildPlan } from '../sources/plan.mjs';
 import { appendEvents, readEvents } from '../store/events.mjs';
 import { projectEvents } from '../store/project.mjs';
 
@@ -12,8 +12,9 @@ export function descobertaEvent(vaga, id, ts) {
 
 export async function collect({ settings, only, dryRun = false, now = new Date(), sources, host }) {
   const lista = sources ?? buildSources(settings, { only });
-  const window = janela(now, settings.radar.janela_dias);
-  const coleta = await runSources(lista, { janela: window, config: settings.fontes, now }, { timeoutMs: settings.radar.timeout_fonte_ms });
+  const plano = buildPlan(settings.radar, now);
+  const window = plano.janela;
+  const coleta = await runSources(lista, { janela: window, plano, config: settings.fontes, now }, { timeoutMs: settings.radar.timeout_fonte_ms });
   const { eventos, avisos } = await readEvents(settings.dataRoot);
   if (avisos.length) throw new Error(`Log de eventos truncado ou corrompido (${avisos.length} aviso(s)); revisão necessária.`);
   const conhecidas = new Set(projectEvents(eventos).vagas.map(vaga => vaga.id));
