@@ -11,10 +11,14 @@ import { parseFrontmatter } from '../../core/kb/schema.mjs';
 
 const personaQuadrantes = path.join(repoRoot, 'tests', 'fixtures', 'kb-quadrantes');
 
+const IDENTIDADE = { nome: 'Ana Quadrantes', email: 'ana.quadrantes@exemplo.test', telefone: '+55 00 90000-0000', cpf: '000.000.000-00' };
+
+// A identidade fictícia nasce na cópia temporária: o repositório não versiona identity.yml fora do exemplo público.
 async function ambiente(t) {
   const dataRoot = await tempDir(t);
   const kb = path.join(dataRoot, 'kb');
   await cp(personaQuadrantes, kb, { recursive: true });
+  await writeFile(path.join(kb, 'identity.yml'), JSON.stringify(IDENTIDADE));
   assert.equal(run(['setup', '--json'], { dataRoot }).status, 0);
   return { dataRoot, kb, fontes: [{ nome: 'markdown-folder', fonte: createMarkdownFolder(kb) }] };
 }
@@ -120,6 +124,7 @@ test('kb sync não escreve fora do DATA_ROOT nem na pasta de origem', async t =>
   const dataRoot = await tempDir(t);
   const externa = path.join(await tempDir(t), 'base');
   await cp(personaQuadrantes, externa, { recursive: true });
+  await writeFile(path.join(externa, 'identity.yml'), JSON.stringify(IDENTIDADE));
   assert.equal(run(['setup', '--json'], { dataRoot }).status, 0);
   const antes = await arvore(externa);
   const vizinho = await arvore(path.dirname(externa));
