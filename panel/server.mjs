@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { randomBytes } from 'node:crypto';
-import { lstat, readFile, realpath } from 'node:fs/promises';
+import { lstat, readFile } from 'node:fs/promises';
+import { noLinks } from '../core/migration/paths.mjs';
 import { isAbsolute, relative, resolve, sep, posix } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 
@@ -21,7 +22,7 @@ function marker(job) {
 }
 
 async function privateFile(root, path) {
-  if ((await lstat(root)).isSymbolicLink() || await realpath(root) !== root) throw new Error('Diretório inválido.');
+  await noLinks(root).catch(() => { throw new Error('Diretório inválido.'); });
   const target = resolve(root, path);
   const rel = relative(root, target);
   if (!rel || rel.startsWith(`..${sep}`) || rel === '..' || isAbsolute(rel)) throw new Error('Arquivo indisponível.');
@@ -30,14 +31,14 @@ async function privateFile(root, path) {
     current = resolve(current, part);
     if ((await lstat(current)).isSymbolicLink()) throw new Error('Link indisponível.');
   }
-  if (await realpath(target) !== target || !(await lstat(target)).isFile()) throw new Error('Arquivo indisponível.');
+  if (!(await lstat(target)).isFile()) throw new Error('Arquivo indisponível.');
   return readFile(target);
 }
 
 export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880 }) {
   if (!['127.0.0.1', 'localhost'].includes(host)) throw new Error('O painel exige endereço local.');
   dataRoot = resolve(dataRoot);
-  if ((await lstat(dataRoot)).isSymbolicLink() || await realpath(dataRoot) !== dataRoot) throw new Error('Diretório de dados inválido.');
+  await noLinks(dataRoot).catch(() => { throw new Error('Diretório de dados inválido.'); });
   const token = randomBytes(32).toString('hex');
   const state = JSON.parse(await privateFile(dataRoot, 'state/migration.json'));
   if (state.version !== 1 || state.mode !== 'shadow' || !/^backups\/[\w-][\w.-]*$/.test(state.snapshotRoot)) {

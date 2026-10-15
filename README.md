@@ -1,23 +1,53 @@
-# CareerBounty
+# CareerBounty <!-- sec:titulo -->
 
-Projeto de plugin para Claude Code voltado à organização de candidaturas.
+Plugin para Claude Code que organiza a busca de vagas e as candidaturas. Leia antes o
+[aviso legal](LEGAL_DISCLAIMER.md): você responde pelos termos de cada site e o envio
+automático vem desligado. English: [README.en.md](README.en.md).
 
-Estado: CLI inicial e migração de dados com backup verificado, log de eventos,
-projeção, exportação de rollback e painel de consulta em modo sombra.
-O pacote do plugin ainda não foi validado para instalação.
+## O que é <!-- sec:o-que-e -->
 
-Com Node >=20, execute `npm test`. Não há dependências para instalar.
+Uma CLI em Node e um conjunto de comandos e agentes do Claude Code. Seus dados ficam numa
+pasta privada fora do repositório (`DATA_ROOT`); o repositório traz só código, documentação
+e uma persona fictícia de exemplo.
+
+## Instalação <!-- sec:instalacao -->
+
+Requer Node 20 ou superior. Sem dependências npm.
 
 ```sh
-node bin/career-bounty.mjs --version
-node bin/career-bounty.mjs --version --json
-node bin/career-bounty.mjs migrate --dry-run --diff --json
-node bin/career-bounty.mjs migrate --json
-node bin/career-bounty.mjs verify --json
-node bin/career-bounty.mjs panel --port 8880
+git clone <endereço deste repositório>
+cd career-bounty
+npm install
+npm test
 ```
 
-Os comandos de migração e painel exigem configuração privada. O modo sombra
-mantém o sistema de origem como fonte de verdade e bloqueia gravações pelo painel.
+No Claude Code: `/plugin install career-bounty --marketplace soulrocha/career-bounty`.
 
-Consulte [docs/SETUP.md](docs/SETUP.md) para o escopo desta preparação e a retomada.
+## Início rápido <!-- sec:inicio-rapido -->
+
+```sh
+node bin/career-bounty.mjs setup
+node bin/career-bounty.mjs doctor
+```
+
+`setup` cria o esqueleto da pasta privada; `doctor` diz o que falta, sem alterar nada.
+
+## Configuração <!-- sec:configuracao -->
+
+`DATA_ROOT` aponta a pasta privada (padrão `~/.career-bounty`). A configuração pessoal vive só
+em `DATA_ROOT/config.yml` (JSON válido). Veja `config.example.yml`. Padrões seguros: envio
+manual e coletor guest do LinkedIn desligado.
+
+## Privacidade <!-- sec:privacidade -->
+
+Nada pessoal entra no git. Veja [PRIVACY.md](PRIVACY.md). Um pre-commit bloqueia CPF,
+telefone, caminho de usuário, valores da sua identidade e empresas da sua denylist.
+
+## Desenvolvimento <!-- sec:desenvolvimento -->
+
+`npm test` roda a suíte (`node --test`). Veja [CONTRIBUTING.md](CONTRIBUTING.md),
+[SECURITY.md](SECURITY.md) e [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Licença <!-- sec:licenca -->
+
+MIT. Veja [LICENSE](LICENSE) e [NOTICE](NOTICE).
