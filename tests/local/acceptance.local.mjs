@@ -3,7 +3,7 @@
 // Nada do legado é copiado para o repositório; o log vai para uma pasta temporária.
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
 import { loadSettings } from '../../core/config.mjs';
@@ -82,4 +82,45 @@ test('F1.10: regras portadas batem com o refresh.py nas vagas reais', async () =
   });
   console.log(`# vagas comparadas: ${pipeline.vagas.length}; divergencias: ${divergentes.length}; empresas com apelido: ${Object.keys(aliases).length}`);
   assert.deepEqual(divergentes, []);
+});
+
+// F4.2/F4.9/F4.12: a base real e o Vault reais em somente leitura. A pasta de dados do teste é temporária; nada é gravado no Vault nem na base.
+//   LOCAL_ACCEPTANCE=1 KB_DATA_ROOT=<DATA_ROOT real com kb/ e fontes.yml> npm run test:local
+async function hashArvore(raiz) {
+  const { createHash } = await import('node:crypto');
+  const { readdir } = await import('node:fs/promises');
+  const itens = [];
+  async function visitar(dir) {
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      if (['.git', '.obsidian', 'node_modules'].includes(entry.name)) continue;
+      const arquivo = path.join(dir, entry.name);
+      if (entry.isDirectory()) await visitar(arquivo);
+      else if (/\.(md|txt|html|json|yml|cmd|ps1)$/i.test(entry.name)) itens.push(`${path.relative(raiz, arquivo)}:${createHash('sha256').update(await readFile(arquivo)).digest('hex')}`);
+    }
+  }
+  await visitar(raiz);
+  return createHash('sha256').update(itens.sort().join('\n')).digest('hex');
+}
+
+test('F4: lê a base real e o Vault real sem alterar nenhum arquivo (hash da árvore antes e depois)', async t => {
+  if (process.env.LOCAL_ACCEPTANCE !== '1') assert.fail('Aceitação local desligada: defina LOCAL_ACCEPTANCE=1.');
+  const real = process.env.KB_DATA_ROOT;
+  if (!real) assert.fail('Defina KB_DATA_ROOT com o DATA_ROOT real (kb/ e fontes.yml).');
+  const { run } = await import('../helpers/cli.mjs');
+  const manifesto = JSON.parse(await readFile(path.join(real, 'fontes.yml'), 'utf8'));
+  const raizVault = manifesto.obsidian_vault?.raiz ?? (await loadSettings({ dataRoot: real })).vault_root;
+  assert.ok(raizVault, 'o fontes.yml ou o config.yml precisa informar a raiz do Vault');
+  // DATA_ROOT temporário: lê a base real por caminho absoluto, grava só aqui.
+  const temp = await tempDir(t);
+  assert.equal(run(['setup', '--json'], { dataRoot: temp }).status, 0);
+  await writeFile(path.join(temp, 'fontes.yml'), JSON.stringify({ ...manifesto, markdown_folder: { raiz: path.join(real, 'kb') } }));
+  await writeFile(path.join(temp, 'config.yml'), await readFile(path.join(real, 'config.yml'), 'utf8'));
+  const [vaultAntes, kbAntes] = [await hashArvore(raizVault), await hashArvore(path.join(real, 'kb'))];
+  for (const args of [['kb', 'sync'], ['kb', 'quadrants'], ['quadrantes'], ['vault', 'plan'], ['mentor', 'contexto']]) {
+    const resultado = run([...args, '--json'], { dataRoot: temp });
+    assert.equal(resultado.status, 0, `${args.join(' ')}: ${resultado.stderr || resultado.stdout.slice(0, 300)}`);
+    if (args[0] === 'quadrantes') console.log(`# quadrantes: ${JSON.stringify(resultado.json.contagem)}`);
+  }
+  assert.equal(await hashArvore(raizVault), vaultAntes, 'o Vault não pode mudar');
+  assert.equal(await hashArvore(path.join(real, 'kb')), kbAntes, 'a base real não pode mudar');
 });

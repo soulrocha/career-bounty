@@ -47,3 +47,23 @@ formulários públicos sem login. Exige `limite_dia`. Sem regra ativa, o padrão
 
 Fato imutável gravado no log append-only (`events/`), com id, instante, host, ator, tipo e
 entidade. Estado e projeções são derivados dos eventos e podem ser reconstruídos.
+
+## Quadrante
+
+Uma das quatro classes que comparam a base com o currículo: (a) dado e CV conferem, (b) dado fora do CV, (c) CV sem dado e
+(d) lacuna. É calculado de forma determinística por `core/kb/quadrants.mjs`.
+
+## Item de CV
+
+Bullet de um modelo de CV, com seção, texto, números extraídos e as afirmações a que se liga pela marca invisível
+`<!-- claim:AF-001 -->`. Bullet sem marca fica `sem_marca` e vai para mapeamento.
+
+## Lacuna
+
+Falta de dado que enfraquece o currículo ou as candidaturas: afirmação sem evidência, resultado sem linha de base, buraco na
+linha do tempo ou requisito frequente de vaga sem afirmação. Tem peso e pergunta sugerida, e a fila de lacunas ordena por peso.
+
+## Candidato
+
+Fato trazido de uma fonte não confirmada (por exemplo, o ai-memory). Tem nível `relato`, nunca vira afirmação sem a aprovação
+explícita da pessoa e nunca vale como fato no CV.
