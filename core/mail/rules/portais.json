@@ -1,0 +1,16 @@
+{
+  "versao": 1,
+  "portais": [
+    { "id": "gupy", "dominios": ["gupy.com.br", "gupy.io"], "marca": "gupy" },
+    { "id": "inhire", "dominios": ["inhire.app"], "marca": "inhire" },
+    { "id": "solides", "dominios": ["solides.com", "solides.com.br"], "marca": "solides" },
+    { "id": "lever", "dominios": ["hire.lever.co", "lever.co"], "marca": "lever" },
+    { "id": "greenhouse", "dominios": ["greenhouse-mail.io", "greenhouse.io"], "marca": "greenhouse" },
+    { "id": "ashby", "dominios": ["ashbyhq.com"], "marca": "ashby" },
+    { "id": "breezy", "dominios": ["breezy-mail.com", "breezy.hr"], "marca": "breezy" },
+    { "id": "cornerstone", "dominios": ["csod.com"], "marca": "csod" },
+    { "id": "quickin", "dominios": ["mailquickin.com", "quickin.io"], "marca": "quickin" },
+    { "id": "digai", "dominios": ["mailer.digai.ai", "mailer-digai.com"], "marca": "digai" },
+    { "id": "linkedin", "dominios": ["linkedin.com"], "marca": "linkedin" }
+  ]
+}
