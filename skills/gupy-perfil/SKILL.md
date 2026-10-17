@@ -5,7 +5,18 @@ description: Revisar a proposta F5.6 e alterar somente itens profissionais aprov
 
 # Perfil Gupy por item
 
-Suporte ao DOM e à referência estável da conta real: **não verificado**. O código atual reconhece somente o contrato semântico sintético `synthetic-v1` das fixtures. DOM desconhecido bloqueia. Não invente seletores, identificador de conta, ferramenta MCP ou suporte real a partir da fixture.
+Página real suportada: `https://login.gupy.io/candidates/curriculum` ("Meu currículo"), versão `gupy-curriculo-v1`, com a
+estrutura observada em 17/10/2026 (só leitura): a leitura do perfil real foi verificada; gravação em conta real: **não verificado**
+(o primeiro item aprovado é o aceite manual). A fixture `synthetic-v1` continua só para testes. DOM diferente bloqueia; não invente seletores.
+
+Na página real:
+- **Não existe "Sobre você":** essa seção da proposta sai do diff (`ignoradas`, com o motivo).
+- **Habilidades** usam busca com autocomplete: o item vem `manual: true`; mostre o diff e a pessoa altera à mão. `editar` recusa.
+- **Descrição de experiência** é o único item editável por script. Antes de `editar`, abra o acordeão com
+  `SCRIPT_ABRIR_EXPERIENCIA` (só abre, não salva). O script do item aplica o texto, espera o "Salvar" da seção aparecer e só
+  clica com exatamente um "Salvar" visível, fora de `<form>`; senão restaura o texto original e devolve erro sem salvar.
+- A conta é reconhecida por um hash opaco das empresas das experiências: experiência adicionada, removida ou renomeada exige
+  nova leitura e nova proposta. Nunca toque em "Mais opções" nem em "Remover".
 
 1. Obtenha `tabs_context` da ferramenta de navegador disponível e crie uma **aba nova**. Não reutilize a aba de candidatura. Login/MFA/captcha são feitos pela pessoa. Não atue em conta real durante testes.
 2. Execute `gupy perfil iniciar --aba <id>` antes de ler o perfil. A aba fica protegida sem prazo de liberação automática. Execute o script extrator devolvido, sem alterações, em chamada individual de `javascript_tool` com aba explícita. O envelope real `session_id` do PreToolUse vincula a sessão sob lock. Sem ele, pare; não invente env ou sessão. O primeiro extrator não pode estar em `browser_batch`.

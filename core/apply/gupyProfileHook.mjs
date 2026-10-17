@@ -1,5 +1,5 @@
 import { NAVEGADOR } from './hook.mjs';
-import { SCRIPT_PERFIL, SCRIPT_RECARREGAR_PERFIL } from './gupyProfile.mjs';
+import { SCRIPT_ABRIR_EXPERIENCIA, SCRIPT_PERFIL, SCRIPT_RECARREGAR_PERFIL } from './gupyProfile.mjs';
 
 const negar = motivo => ({ decisao: 'negar', motivo });
 const permitir = { decisao: 'permitir', motivo: 'Leitura oficial de perfil.' };
@@ -39,7 +39,7 @@ export function decidirPerfil(entrada, estado) {
   if (!entrada.session_id || a.session_id !== entrada.session_id) return negar('Sessão diferente da aba de perfil.');
   if (tool === 'javascript_tool') {
     if (input.text === SCRIPT_PERFIL) return { ...permitir, vincular: { tabId: a.tab_id, sessionId: entrada.session_id, script: input.text, toolUseId: entrada.tool_use_id } };
-    if (input.text === SCRIPT_RECARREGAR_PERFIL) return permitir;
+    if (input.text === SCRIPT_RECARREGAR_PERFIL || input.text === SCRIPT_ABRIR_EXPERIENCIA) return permitir;
     if (typeof input.text === 'string' && a.itens.some(i => i.script && i.script === input.text)) return { ...permitir, consumir: { tabId: a.tab_id, sessionId: entrada.session_id, script: input.text } };
   }
   if (tool === 'computer' && ['scroll', 'wait'].includes(input?.action)) return permitir;
