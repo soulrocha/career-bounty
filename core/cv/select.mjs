@@ -13,7 +13,7 @@ const peso = req => PESOS[`${req.tipo}:${req.avaliacao}`] ?? 0;
 
 // { gerar, adaptar, motivo }: portal sem CV não gera nada; o resto gera, e só a vaga boa e ativa é adaptada.
 export function decidirCv(vaga, config) {
-  if (!curriculoNecessario(vaga, config)) return { gerar: false, adaptar: false, motivo: 'portal_sem_cv' };
+  if (vaga.curriculo_necessario === false || !curriculoNecessario(vaga, config)) return { gerar: false, adaptar: false, motivo: 'portal_sem_cv' };
   if (!ADERENCIAS_ADAPTADAS.has(vaga.aderencia)) return { gerar: true, adaptar: false, motivo: 'aderencia' };
   if (vaga.url_status !== 'aberta') return { gerar: true, adaptar: false, motivo: 'fechada' };
   if (vaga.condicoes?.situacao === 'incompativel') return { gerar: true, adaptar: false, motivo: 'incompativel' };
