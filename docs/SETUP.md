@@ -59,6 +59,10 @@ Base de conhecimento (afirmações, quadrantes, entrevista e mentor): `kb sync`,
 `kb suggest`, `entrevista`, `mentor contexto` e `vault plan`. As fontes vêm de `DATA_ROOT/fontes.yml`
 e a descrição completa está em [KNOWLEDGE.md](KNOWLEDGE.md).
 
+Currículos (dois PDFs com gates e proposta de perfil de portal): `cv gerar --vaga <id>` e `cv gate --vaga <id>`.
+O perfil de CV fica em `DATA_ROOT/cv/perfil.json`, os PDFs saem do Chrome ou Edge instalados e a descrição completa
+está em [CV.md](CV.md).
+
 ## Retomar
 
 1. Confira a branch e o estado do Git; preserve alterações existentes.

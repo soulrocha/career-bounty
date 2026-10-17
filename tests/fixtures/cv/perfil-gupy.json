@@ -1,0 +1,8 @@
+{
+  "sobre": "Analista de produto com experiência em operações e dados.",
+  "experiencias": [
+    { "id": "g1", "empresa": "Empresa Gama", "cargo": "Gerente de Produto", "descricao": "Gestão de produto de uma plataforma interna de dados." },
+    { "id": "g2", "empresa": "Empresa Beta", "cargo": "Líder de Operações", "descricao": "" }
+  ],
+  "habilidades": ["Scrum"]
+}

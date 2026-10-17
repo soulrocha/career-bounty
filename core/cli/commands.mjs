@@ -32,6 +32,7 @@ import { report } from './report.mjs';
 import { avisoEmailNaoConferido, sincronizarEmail } from '../mail/sync.mjs';
 import { entrevistaCommands } from './entrevista.mjs';
 import { kbCommands } from './kb.mjs';
+import { cvCommands } from './cv.mjs';
 import { mentorCommands } from './mentor.mjs';
 import { vaultCommands } from './vault.mjs';
 
@@ -67,6 +68,7 @@ export const commandNames = () => [...legacyCommandNames, ...Object.keys(command
 
 export const commands = {
   ...kbCommands,
+  ...cvCommands,
   ...entrevistaCommands,
   ...mentorCommands,
   ...vaultCommands,

@@ -8,9 +8,11 @@ const DATAS = [
   new RegExp(`\b${MESES}\s*[/\-]?\s*(?:de\s+)?\d{4}\b`, 'gi'),
   /\b(?:19|20)\d{2}\s*[-–—]\s*(?:19|20)\d{2}\b/g,
 ];
-const NUMERO = /(R\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:[.,]\d+)?)(\s*%)?(\s*(?:milhões|milhão|mil|mi)(?![\p{L}\p{N}]))?/gu;
+// Escala por extenso (com ou sem espaço) ou sufixo colado k/M: "41k" é 41 mil, nunca 41. Seguida de hífen não é escala
+// ("bi-semanal"); "tri" sozinho fica de fora (costuma ser trimestre).
+const NUMERO = /(R\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:[.,]\d+)?)(\s*%)?(\s*(?:trilhões|trilhão|trilhoes|trilhao|bilhões|bilhão|bilhoes|bilhao|bi|milhões|milhão|milhoes|milhao|mil|mi)(?![\p{L}\p{N}-])|(?:k|K|M)(?![\p{L}\p{N}-]))?/gu;
 const UNIDADES_COLADAS = new Set(['ms', 's', 'min', 'h', 'x', 'k', 'kb', 'mb', 'gb', 'tb', 'm', 'km', 'kg', 'g', 'a', 'o', 'º', 'ª']);
-const ESCALAS = { mil: 1e3, mi: 1e6, milhao: 1e6, milhoes: 1e6 };
+const ESCALAS = { mil: 1e3, k: 1e3, mi: 1e6, m: 1e6, milhao: 1e6, milhoes: 1e6, bi: 1e9, bilhao: 1e9, bilhoes: 1e9, tri: 1e12, trilhao: 1e12, trilhoes: 1e12 };
 
 const letraOuDigito = ch => ch !== undefined && /[\p{L}\p{N}_#@]/u.test(ch);
 
@@ -45,8 +47,11 @@ export function extrairNumeros(texto) {
   return out;
 }
 
-// Chave de comparação: valor e se é percentual. Moeda e contagem se equivalem (R$ 2,3 mi == 2,3 mi).
-export const chaveNumero = n => `${n.tipo === 'percentual' ? '%' : '#'}${n.valor}`;
+// Chave de comparação: valor (já multiplicado pela escala: "41k" vale 41 000, nunca 41) e classe.
+// Percentual é sempre classe própria. Moeda pequena também ("R$ 41" não é "41 pessoas"); de mil para cima a grandeza
+// escrita de outro jeito casa (R$ 2,3 mi == 2,3 mi == 2.300.000). Limitação conhecida: "R$ 41 mil" ainda sustenta
+// "41 mil usuários"; separar exigiria entender o substantivo contado.
+export const chaveNumero = n => `${n.tipo === 'percentual' ? '%' : n.tipo === 'moeda' && n.valor < 1000 ? '$' : '#'}${n.valor}`;
 export const mesmoNumero = (a, b) => chaveNumero(a) === chaveNumero(b);
 
 // Números que uma afirmação sustenta: os do texto e os da lista `numeros` do frontmatter.
