@@ -114,3 +114,14 @@ export function arquivosServiveis(manifesto) {
   if (!manifesto) return [];
   return manifesto.versoes.flatMap(v => ['cv-ats.pdf', 'cv-visual.pdf'].map(nome => relativo(manifesto.vaga_id, v.hash, nome)));
 }
+
+// CV de cada vaga para o painel e para a fila (F5.8, F6.7): o aprovado mais novo, o enviado e o motivo do bloqueio.
+export async function cvsDoPainel(projecao, dataRoot) {
+  const cvs = {};
+  for (const vaga of projecao.vagas ?? []) {
+    let manifesto = null;
+    try { manifesto = await lerManifesto(dataRoot, vaga.id); } catch { manifesto = null; }
+    if (manifesto) cvs[vaga.id] = cvDoPainel(manifesto);
+  }
+  return cvs;
+}
