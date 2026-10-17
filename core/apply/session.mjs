@@ -28,16 +28,22 @@ export async function iniciarCandidatura(dataRoot, { vaga, tabId, ts = new Date(
 }
 
 // Pura: decide o que fazer com a extração. Não grava nada.
-export async function prepararPreenchimento({ extracao: bruta, respostas, vaga, portal = null, hoje, runner = null, identity = [] }) {
+export async function prepararPreenchimento({ extracao: bruta, respostas, vaga, portal = null, hoje, runner = null, identity = [], meta, aoPreparar }) {
   const extracao = normalizarExtracao(bruta);
   if (bloqueadaPorHumano(extracao)) {
     const motivo = Object.entries(extracao.bloqueios).filter(([, v]) => v).map(([k]) => k).join(', ');
-    return { bloqueada: true, motivo: `página pede ação humana (${motivo})` };
+    const resumo = { campos: extracao.campos.length, desconhecidos: 0, ignorados: 0, todos_conhecidos: false };
+    await aoPreparar?.(resumo);
+    return { bloqueada: true, motivo: `página pede ação humana (${motivo})`, resumo };
   }
   const casamento = casarCampos({ extracao, respostas, portal, empresa: vaga.empresa, hoje });
-  const { campos, chamadas_llm } = await classificarDesconhecidos({ desconhecidos: casamento.desconhecidos, runner, identity });
+  const resumo = { campos: extracao.campos.length, desconhecidos: casamento.desconhecidos.length, ignorados: casamento.ignorados.length,
+    todos_conhecidos: extracao.campos.length > 0 && casamento.desconhecidos.length === 0 && casamento.ignorados.length === 0 };
+  await aoPreparar?.(resumo);
+  const { campos, chamadas_llm } = await classificarDesconhecidos({ desconhecidos: casamento.desconhecidos, runner, identity, meta });
   return {
     bloqueada: false,
+    resumo,
     script: scriptDePreenchimento(casamento.preenchimentos),
     anexar_cv: casamento.preenchimentos.some(p => p.tipo === 'file'),
     preencha_voce: preenchaVoce(casamento),
@@ -50,7 +56,8 @@ export async function prepararPreenchimento({ extracao: bruta, respostas, vaga, 
 
 // Grava o efeito da preparação: script registrado para o hook e perguntas pendentes (rascunho também vira pergunta,
 // com o texto sugerido, para a pessoa aprovar na aba Perguntas antes de qualquer uso).
-export async function registrarPreparacao(dataRoot, { vaga, preparo, portal = null, rascunhosSugeridos = {}, ts = new Date().toISOString() }) {
+export async function registrarPreparacao(dataRoot, { vaga, preparo, portal = null, tentativa_id, rascunhosSugeridos = {}, ts = new Date().toISOString() }) {
+  if (tentativa_id && preparo.resumo) await registrarResumoPreparacao(dataRoot, { vaga, tentativa_id, resumo: preparo.resumo, ts });
   if (preparo.bloqueada) return { perguntas: 0 };
   await registrarScript(dataRoot, { vagaId: vaga.id, script: preparo.script, ts });
   const eventos = [...preparo.perguntas, ...preparo.rascunhos].map(campo => {
@@ -58,8 +65,15 @@ export async function registrarPreparacao(dataRoot, { vaga, preparo, portal = nu
     if (rascunhosSugeridos[campo.ref]) e.dados.sugestao = rascunhosSugeridos[campo.ref];
     return e;
   });
+  const perguntas = eventos.length;
   if (eventos.length) await appendEvents(dataRoot, eventos, { now: ts });
-  return { perguntas: eventos.length };
+  return { perguntas };
+}
+
+export async function registrarResumoPreparacao(dataRoot, { vaga, tentativa_id, resumo, ts = new Date().toISOString() }) {
+  const hash = createHash('sha256').update(JSON.stringify([resumo.campos, resumo.desconhecidos, resumo.ignorados, resumo.todos_conhecidos])).digest('hex').slice(0, 16);
+  return appendEvents(dataRoot, [{ id: `candidatura.preparada:${tentativa_id}:${ts}:${hash}`, ts, ator: 'aplicar', tipo: 'candidatura.preparada', entidade: 'vaga', entidade_id: vaga.id,
+    dados: { vaga_id: vaga.id, tentativa_id, ...resumo } }], { now: ts });
 }
 
 export async function encerrarCandidatura(dataRoot, { tentativa, vaga, tabId, estado, bruto = null, motivo = null, ts = new Date().toISOString() }) {

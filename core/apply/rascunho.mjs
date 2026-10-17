@@ -24,7 +24,7 @@ export function validarRascunhos(json, { refs, porId, afirmacoes }) {
 }
 
 // campos: rascunhos da classificação (ref, label). Devolve { ref: texto } para usar como sugestão.
-export async function rascunharRespostas({ runner, campos, vaga, afirmacoes }) {
+export async function rascunharRespostas({ runner, campos, vaga, afirmacoes, meta }) {
   if (!campos.length) return {};
   const agente = await loadAgent('redator-respostas');
   const liberadas = elegiveis(afirmacoes);
@@ -36,6 +36,6 @@ export async function rascunharRespostas({ runner, campos, vaga, afirmacoes }) {
     limite_caracteres: RASCUNHO_MAX,
   };
   const ctx = { refs: new Set(campos.map(c => c.ref)), porId, afirmacoes };
-  const { json } = await runner.run({ agente: 'redator-respostas', modelo: agente.modelo, versaoPrompt: agente.versaoPrompt, sistema: agente.sistema, entrada, validar: saida => validarRascunhos(saida, ctx) });
+  const { json } = await runner.run({ agente: 'redator-respostas', modelo: agente.modelo, versaoPrompt: agente.versaoPrompt, sistema: agente.sistema, entrada, meta, validar: saida => validarRascunhos(saida, ctx) });
   return Object.fromEntries(json.rascunhos.map(r => [r.ref, r.texto.trim()]));
 }

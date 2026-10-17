@@ -67,3 +67,11 @@ linha do tempo ou requisito frequente de vaga sem afirmação. Tem peso e pergun
 
 Fato trazido de uma fonte não confirmada (por exemplo, o ai-memory). Tem nível `relato`, nunca vira afirmação sem a aprovação
 explícita da pessoa e nunca vale como fato no CV.
+
+## Medição por candidatura
+
+Soma de eventos `llm.uso` vinculados ao `tentativa_id` de uma reserva e à `vaga_id`, separando navegador de runner.
+`medicao: completa` exige preparo e contadores de navegador, sem consumo simulado ou vínculo inconsistente.
+`resultado: aprovada` exige também todos os campos conhecidos e no máximo 15.000 tokens. Falta de dados é
+`nao_verificada`; desconhecido em qualquer etapa permanece desconhecido para essa medição, mesmo após resposta humana.
+`medicao_id` identifica um incremento de contadores da sessão informado pelo operador; não identifica a pessoa ou a vaga.
