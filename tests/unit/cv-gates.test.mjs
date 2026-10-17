@@ -123,6 +123,8 @@ test('o painel e a candidatura não oferecem a vaga com CV bloqueado', async () 
   assert.equal(projetada.cv_gate.status, 'bloqueado');
   assert.equal(podeCandidatar(projetada), false);
   assert.equal(podeCandidatar(vagaAlta()), true);
+  // Versão nova bloqueada com uma anterior aprovada: a vaga continua oferecida com a aprovada.
+  assert.equal(podeCandidatar({ ...projetada, cv_gate: { ...projetada.cv_gate, aprovada: 'f'.repeat(64) } }), true);
 
   const html = renderPainel({ ...projecao, vagas: [projetada] }, { template: await readFile(PUBLIC_TEMPLATE, 'utf8') });
   // O template decide no navegador: o dado chega com o gate, e o card troca o envio pelo motivo.

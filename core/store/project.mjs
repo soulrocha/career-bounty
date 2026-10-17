@@ -159,7 +159,7 @@ const reducers = {
   'vaga.destino_bloqueado': onVaga((vaga, dados) => ({ ...vaga, destino_bloqueado_em: dados.dia, destino_bloqueio_motivo: dados.motivo })),
   'vaga.avaliada': onVaga(avaliada),
   // Gate do CV (F5.5): a última avaliação vale; CV bloqueado tira a vaga da candidatura.
-  'cv.gate': onVaga((vaga, dados) => ({ ...vaga, cv_gate: { status: dados.status, motivos: dados.motivos, versao: dados.versao, tipo_cv: dados.tipo_cv } })),
+  'cv.gate': onVaga((vaga, dados) => ({ ...vaga, cv_gate: { status: dados.status, motivos: dados.motivos, versao: dados.versao, tipo_cv: dados.tipo_cv, aprovada: dados.aprovada ?? null } })),
   'email_evento.importado': email.importada,
   'email_evento.atualizado': email.atualizada,
   'candidatura.marcada': onVaga(applyMarcacao),

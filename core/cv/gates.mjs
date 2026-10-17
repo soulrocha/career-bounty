@@ -95,13 +95,14 @@ export function avaliarGate({ payload, afirmacoes, textoAts }) {
   return { status: motivos.length ? 'bloqueado' : 'ok', motivos, versao: versaoDoCv(payload) };
 }
 
-// Evento do gate: um por vaga e versão do CV (avaliar de novo o mesmo CV não duplica).
-export function eventoGate({ vagaId, gate, tipoCv = 'adaptado', ts }) {
+// Evento do gate: um por vaga, versão do CV e resultado (avaliar de novo com o mesmo resultado não duplica; resultado novo grava).
+// aprovada: hash da versão aprovada mais nova da vaga (pode ser anterior a esta), a que o painel oferece.
+export function eventoGate({ vagaId, gate, tipoCv = 'adaptado', aprovada = null, ts }) {
   return {
-    id: `cv-gate:${vagaId}:${gate.versao}`, ts, ator: 'cv', tipo: 'cv.gate', entidade: 'vaga', entidade_id: vagaId,
-    dados: { status: gate.status, motivos: gate.motivos, versao: gate.versao, tipo_cv: tipoCv },
+    id: `cv-gate:${vagaId}:${gate.versao}:${createHash('sha256').update(estavel({ s: gate.status, m: gate.motivos, a: aprovada })).digest('hex').slice(0, 12)}`, ts, ator: 'cv', tipo: 'cv.gate', entidade: 'vaga', entidade_id: vagaId,
+    dados: { status: gate.status, motivos: gate.motivos, versao: gate.versao, tipo_cv: tipoCv, ...(aprovada ? { aprovada } : {}) },
   };
 }
 
-// Vaga com CV bloqueado não é oferecida no painel nem na candidatura assistida.
-export const podeCandidatar = vaga => vaga?.cv_gate?.status !== 'bloqueado';
+// Vaga com CV bloqueado não é oferecida no painel nem na candidatura assistida, a menos que haja versão anterior aprovada.
+export const podeCandidatar = vaga => vaga?.cv_gate?.status !== 'bloqueado' || Boolean(vaga.cv_gate.aprovada);
