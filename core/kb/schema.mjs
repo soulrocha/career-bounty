@@ -81,5 +81,8 @@ export function montarAfirmacao({ data, body }, arquivo) {
     origem: data.origem ?? null,
     publicavel: data.publicavel ?? null,
     numeros: comoLista(data.numeros).map(String),
+    // Opcionais do CV: frases-variante cadastradas e termos que não podem aparecer em artefato (clientes, colegas, sistemas).
+    ...(data.variantes ? { variantes: comoLista(data.variantes).map(String) } : {}),
+    ...(data.anonimizar ? { anonimizar: comoLista(data.anonimizar).map(String) } : {}),
   };
 }
