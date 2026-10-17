@@ -61,15 +61,6 @@ function conferirCards(payload, porId, afirmacoes) {
   return { motivos, ligadas };
 }
 
-// Texto do perfil que não vem de afirmação: título, intros e seções fixas. Número aqui também precisa de prova.
-const textosFixos = payload => [
-  ['titulo', payload.titulo],
-  ...payload.experiencias.filter(exp => exp.intro).map(exp => [`${exp.id}, intro`, exp.intro]),
-  ...(payload.competencias ?? []).map((c, i) => [`competência ${i + 1}`, `${c.grupo}: ${c.itens}`]),
-  ...(payload.cursos ?? []).map((c, i) => [`curso ${i + 1}`, c]),
-  ['idiomas', payload.idiomas],
-].filter(([, texto]) => texto);
-
 // Todo texto visível do CV, para procurar termo que devia ter sido anonimizado.
 const textoVisivel = payload => [
   payload.titulo, payload.resumo, ...payload.palavras_chave, ...(payload.cabecalho?.contatos ?? []),
@@ -106,14 +97,15 @@ export function avaliarGate({ payload, afirmacoes, textoAts }) {
   const usadas = afirmacoes.filter(af => itens.usadas.includes(af.id) || cards.ligadas.includes(af.id));
   const ligadas = [...new Set([...itens.usadas, ...cards.ligadas])];
   // O resumo é escrito pelo modelo: além dos dígitos, quantidade por extenso só com a mesma expressão numa afirmação usada.
-  const extenso = quantidadesPorExtenso(payload.resumo, usadas.map(af => af.texto))
+  const extenso = quantidadesPorExtenso(payload.resumo, usadas)
     .map(palavra => ({ codigo: 'numero_por_extenso', onde: 'resumo', numero: palavra, motivo: `resumo: "${palavra}" sem afirmação que use a mesma expressão` }));
   const motivos = [
     ...itens.motivos,
     ...cards.motivos,
     ...conferirNumeros({ texto: payload.resumo, ligadas, afirmacoes, onde: 'resumo' }),
+    // Título, intros e seções fixas vêm do perfil.json escrito pela pessoa, nunca do modelo: número ali ("Office 365",
+    // "ISO 27001") é responsabilidade de quem escreve o perfil. O gate só procura termo a anonimizar nesses campos.
     ...extenso,
-    ...textosFixos(payload).flatMap(([onde, texto]) => conferirNumeros({ texto, ligadas, afirmacoes, onde })),
     ...conferirAnonimizacao(payload, usadas),
     ...conferirAts(payload, textoAts),
   ];

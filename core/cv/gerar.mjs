@@ -93,11 +93,14 @@ export async function gerarCvDaVaga({ dataRoot, settings, vagaId, runner = null,
   const visual = await gerarPdfVisual(payload, { fotoDataUri, navegador });
   const ats = await gerarPdfAts(payload, { navegador });
   const gate = avaliarGate({ payload, afirmacoes: base.claims, textoAts: extrairTexto(ats.pdf) });
-  const { pasta } = await gravarCv(dataRoot, {
+  // Mesmo payload de um CV já enviado: a versão congelada fica como está (é a mesma) e o fluxo segue com a reavaliação.
+  const jaEnviada = (await lerManifesto(dataRoot, vagaId))?.enviado?.hash === gate.versao;
+  const pasta = jaEnviada ? pastaDaVersao(dataRoot, vagaId, gate.versao) : (await gravarCv(dataRoot, {
     vagaId, versao: gate.versao, tipo: payload.tipo, payload, gate, ts,
     arquivos: { 'cv-visual.html': visual.html, 'cv-visual.pdf': visual.pdf, 'cv-ats.html': ats.html, 'cv-ats.pdf': ats.pdf },
-  });
-  await reavaliarVersoes({ dataRoot, vagaId, base, exceto: gate.versao });
+  })).pasta;
+  if (jaEnviada) avisos = [...avisos, 'este CV é o já enviado nesta candidatura; a versão congelada foi mantida'];
+  await reavaliarVersoes({ dataRoot, vagaId, base, exceto: jaEnviada ? null : gate.versao });
   const { aprovada, evento } = await registrarGate({ dataRoot, vagaId, gate, tipoCv: payload.tipo, ts });
   if (!evento) avisos = [...avisos, AVISO_SOMBRA];
   return { gerado: true, motivo: decisao.motivo, tipo: payload.tipo, versao: gate.versao, gate, aprovada, evento, pasta, paginas: { visual: visual.paginas, ats: ats.paginas }, avisos };

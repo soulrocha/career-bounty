@@ -57,7 +57,7 @@ function validarSecao(secao, i, ctx) {
   if (tamanho(secao.proposto) > limite) throw new Error(`${secao.campo} excede ${limite} caracteres (${tamanho(secao.proposto)})`);
   const conferencia = verificarTexto({ texto: secao.proposto, ligadas: secao.afirmacoes, afirmacoes });
   if (!conferencia.ok) throw new Error(`${secao.campo} com fato sem afirmação: ${conferencia.problemas.map(p => p.motivo).join('; ')}`);
-  const extenso = quantidadesPorExtenso(secao.proposto, ligadas.map(af => af.texto));
+  const extenso = quantidadesPorExtenso(secao.proposto, ligadas);
   if (extenso.length) throw new Error(`${secao.campo} com quantidade por extenso sem afirmação que use a mesma expressão: ${extenso.join(', ')}`);
 }
 

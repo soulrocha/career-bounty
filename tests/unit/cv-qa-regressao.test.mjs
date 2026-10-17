@@ -97,13 +97,35 @@ test('QA 4: com o redator, vaga sem alvo continua no CV-base e o modelo nem é c
   assert.equal(chamadas.length, 0);
 });
 
-test('QA 5: número em título, intro, competência ou curso, card com afirmação inexistente e termo anonimizado com acento ou hífen bloqueiam', async () => {
+test('re-QA 1: número legítimo nos campos fixos do perfil (escritos pela pessoa, nunca pelo modelo) não bloqueia', async () => {
+  const { payload, gate } = await payloadOk();
+  const p = structuredClone(payload);
+  p.titulo = 'Analista de Produto | ISO 27001';
+  p.experiencias[0].intro = 'Empresa de varejo com 3 mil funcionários.';
+  p.competencias = [{ grupo: 'Ferramentas', itens: 'Office 365, Python 3, Java 17.' }];
+  p.cursos = ['Curso de SQL (40h) | Instituto Exemplo'];
+  p.idiomas = 'Inglês: TOEFL 100.';
+  const r = await gate(p);
+  assert.deepEqual(r.motivos, []);
+});
+
+test('re-QA 2 e 3: extenso sem falso positivo comum e sem os contornos achados', async () => {
+  const { quantidadesPorExtenso } = await import('../../core/cv/extenso.mjs');
+  const af = texto => ({ texto });
+  for (const [texto, ligadas] of [
+    ['Economizou R$ 2,3 milhões.', [af('Economizou R$ 2,3 mi.')]], ['Migrou cinco sistemas.', [af('Migrou 5 sistemas.')]],
+    ['Na área desde dez/2018.', []], ['Certificação Seis Sigma.', []], ['Removeu registros duplicados.', []],
+    ['Cresceu trinta por cento.', [af('Cresceu 30% no ano.')]],
+  ]) assert.deepEqual(quantidadesPorExtenso(texto, ligadas), [], texto);
+  for (const [texto, ligadas] of [
+    ['Atendeu um milhão de usuários.', []], ['Meio milhão de acessos.', []], ['Alcançou o décuplo.', []], ['Reduziu um quarto do custo.', []],
+    ['Reduziu o tempo em sete vezes.', [af('Entregou em setembro.')]],
+  ]) assert.notDeepEqual(quantidadesPorExtenso(texto, ligadas), [], texto);
+});
+
+test('QA 5: card com afirmação inexistente e termo anonimizado com acento ou hífen bloqueiam', async () => {
   const { payload, gate } = await payloadOk();
   const casos = [
-    p => { p.titulo = 'Analista de Produto com 15 anos'; },
-    p => { p.experiencias[0].intro = 'Gestão de 300 pessoas.'; },
-    p => { p.competencias = [{ grupo: 'Dados', itens: 'SQL avançado em 13 bancos.' }]; },
-    p => { p.cursos = ['Curso de 900 horas | Instituto Exemplo']; },
     p => { p.cards[0] = { ...p.cards[0], claim_ids: ['AF-201', 'AF-999'] }; },
     p => { p.competencias = [{ grupo: 'Sistemas', itens: 'Integração com o Sistema-Órion.' }]; },
     p => { p.resumo = 'Analista de produto que atendeu o cliente secreto.'; },
@@ -177,4 +199,16 @@ test('a proposta de perfil de portal vai para outbox/cv em JSON e Markdown, sem 
   const json = JSON.parse(await readFile(path.join(dataRoot, 'outbox', 'cv', 'perfil-gupy-2026-10-17.json'), 'utf8'));
   assert.equal(json.tipo, 'proposta');
   assert.equal(json.secoes.length, 1);
+});
+
+test('re-QA 5: cv gerar com a mesma entrada de um CV já enviado mantém a versão congelada e não falha', { skip: semNavegador }, async t => {
+  const { marcarEnviado } = await import('../../core/cv/artifacts.mjs');
+  const dataRoot = await ambienteCli(t);
+  const v1 = run(['cv', 'gerar', '--vaga', 'vaga-cv-01', '--json'], { dataRoot });
+  assert.equal(v1.status, 0, v1.stderr);
+  await marcarEnviado(dataRoot, { vagaId: 'vaga-cv-01', versao: v1.json.versao, ts: '2026-10-17T13:00:00.000Z' });
+  const de_novo = run(['cv', 'gerar', '--vaga', 'vaga-cv-01', '--json'], { dataRoot });
+  assert.equal(de_novo.status, 0, de_novo.stderr);
+  assert.equal(de_novo.json.versao, v1.json.versao);
+  assert.ok(de_novo.json.avisos.some(a => /já enviado/.test(a)));
 });
