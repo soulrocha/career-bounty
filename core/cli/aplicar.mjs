@@ -11,8 +11,7 @@ import { encerrarCandidatura, iniciarCandidatura, prepararPreenchimento, registr
 import { lerRespostas } from '../apply/answers.mjs';
 import { rascunharRespostas } from '../apply/rascunho.mjs';
 import { projetarTentativas, chaveTentativa } from '../apply/attempts.mjs';
-import { SCRIPT_COMPROVANTE, registrarComprovante } from '../apply/receipt.mjs';
-import { cvDoPainel, lerManifesto } from '../cv/artifacts.mjs';
+import { SCRIPT_COMPROVANTE } from '../apply/receipt.mjs';
 import { lerBase } from '../kb/base.mjs';
 import { carregarFontes } from '../kb/fontes.mjs';
 import { loadIdentityValues } from '../privacy/redact.mjs';
@@ -52,10 +51,12 @@ export const aplicarCommands = {
       const values = parseFlags(flags, { allowed: ['--vagas'], withValue: ['--vagas'] });
       const ids = String(values['--vagas'] ?? '').split(',').map(s => s.trim()).filter(Boolean);
       if (!ids.length) throw new Error(USO);
-      const { fila } = await planejarAplicacao({ dataRoot, settings });
+      if (new Set(ids).size !== ids.length) throw new Error('Lote contém vaga duplicada.');
+      const { fila } = await planejarAplicacao({ dataRoot, settings, paraLote: true });
       const fora = ids.filter(id => !fila.some(f => f.vaga_id === id));
       if (fora.length) throw new Error(`Fora da fila elegível (veja apply plan): ${fora.join(', ')}`);
       const vagas = await Promise.all(ids.map(async id => { const v = await vagaDaProjecao(dataRoot, id); return { vaga_id: id, chave: chaveTentativa(v), empresa: v.empresa, cargo: v.cargo }; }));
+      if (new Set(vagas.map(v => v.chave)).size !== vagas.length) throw new Error('Lote contém duas aparições da mesma requisição.');
       const lote = await proporLote(dataRoot, { vagas });
       return { result: lote, text: `Para aprovar o envio, a pessoa digita no chat exatamente:${NL}${lote.frase}${NL}(o lote vence em 1 hora; cada aprovação vale 2 horas e uma vez)` };
     }
@@ -64,8 +65,7 @@ export const aplicarCommands = {
       if (!values['--vaga'] || !values['--aba']) throw new Error(USO);
       const vaga = await vagaDaProjecao(dataRoot, values['--vaga']);
       const r = await iniciarCandidatura(dataRoot, { vaga, tabId: values['--aba'] });
-      const atual = cvDoPainel(await lerManifesto(dataRoot, vaga.id))?.atual;
-      return { result: { ...r, extrator: SCRIPT_EXTRATOR, cv_ats: atual ? path.join(dataRoot, atual.ats) : null } };
+      return { result: { ...r, extrator: SCRIPT_EXTRATOR, cv_ats: r.cv ? path.join(dataRoot, r.cv.ats) : null } };
     }
     if (sub === 'preparar') {
       const values = parseFlags(flags, { allowed: ['--vaga', '--extracao', '--live', '--replay', '--gravar'], withValue: ['--vaga', '--extracao', '--replay'] });
@@ -79,7 +79,7 @@ export const aplicarCommands = {
       let sugestoes = {};
       if (runner && preparo.rascunhos?.length) sugestoes = await rascunharRespostas({ runner, campos: preparo.rascunhos, vaga, afirmacoes: (await lerBase((await carregarFontes({ dataRoot, settings })).fontes)).claims });
       const { perguntas } = await registrarPreparacao(dataRoot, { vaga, preparo, portal, rascunhosSugeridos: sugestoes });
-      const atual = cvDoPainel(await lerManifesto(dataRoot, vaga.id))?.atual;
+      const atual = tentativa.cv;
       const resultado = { ...preparo, perguntas_criadas: perguntas, cv_ats: preparo.anexar_cv && atual ? path.join(dataRoot, atual.ats) : null };
       const texto = preparo.bloqueada ? `bloqueada: ${preparo.motivo}`
         : `${preparo.pronta ? 'pronta para revisar e enviar' : `${perguntas} pergunta(s) criada(s) na aba Perguntas`}; ${preparo.preencha_voce.length} campo(s) sensível(is) para a pessoa digitar`;
@@ -105,14 +105,8 @@ export const aplicarCommands = {
       const vaga = await vagaDaProjecao(dataRoot, values['--vaga']);
       const tentativa = projetarTentativas((await readEvents(dataRoot)).eventos).get(chaveTentativa(vaga));
       if (!tentativa || tentativa.estado !== 'em_andamento') throw new Error('Nenhuma tentativa em andamento para esta vaga.');
-      let estado = values['--estado'];
-      let comprovante = null;
-      if (['enviada', 'enviada_sem_comprovante'].includes(estado)) {
-        const r = await registrarComprovante(dataRoot, { vaga, bruto: values['--comprovante'] ? await lerJson(values['--comprovante']) : null, identity: await loadIdentityValues() });
-        estado = r.estado;
-        comprovante = r.comprovante;
-      }
-      await encerrarCandidatura(dataRoot, { tentativa: { tentativa_id: tentativa.tentativa_id, chave: tentativa.chave }, vaga, tabId: values['--aba'], estado, comprovante, motivo: values['--motivo'] ?? null });
+      const bruto = values['--comprovante'] ? await lerJson(values['--comprovante']) : null;
+      const { estado, comprovante } = await encerrarCandidatura(dataRoot, { tentativa: { tentativa_id: tentativa.tentativa_id, chave: tentativa.chave }, vaga, tabId: values['--aba'], estado: values['--estado'], bruto, motivo: values['--motivo'] ?? null });
       return { result: { estado, comprovante }, text: `desfecho: ${estado}${estado === 'enviada_sem_comprovante' ? ' (confira e marque no painel)' : ''}` };
     }
     throw new Error(USO);

@@ -32,8 +32,12 @@ Use só em sessão interativa, com a pessoa presente. CB é `node "${CLAUDE_PLUG
 4. Se vier `bloqueada`, rode `CB apply desfecho --vaga <id> --aba <tabId> --estado bloqueada:humano --motivo "<motivo>"` e siga.
 5. Rode o `script` devolvido com `javascript_tool` (preenche numa chamada). Anexe o currículo com `file_upload` usando só o
    caminho `cv_ats`. Peça à pessoa os campos de `preencha_voce`.
-6. Se houver perguntas criadas, avise que estão na aba Perguntas e siga para a próxima vaga; esta volta à fila depois.
-7. Formulário em várias etapas: avance com o script de `CB apply clique --texto "<botão>"` (ele recusa botão de envio).
+6. Se houver perguntas criadas, avise que estão na aba Perguntas e siga para a próxima vaga; preserve a aba e a tentativa.
+   Depois que a pessoa salvar as respostas, extraia novamente e retome `apply preparar` na mesma aba. Não rode `apply iniciar`
+   de novo: a reserva existente protege contra duplicidade enquanto a pessoa responde.
+7. Formulário em várias etapas: avance com `CB apply clique --texto "<botão>"`. Só aceita um botão visível e habilitado,
+   com `type="button"` explícito e rótulo de navegação conhecido (Próximo, Avançar, Continuar, Voltar e equivalentes).
+   Botão de submit, tipo omitido, rótulo desconhecido ou alvo ambíguo exige ação humana; não contorne a recusa.
 8. Com a vaga pronta, inclua-a no lote. Depois da frase digitada pela pessoa, rode o script de `CB apply envio --vaga <id>`.
 9. Rode `SCRIPT_COMPROVANTE` (devolvido por `CB apply comprovante`) na aba, salve o JSON e registre
    `CB apply desfecho --vaga <id> --aba <tabId> --estado enviada --comprovante <arquivo>`. Sem confirmação na página, o estado

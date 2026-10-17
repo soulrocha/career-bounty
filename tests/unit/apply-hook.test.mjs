@@ -122,7 +122,9 @@ test('na página: o script de clique recusa o botão de envio e o script de envi
   const { pagina, portal } = await import('../helpers/navegador.mjs');
   const p = await pagina(t, portal('greenhouse'));
   assert.deepEqual(await p.avaliar(scriptDeClique('Submit Application')), { erro: 'botão de envio: use o script de envio com aprovação' });
-  assert.deepEqual(await p.avaliar(scriptDeClique('Attach')), { clicado: 'Attach' });
+  assert.match((await p.avaliar(scriptDeClique('Attach'))).erro, /não reconhecida/);
+  await p.avaliar('document.forms[0].insertAdjacentHTML("beforeend", "<button type=button>Próximo</button>")');
+  assert.deepEqual(await p.avaliar(scriptDeClique('Próximo')), { clicado: 'Próximo' });
   assert.equal(await p.avaliar('document.body.dataset.enviado ?? null'), null);
   await p.avaliar(`document.querySelectorAll('[required]').forEach(e => e.removeAttribute('required')); document.forms[0].onsubmit = e => { e.preventDefault(); document.body.dataset.enviado = '1'; }`);
   assert.deepEqual(await p.avaliar(scriptDeEnvio('vaga-01')), { enviado: 'Submit Application' });
@@ -138,4 +140,32 @@ test('na aba de candidatura, upload só do PDF ATS versionado da própria vaga',
     assert.equal(decidir(`${CHROME}file_upload`, { ref: 'ref_3', tabId: 7, paths })?.decisao, 'negar', JSON.stringify(paths));
   }
   assert.equal(decidir(`${CHROME}file_upload`, { ref: 'ref_3', tabId: 7, paths: [ok], files: [{ name: 'x', data: 'eA==' }] })?.decisao, 'negar');
+});
+
+test('script de navegação nunca aciona submit com rótulo não reconhecido', { skip: (await import('../helpers/navegador.mjs')).semNavegador }, async t => {
+  const { pagina } = await import('../helpers/navegador.mjs');
+  const p = await pagina(t, 'data:text/html,<form><button type="submit">Confirmar candidatura</button></form>');
+  await p.avaliar('window.envios=0;document.forms[0].onsubmit=e=>{e.preventDefault();window.envios++}');
+  const script = scriptDeClique('Confirmar candidatura');
+  assert.equal(decidir(`${CHROME}javascript_tool`, { text: script, tabId: 7 }), null);
+  const resultado = await p.avaliar(script);
+  assert.ok(resultado.erro);
+  assert.equal(await p.avaliar('window.envios'), 0);
+});
+
+test('navegação falha fechada para controles implícitos, ocultos, desabilitados e ambíguos', { skip: (await import('../helpers/navegador.mjs')).semNavegador }, async t => {
+  const { pagina } = await import('../helpers/navegador.mjs');
+  const p = await pagina(t, 'data:text/html,<form></form>');
+  for (const html of ['<button>Próximo</button>', '<button type="submit">Próximo</button>', '<input type="image" value="Próximo">',
+    '<button type="reset">Próximo</button>', '<a href="#">Próximo</a>', '<div role="button">Próximo</div>',
+    '<button type="button" disabled>Próximo</button>', '<button type="button" aria-disabled="true">Próximo</button>',
+    '<button type="button" hidden>Próximo</button>', '<button type="button" style="visibility:hidden">Próximo</button>',
+    '<button type="button">Próximo</button><button type="button">Próximo</button>']) {
+    await p.avaliar(`document.forms[0].innerHTML=${JSON.stringify(html)};window.cliques=0;document.forms[0].onclick=()=>window.cliques++;document.forms[0].onsubmit=e=>e.preventDefault()`);
+    assert.ok((await p.avaliar(scriptDeClique('Próximo'))).erro, html);
+    assert.equal(await p.avaliar('window.cliques'), 0, html);
+  }
+  await p.avaliar('document.forms[0].innerHTML="<button type=button>Continuar</button>"');
+  assert.deepEqual(await p.avaliar(scriptDeClique('Continuar')), { clicado: 'Continuar' });
+  assert.equal(await p.avaliar('window.cliques'), 1);
 });

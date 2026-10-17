@@ -18,7 +18,7 @@ export const chaveTentativa = vaga => requisicaoKey(vaga) ?? [...chavesCanonicas
 export function projetarTentativas(eventos) {
   const porChave = new Map();
   for (const e of eventos) {
-    if (e.tipo === 'candidatura.tentativa') porChave.set(e.dados.chave, { chave: e.dados.chave, vaga_id: e.entidade_id, rota: e.dados.rota, estado: 'em_andamento', desde: e.ts, tentativa_id: e.id });
+    if (e.tipo === 'candidatura.tentativa') porChave.set(e.dados.chave, { chave: e.dados.chave, vaga_id: e.entidade_id, rota: e.dados.rota, cv: e.dados.cv ?? null, estado: 'em_andamento', desde: e.ts, tentativa_id: e.id });
     else if (e.tipo === 'candidatura.estado') {
       const atual = porChave.get(e.dados.chave);
       if (atual && atual.tentativa_id === e.dados.tentativa_id) porChave.set(e.dados.chave, { ...atual, estado: e.dados.estado, desde: e.ts, ...(e.dados.comprovante ? { comprovante: e.dados.comprovante } : {}), ...(e.dados.motivo ? { motivo: e.dados.motivo } : {}) });
@@ -42,15 +42,15 @@ export function bloqueioDeTentativa(tentativa, agora) {
 }
 
 // Reserva a requisição antes de qualquer ação, sob lock: duas abas ou dois processos não reservam a mesma vaga.
-export async function reservarTentativa(dataRoot, { vaga, rota, ts = new Date().toISOString() }) {
+export async function reservarTentativa(dataRoot, { vaga, rota, cv = null, ts = new Date().toISOString() }) {
   const chave = chaveTentativa(vaga);
   return withLock(path.join(dataRoot, 'state', 'tentativas.lock'), { busyMessage: 'Outra tentativa está sendo reservada; tente de novo.' }, async () => {
     const atual = projetarTentativas((await readEvents(dataRoot)).eventos).get(chave);
     const bloqueio = bloqueioDeTentativa(atual, ts);
     if (bloqueio) { const e = new Error(bloqueio.motivo); e.code = bloqueio.codigo; throw e; }
     const id = `tentativa:${createHash('sha256').update(`${chave}|${ts}`).digest('hex').slice(0, 16)}`;
-    await appendEvents(dataRoot, [{ id, ts, ator: 'aplicar', tipo: 'candidatura.tentativa', entidade: 'vaga', entidade_id: vaga.id, dados: { chave, rota } }], { now: ts });
-    return { tentativa_id: id, chave };
+    await appendEvents(dataRoot, [{ id, ts, ator: 'aplicar', tipo: 'candidatura.tentativa', entidade: 'vaga', entidade_id: vaga.id, dados: { chave, rota, cv } }], { now: ts });
+    return { tentativa_id: id, chave, cv };
   });
 }
 

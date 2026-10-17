@@ -11,7 +11,7 @@ export const ADERENCIAS_PADRAO = ['alta', 'media'];
 
 // vagas: projeção. perguntasPorVaga: Map de projetarPerguntas. tentativas: Map de projetarTentativas.
 // cvs: { vaga_id: cvDoPainel(manifesto) }. config: settings (cv_skip_portals).
-export function montarFila({ vagas, perguntasPorVaga = new Map(), tentativas = new Map(), cvs = {}, config = {}, aderencias = ADERENCIAS_PADRAO, agora = new Date().toISOString() }) {
+export function montarFila({ vagas, perguntasPorVaga = new Map(), tentativas = new Map(), cvs = {}, config = {}, aderencias = ADERENCIAS_PADRAO, agora = new Date().toISOString(), vagasEmRevisao = new Set() }) {
   const pedidas = new Set(aderencias.flatMap(a => (a === 'alta' ? ['alta', 'boa'] : [a])));
   const fila = [];
   const excluidas = [];
@@ -22,8 +22,11 @@ export function montarFila({ vagas, perguntasPorVaga = new Map(), tentativas = n
     if (descartadaDe(vaga)) { fora(vaga, 'descartada', 'descartada'); continue; }
     if (vaga.url_status !== 'aberta') { fora(vaga, 'encerrada', `vaga ${vaga.url_status ?? 'sem status'}: não está viva`); continue; }
     if (vaga.condicoes?.situacao === 'incompativel') { fora(vaga, 'incompativel', 'condições incompatíveis'); continue; }
-    const tentativa = bloqueioDeTentativa(tentativas.get(chaveTentativa(vaga)), agora);
-    if (tentativa) { fora(vaga, tentativa.codigo, tentativa.motivo); continue; }
+    const reservada = tentativas.get(chaveTentativa(vaga));
+    const tentativa = bloqueioDeTentativa(reservada, agora);
+    // Revisar o lote da mesma aba não cria reserva nova nem libera outra aparição da requisição.
+    const revisao = tentativa?.codigo === 'em_andamento' && reservada.vaga_id === vaga.id && vagasEmRevisao.has(vaga.id);
+    if (tentativa && !revisao) { fora(vaga, tentativa.codigo, tentativa.motivo); continue; }
     const pendentes = perguntasPorVaga.get(vaga.id) ?? [];
     if (pendentes.length) { fora(vaga, 'aguarda_resposta', `${pendentes.length} pergunta(s) esperando resposta na aba Perguntas`); continue; }
     const semCv = !decidirCv(vaga, config).gerar;

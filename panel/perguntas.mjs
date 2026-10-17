@@ -9,11 +9,12 @@ export async function listarPerguntas({ dataRoot }) {
 
 const ESTILO = `<style>
 #perguntas-painel{max-width:1176px;margin:auto;padding:28px;color:var(--ink,#14253b)}
-#perguntas-painel .p-item{background:#fff;border:1px solid var(--line,#dce3e9);border-radius:5px;margin:0 0 12px;padding:16px 18px}
+#perguntas-painel .p-item{background:#fff;border:1px solid var(--line,#dce3e9);border-radius:5px;margin:0 0 12px;padding:16px 18px;overflow-wrap:anywhere}
 #perguntas-painel .p-label{font-size:15px;font-weight:600;margin:0 0 6px}
 #perguntas-painel .p-meta{color:var(--muted,#5d6c7e);font-size:12px;margin:0 0 10px}
 #perguntas-painel .p-linha{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-#perguntas-painel input[type=text],#perguntas-painel textarea,#perguntas-painel select{font:inherit;padding:7px 9px;border:1px solid var(--line,#c9d3dd);border-radius:4px;min-width:260px}
+#perguntas-painel .p-linha>*{min-width:0;max-width:100%;box-sizing:border-box}
+#perguntas-painel input[type=text],#perguntas-painel textarea,#perguntas-painel select{font:inherit;padding:7px 9px;border:1px solid var(--line,#c9d3dd);border-radius:4px;min-width:0;max-width:100%;box-sizing:border-box}
 #perguntas-painel textarea{min-height:70px;width:100%}
 #perguntas-painel .p-estado{background:#fff;border:1px solid var(--line,#dce3e9);border-radius:5px;padding:24px;text-align:center;font-size:14px}
 #perguntas-painel .p-erro{color:#b42318;font-size:13px}
@@ -34,9 +35,10 @@ function campo(p){
 function escopos(p){var s=el('select');var o=el('option','Para todas as vagas');o.value='global';s.appendChild(o);
  var vistos={};p.vagas.forEach(function(v){[['empresa',v.empresa,'Só para '],['portal',v.portal,'Só no portal ']].forEach(function(e){if(e[1]&&!vistos[e[0]+e[1]]){vistos[e[0]+e[1]]=1;var x=el('option',e[2]+e[1]);x.value=e[0]+'|'+e[1];s.appendChild(x)}})});return s}
 function item(p){
- var box=el('div',undefined,'p-item');box.appendChild(el('p',p.label,'p-label'));
+ var box=el('div',undefined,'p-item'),label=el('p',p.label,'p-label');label.id='pergunta-'+p.id;box.appendChild(label);
  box.appendChild(el('p',(p.sugestao?'Rascunho do redator a partir das suas afirmações: revise antes de salvar. ':'')+(p.categoria==='sensivel'?'Dado sensível: fica só no seu computador e nunca vai ao modelo. ':'')+'Esperando: '+p.vagas.map(function(v){return (v.empresa||'?')+' ('+(v.cargo||'')+')'}).join('; '),'p-meta'));
  var c=campo(p),esc=escopos(p),b=el('button','Salvar resposta'),erro=el('p','','p-erro'),linha=el('div',undefined,'p-linha');b.type='button';
+ c.no.setAttribute('aria-labelledby',label.id);if(p.tipo==='checkbox_grupo')c.no.setAttribute('role','group');esc.setAttribute('aria-label','Escopo da resposta');
  linha.appendChild(c.no);linha.appendChild(esc);linha.appendChild(b);box.appendChild(linha);box.appendChild(erro);
  b.addEventListener('click',function(){var v=c.valor();if(v===''||(Array.isArray(v)&&!v.length)){erro.textContent='Preencha a resposta.';return}
   var e=esc.value.split('|'),escopo=e[0]==='global'?{tipo:'global'}:{tipo:e[0],valor:e[1]};b.disabled=true;erro.textContent='';
