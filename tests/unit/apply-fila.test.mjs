@@ -84,3 +84,20 @@ test('duas abas reservando ao mesmo tempo: só uma passa', async t => {
   assert.equal(resultados.filter(r => r.status === 'fulfilled').length, 1);
   assert.equal(chaveTentativa(v), 'req:REQ-vaga-03');
 });
+
+test('revisão do lote só admite a reserva viva da mesma vaga e mantém todos os demais gates', () => {
+  const v = vaga('vaga-01');
+  const base = { chave: chaveTentativa(v), vaga_id: v.id, estado: 'em_andamento', desde: AGORA };
+  const montar = (extra = {}, reserva = base) => montarFila({ vagas: [v], tentativas: new Map([[chaveTentativa(v), reserva]]), cvs: cvOk(v.id),
+    vagasEmRevisao: new Set([v.id]), agora: AGORA, ...extra });
+  assert.equal(montar().fila.length, 1);
+  assert.equal(montar({ vagasEmRevisao: new Set() }).excluidas[0].codigo, 'em_andamento');
+  assert.equal(montar({}, { ...base, vaga_id: 'outra-aparicao' }).excluidas[0].codigo, 'em_andamento');
+  for (const estado of ['enviada', 'enviada_sem_comprovante', 'incerta']) assert.equal(montar({}, { ...base, estado }).fila.length, 0, estado);
+  assert.equal(montar({ agora: '2026-10-17T12:31:00.000Z' }).excluidas[0].codigo, 'travada');
+  assert.equal(montar({ perguntasPorVaga: new Map([[v.id, ['pq-1']]]) }).excluidas[0].codigo, 'aguarda_resposta');
+  assert.equal(montar({ cvs: {} }).excluidas[0].codigo, 'sem_cv');
+  for (const extra of [{ candidatura_usuario: { aplicada: true } }, { descarte_usuario: { descartada: true } }, { url_status: 'encerrada' }, { condicoes: { situacao: 'incompativel' } }]) {
+    assert.equal(montar({ vagas: [{ ...v, ...extra }] }).fila.length, 0);
+  }
+});

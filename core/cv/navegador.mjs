@@ -41,7 +41,7 @@ export async function imprimirPdf({ html, navegador = encontrarNavegador() }) {
     const saida = path.join(dir, 'cv.pdf');
     await writeFile(origem, html, 'utf8');
     const args = [
-      '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--disable-extensions',
+      '--headless=new', '--edge-skip-compat-layer-relaunch', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--disable-extensions',
       '--disable-background-networking', '--disable-sync', '--no-pdf-header-footer', '--run-all-compositor-stages-before-draw',
       `--user-data-dir=${path.join(dir, 'perfil')}`, `--print-to-pdf=${saida}`, pathToFileURL(origem).href,
     ];

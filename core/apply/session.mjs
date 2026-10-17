@@ -8,15 +8,22 @@ import { casarCampos } from './matcher.mjs';
 import { classificarDesconhecidos } from './classify.mjs';
 import { preenchaVoce, scriptDePreenchimento } from './preencher.mjs';
 import { eventoPerguntaPendente } from './perguntas.mjs';
-import { registrarDesfecho, reservarTentativa } from './attempts.mjs';
-import { desmarcarAba, marcarAba, registrarScript } from './sessao.mjs';
+import { ESTADOS, chaveTentativa, projetarTentativas, registrarDesfecho, reservarTentativa } from './attempts.mjs';
+import { finalizarAbaDaTentativa, marcarAba, registrarScript } from './sessao.mjs';
+import { registrarComprovante } from './receipt.mjs';
 import { rotaDe } from './route.mjs';
-import { appendEvents } from '../store/events.mjs';
+import { appendEvents, readEvents } from '../store/events.mjs';
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { cvDoPainel, lerManifesto } from '../cv/artifacts.mjs';
 
 export async function iniciarCandidatura(dataRoot, { vaga, tabId, ts = new Date().toISOString() }) {
   const { rota, portal } = rotaDe(vaga);
-  const tentativa = await reservarTentativa(dataRoot, { vaga, rota, ts });
-  await marcarAba(dataRoot, { tabId, vagaId: vaga.id, ts });
+  const atual = cvDoPainel(await lerManifesto(dataRoot, vaga.id))?.atual;
+  const cv = atual ? { hash: atual.hash, ats: atual.ats, pdf_sha256: createHash('sha256').update(await readFile(path.join(dataRoot, atual.ats))).digest('hex') } : null;
+  const tentativa = await reservarTentativa(dataRoot, { vaga, rota, cv, ts });
+  await marcarAba(dataRoot, { tabId, vagaId: vaga.id, tentativaId: tentativa.tentativa_id, cvAts: cv ? path.join(dataRoot, cv.ats) : null, ts });
   return { ...tentativa, rota, portal };
 }
 
@@ -55,11 +62,17 @@ export async function registrarPreparacao(dataRoot, { vaga, preparo, portal = nu
   return { perguntas: eventos.length };
 }
 
-export async function encerrarCandidatura(dataRoot, { tentativa, vaga, tabId, estado, comprovante = null, motivo = null, ts = new Date().toISOString() }) {
-  await registrarDesfecho(dataRoot, { ...tentativa, vagaId: vaga.id, estado, comprovante, motivo, ts });
-  // Bloqueada por humano: a aba continua marcada (e protegida) para a pessoa resolver ali.
-  if (estado !== 'bloqueada:humano') await desmarcarAba(dataRoot, { tabId, ts });
-  return { estado };
+export async function encerrarCandidatura(dataRoot, { tentativa, vaga, tabId, estado, bruto = null, motivo = null, ts = new Date().toISOString() }) {
+  if (!ESTADOS.includes(estado) || estado === 'em_andamento') throw new Error(`Desfecho inválido: ${estado}`);
+  return finalizarAbaDaTentativa(dataRoot, { tabId, vagaId: vaga.id, tentativaId: tentativa.tentativa_id, manter: estado === 'bloqueada:humano', ts }, async () => {
+    const chave = chaveTentativa(vaga);
+    const atual = projetarTentativas((await readEvents(dataRoot)).eventos).get(chave);
+    if (tentativa.chave !== chave || atual?.tentativa_id !== tentativa.tentativa_id || atual.vaga_id !== vaga.id || atual.estado !== 'em_andamento') throw new Error('Tentativa sem vínculo atual com esta vaga.');
+    let comprovante = null;
+    if (['enviada', 'enviada_sem_comprovante'].includes(estado)) ({ estado, comprovante } = await registrarComprovante(dataRoot, { vaga, bruto, ts }));
+    await registrarDesfecho(dataRoot, { ...tentativa, vagaId: vaga.id, estado, comprovante, motivo, ts });
+    return { estado, comprovante };
+  });
 }
 
 export { lerRespostas };

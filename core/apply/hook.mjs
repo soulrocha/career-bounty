@@ -2,6 +2,7 @@
 // função e, quando ela pede, consome a aprovação. Fora de aba de candidatura não decide nada (null). Dentro dela, falha
 // fechado: clique por coordenada, Enter, espaço e script desconhecido são negados; o envio exige aprovação nominal.
 import { SCRIPT_EXTRATOR } from './extrator.mjs';
+import { SCRIPT_COMPROVANTE } from './receipt.mjs';
 import { aprovacaoValida } from './approval.mjs';
 import { hashScript, scriptDeClique, scriptDeEnvio } from './sessao.mjs';
 
@@ -24,7 +25,7 @@ function abaAlvo(input, abas) {
 
 function decidirScript(texto, aba, { sessao, aprovacoes, agora }) {
   const t = String(texto ?? '').trim();
-  if (t === SCRIPT_EXTRATOR) return null;
+  if (t === SCRIPT_EXTRATOR || t === SCRIPT_COMPROVANTE) return null;
   if (vivas(sessao.scripts, agora).some(s => s.vaga_id === aba.vaga_id && s.hash === hashScript(t))) return null;
   const clique = /^\(\(\)=>\{const T=("(?:[^"\\]|\\.)*"),/.exec(t);
   if (clique) {
@@ -53,6 +54,7 @@ function decidirAcao(ferramenta, input, aba, ctx) {
     const vaga = String(aba.vaga_id).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const cv = new RegExp(`[\\\\/]artifacts[\\\\/]cv[\\\\/]${vaga}[\\\\/][0-9a-f]{64}[\\\\/]cv-ats\\.pdf$`);
     const caminhos = Array.isArray(input?.paths) ? input.paths : [];
+    if ('cv_ats' in aba && (!aba.cv_ats || caminhos.some(c => c !== aba.cv_ats))) return nega('aba de candidatura: use o PDF escolhido ao iniciar esta tentativa');
     if (!caminhos.length || input?.files?.length || !caminhos.every(c => typeof c === 'string' && cv.test(c))) return nega('aba de candidatura: só o PDF ATS aprovado desta vaga pode ser anexado');
     return null;
   }

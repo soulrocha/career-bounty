@@ -32,9 +32,9 @@ export async function listarFila({ dataRoot }) {
 
 const ESTILO = `<style>
 #fila-painel{max-width:1176px;margin:auto;padding:28px;color:var(--ink,#14253b)}
-#fila-painel table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line,#dce3e9);border-radius:5px;font-size:13px}
-#fila-painel th,#fila-painel td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line,#dce3e9);vertical-align:top}
-#fila-painel .f-estado{font-weight:600;white-space:nowrap}
+#fila-painel table{width:100%;table-layout:fixed;border-collapse:collapse;background:#fff;border:1px solid var(--line,#dce3e9);border-radius:5px;font-size:13px}
+#fila-painel th,#fila-painel td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line,#dce3e9);vertical-align:top;overflow-wrap:anywhere}
+#fila-painel .f-estado{font-weight:600}
 #fila-painel .f-vazio{background:#fff;border:1px solid var(--line,#dce3e9);border-radius:5px;padding:24px;text-align:center;font-size:14px}
 </style>`;
 

@@ -12,7 +12,8 @@ const TEMPO_PADRAO_MS = 30_000;
 export async function abrirNavegador({ navegador = encontrarNavegador(), tempoMs = TEMPO_PADRAO_MS } = {}) {
   if (!navegador) throw new Error('Nenhum Chrome, Chromium ou Edge encontrado. Defina CAREER_BOUNTY_BROWSER com o caminho do executável.');
   const perfil = await mkdtemp(path.join(tmpdir(), 'cb-cdp-'));
-  const args = ['--headless=new', '--remote-debugging-pipe', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
+  // Edge no Windows pode reiniciar pela camada de compatibilidade e perder os pipes herdados.
+  const args = ['--headless=new', '--remote-debugging-pipe', '--edge-skip-compat-layer-relaunch', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
     '--disable-extensions', '--disable-background-networking', '--disable-sync', `--user-data-dir=${perfil}`, 'about:blank'];
   if (process.platform === 'linux') args.unshift('--no-sandbox');
   const filho = spawn(navegador, args, { stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'], windowsHide: true });
