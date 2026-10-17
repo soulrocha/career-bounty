@@ -68,7 +68,7 @@ export function validarSelecao(json, ctx) {
   const ligadas = [...new Set([...escolhidas, ...ctx.afirmacoesDosCards.filter(id => ctx.todas.has(id) && !motivoInelegivel(ctx.todas.get(id)))])];
   const conferencia = verificarTexto({ texto: json.resumo, ligadas, afirmacoes: [...ctx.todas.values()] });
   if (!conferencia.ok) throw new Error(`resumo com fato sem afirmação: ${conferencia.problemas.map(p => p.motivo).join('; ')}`);
-  const extenso = quantidadesPorExtenso(json.resumo, ligadas.map(id => ctx.todas.get(id).texto));
+  const extenso = quantidadesPorExtenso(json.resumo, ligadas.map(id => ctx.todas.get(id)));
   if (extenso.length) throw new Error(`resumo com quantidade por extenso sem afirmação que use a mesma expressão: ${extenso.join(', ')}`);
 }
 

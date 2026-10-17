@@ -74,7 +74,11 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
             ? await marcarCandidatura({ ...options, id: body.id, aplicada: body.aplicada, data: body.data })
             : await descartar({ ...options, id: body.id, descartada: body.descartada });
           // Candidatura marcada: o CV aprovado da vaga vira o enviado e fica imutável (F5.7).
-          if (route === '/api/candidaturas' && body.aplicada === true) await congelarCvEnviado(dataRoot, { vagaId: body.id, ts: now?.() ?? new Date().toISOString() });
+          // A marcação já foi gravada: falha ao congelar não pode virar erro da candidatura, só aviso.
+          if (route === '/api/candidaturas' && body.aplicada === true) {
+            try { await congelarCvEnviado(dataRoot, { vagaId: body.id, ts: now?.() ?? new Date().toISOString() }); }
+            catch { return send(200, { ...result, aviso_cv: 'Candidatura salva, mas o CV não foi congelado; rode "cv gate" e tente de novo.' }); }
+          }
           return send(200, result);
         } catch (error) {
           if (error.code === 'nao_encontrado') return send(404, { erro: 'Vaga não encontrada.' });

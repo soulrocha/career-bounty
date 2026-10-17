@@ -20,7 +20,8 @@ rebaixada); `cv gerar` faz o mesmo com as versões anteriores. Assim uma versão
 que deixou de ter prova.
 
 Em modo sombra (antes do corte da migração), `cv gerar` e `cv gate` gravam o artefato e o manifesto, mas não gravam evento:
-o legado continua o escritor oficial do pipeline. A saída avisa.
+o legado continua o escritor oficial do pipeline. A saída avisa. Depois do corte para o modo ativo, rode `cv gate --vaga <id>`
+nas vagas com CV para que o resultado do gate entre na projeção.
 
 ## Quem recebe adaptação
 
@@ -68,10 +69,16 @@ O CV fica "bloqueado" quando qualquer item abaixo falha. O motivo aparece no pai
 
 - Afirmação inexistente, sem prova, não publicável ou sem uso de CV.
 - Texto do bullet diferente do texto da afirmação e das variantes cadastradas.
-- Número sem afirmação ligada que o sustente (bullet, resumo, card, título, intro, competências, cursos ou idiomas),
-  inclusive arredondado. A escala conta ("41k" é 41 mil, "R$ 5 bilhões" é 5 bilhões) e moeda abaixo de mil não se confunde
-  com contagem ("R$ 41" não é "41 pessoas").
-- No resumo, quantidade por extenso ("dobrou", "dez vezes", "centenas", "uma década") sem afirmação usada que traga a mesma expressão.
+- Número sem afirmação ligada que o sustente (bullet, resumo ou card), inclusive arredondado. A escala conta ("41k" é 41 mil,
+  "R$ 5 bilhões" é 5 bilhões) e moeda abaixo de mil não se confunde com contagem ("R$ 41" não é "41 pessoas").
+- No resumo, quantidade por extenso ("dobrou", "dez vezes", "centenas", "um milhão", "uma década") sem afirmação usada que traga
+  a mesma palavra ou, para cardinais, o mesmo valor em dígitos ("cinco sistemas" com "5 sistemas" passa).
+
+Título, intros, competências, cursos e idiomas vêm do `perfil.json` escrito pela pessoa, nunca do modelo: número ali
+("Office 365", "ISO 27001", "TOEFL 100") não passa pelo conferidor de números; só a busca de termo a anonimizar vale para eles.
+
+Limitações conhecidas: de mil para cima, moeda e contagem com o mesmo valor casam ("R$ 41 mil" sustenta "41 mil usuários");
+números colados a letras ("#1", "top10", "15anos") não são extraídos.
 - Termo marcado para anonimizar presente em qualquer parte do CV (sem diferença de acento, caixa ou hífen).
 - Resumo ou bullet ausente no texto extraído do PDF ATS.
 
