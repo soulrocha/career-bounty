@@ -46,6 +46,8 @@ test('o verificador de allowlist acusa empresa e domínio fora da lista', () => 
   assert.deepEqual(findViolations('{"empresa": "Outra Coisa"}', allowed), [{ kind: 'empresa' }]);
   assert.deepEqual(findViolations('veja https://portal-real.com.br/vaga', allowed), [{ kind: 'dominio' }]);
   assert.deepEqual(findViolations(`contato ${['fulano', 'provedor.com'].join('@')}`, allowed), [{ kind: 'dominio' }]);
+  assert.equal(findViolations('<svg xmlns="http://www.w3.org/2000/svg"></svg>', allowed).length, 0);
+  assert.deepEqual(findViolations('<a href="http://www.w3.org/x">', allowed), [{ kind: 'dominio' }]);
 });
 
 test('código e instruções não contêm caminho de usuário, IP privado, nome de máquina nem URL de ai-memory', async () => {

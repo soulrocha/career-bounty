@@ -1,0 +1,30 @@
+{
+  "versao": 1,
+  "cabecalho": {
+    "nome": "Ana Exemplo",
+    "titulo": "Analista de Produto",
+    "contatos": ["ana@exemplo.test", "+55 00 90000-0000", "Cidade Exemplo"]
+  },
+  "foto": "foto.svg",
+  "cards": [
+    { "valor": "34%", "rotulo": "menos tempo de fechamento de pedidos", "claim_ids": ["AF-201"] },
+    { "valor": "41", "rotulo": "pessoas usando o painel de indicadores", "claim_ids": ["AF-202"] },
+    { "valor": "5", "rotulo": "sistemas legados migrados", "claim_ids": ["AF-204"] },
+    { "valor": "R$ 2,3 mi", "rotulo": "economia em contratos", "claim_ids": ["AF-209"] }
+  ],
+  "resumo_base": "Analista de produto com experiência em operações, indicadores e migração de sistemas. Foco em reduzir o tempo de ciclo e dar visibilidade com painéis para quem decide.",
+  "experiencias": [
+    { "id": "exp-gama", "empresa": "Empresa Gama", "cargo": "Gerente de Produto", "periodo": "jul/2023 - atual", "inicio": "2023-07", "fim": null, "intro": "Gestão de produto de uma plataforma interna de dados." },
+    { "id": "exp-beta", "empresa": "Empresa Beta", "cargo": "Líder de Operações", "periodo": "jan/2021 - jun/2023", "inicio": "2021-01", "fim": "2023-06", "intro": null },
+    { "id": "exp-alfa", "empresa": "Empresa Alfa", "cargo": "Analista de Operações", "periodo": "jan/2018 - dez/2020", "inicio": "2018-01", "fim": "2020-12", "intro": null }
+  ],
+  "formacao": [
+    { "curso": "Bacharelado em Sistemas de Informação", "instituicao": "Universidade Exemplo", "periodo": "2012 - 2016" }
+  ],
+  "cursos": ["Scrum Fundamentals | Instituto Exemplo", "Análise de Dados para Produto | Instituto Exemplo"],
+  "competencias": [
+    { "grupo": "Produto", "itens": "Discovery, roadmap, priorização e métricas de produto." },
+    { "grupo": "Dados", "itens": "SQL, painéis de indicadores e análise de funil." }
+  ],
+  "idiomas": "Português: nativo. Inglês: intermediário."
+}
