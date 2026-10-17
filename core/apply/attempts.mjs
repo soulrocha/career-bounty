@@ -61,3 +61,18 @@ export async function registrarDesfecho(dataRoot, { tentativa_id, chave, vagaId,
   await appendEvents(dataRoot, [{ id: `${tentativa_id}:${estado}:${ts}`, ts, ator: 'aplicar', tipo: 'candidatura.estado', entidade: 'vaga', entidade_id: vagaId,
     dados: { chave, tentativa_id, estado, ...(comprovante ? { comprovante } : {}), ...(motivo ? { motivo } : {}) } }], { now: ts });
 }
+
+// Reconciliação (F7.4): tentativa "incerta" (queda entre o clique e o comprovante) só sai desse estado por conferência.
+// A confirmação por e-mail (email.recebido com etapa "inscrita", F3) posterior à tentativa resolve como enviada.
+export async function reconciliarIncertas(dataRoot, { ts = new Date().toISOString() } = {}) {
+  const eventos = (await readEvents(dataRoot)).eventos;
+  const resolvidas = [];
+  for (const t of projetarTentativas(eventos).values()) {
+    if (t.estado !== 'incerta') continue;
+    const email = eventos.find(e => e.tipo === 'email.recebido' && e.entidade_id === t.vaga_id && e.dados?.etapa === 'inscrita' && Date.parse(e.ts) >= Date.parse(t.desde));
+    if (!email) continue;
+    await registrarDesfecho(dataRoot, { tentativa_id: t.tentativa_id, chave: t.chave, vagaId: t.vaga_id, estado: 'enviada', comprovante: { origem: 'email', email_evento_id: email.id, data: email.ts }, ts });
+    resolvidas.push(t.vaga_id);
+  }
+  return resolvidas;
+}
