@@ -8,7 +8,7 @@ import { decidirPerfil } from '../../core/apply/gupyProfileHook.mjs';
 import { SCRIPT_PERFIL, SCRIPT_RECARREGAR_PERFIL, iniciarPerfil, lerPerfil, proporPerfil, aprovarPerfilPorMensagem } from '../../core/apply/gupyProfile.mjs';
 
 const prefix = 'mcp__claude-in-chrome__', sessionId = 'sessao-01';
-const estado = { abas: [{ tab_id: '7', session_id: sessionId, itens: [{ script: 'script-exato' }] }] };
+const estado = { abas: [{ tab_id: '7', session_id: sessionId, itens: [{ script: 'script-exato' }], expira_em: '2999-01-01T00:00:00.000Z' }] };
 let call = 0;
 const e = (name, input = {}, session_id = sessionId) => ({ tool_name: `${prefix}${name}`, tool_input: input, session_id, tool_use_id: `tool-call-${++call}` });
 

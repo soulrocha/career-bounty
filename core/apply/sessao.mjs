@@ -6,6 +6,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { atomicJson } from '../store/atomicWrite.mjs';
 import { withLock } from '../store/lock.mjs';
+import { SCRIPT_ETAPA_GUPY, classificarEtapa } from './gupyFlow.mjs';
 
 export const VALIDADE_ABA_MIN = 180;
 export const ENVIO_TEXTO = /^\s*(enviar|candidatar|candidatar-se|submit|apply|finalizar|concluir|send|confirmar|inscrever|registrar|finish|complete)\b/i;
@@ -33,9 +34,32 @@ async function alterar(dataRoot, mudar) {
 const vivas = (lista, ts) => lista.filter(item => Date.parse(item.expira_em) > Date.parse(ts));
 
 // Marca a aba (id da ferramenta do navegador) como formulário de candidatura da vaga.
-export const marcarAba = (dataRoot, { tabId, vagaId, tentativaId, cvAts, ts = new Date().toISOString() }) => alterar(dataRoot, s => ({
-  ...s, abas: [...vivas(s.abas, ts).filter(a => a.tab_id !== String(tabId)), { tab_id: String(tabId), vaga_id: vagaId, ...(tentativaId ? { tentativa_id: tentativaId } : {}), ...(cvAts !== undefined ? { cv_ats: cvAts } : {}), expira_em: new Date(Date.parse(ts) + VALIDADE_ABA_MIN * 60000).toISOString() }],
+export const marcarAba = (dataRoot, { tabId, vagaId, tentativaId, cvAts, rota = null, ts = new Date().toISOString() }) => alterar(dataRoot, s => ({
+  ...s, abas: [...vivas(s.abas, ts).filter(a => a.tab_id !== String(tabId)), { tab_id: String(tabId), vaga_id: vagaId, rota, ...(tentativaId ? { tentativa_id: tentativaId } : {}), ...(cvAts !== undefined ? { cv_ats: cvAts } : {}), expira_em: new Date(Date.parse(ts) + VALIDADE_ABA_MIN * 60000).toISOString() }],
 }));
+
+// Etapa da Gupy observada (F6.14): o PreToolUse registra a chamada do script de etapa; o PostToolUse lê a resposta dessa
+// mesma chamada e grava a etapa classificada na aba. O modelo não tem como declarar a etapa por arquivo.
+export const registrarEtapaPendente = (dataRoot, { tabId, toolUseId, ts = new Date().toISOString() }) => alterar(dataRoot, s => {
+  const aba = vivas(s.abas, ts).find(a => a.tab_id === String(tabId));
+  if (!aba || typeof toolUseId !== 'string' || !toolUseId) throw new Error('Aba de candidatura ou chamada inválida para a etapa.');
+  return { ...s, abas: s.abas.map(a => (a === aba ? { ...a, etapa_pendente: toolUseId } : a)) };
+});
+
+export async function observarEtapa(dataRoot, entrada, ts = new Date().toISOString()) {
+  if (!/__javascript_tool$/.test(String(entrada?.tool_name ?? '')) || String(entrada?.tool_input?.text ?? '').trim() !== SCRIPT_ETAPA_GUPY) return false;
+  const tab = String(entrada.tool_input.tabId ?? entrada.tool_input.tab_id ?? '');
+  return alterar(dataRoot, s => {
+    const aba = s.abas.find(a => a.tab_id === tab && a.etapa_pendente === entrada.tool_use_id);
+    if (!aba) return s;
+    let resposta = entrada.tool_response;
+    try {
+      if (Array.isArray(resposta?.content)) resposta = resposta.content.length === 1 && resposta.content[0]?.type === 'text' ? JSON.parse(resposta.content[0].text) : null;
+    } catch { resposta = null; }
+    const etapa = resposta && !entrada.tool_response?.isError ? classificarEtapa(resposta) : { etapa: 'desconhecida', motivo: 'resposta ilegível' };
+    return { ...s, abas: s.abas.map(a => (a === aba ? { ...a, etapa_pendente: null, etapa: { ...etapa, tool_use_id: entrada.tool_use_id, observada_em: ts } } : a)) };
+  });
+}
 export const desmarcarAba = (dataRoot, { tabId, ts = new Date().toISOString() }) => alterar(dataRoot, s => ({ ...s, abas: vivas(s.abas, ts).filter(a => a.tab_id !== String(tabId)) }));
 
 // Mantém o vínculo sob lock até persistir o desfecho; falhas conservam a proteção.
@@ -65,6 +89,9 @@ export const scriptDeClique = texto => `(()=>{const T=${JSON.stringify(String(te
   + `b.click();return{clicado:N(b.innerText||b.value)}})()`;
 
 // Envio: clica no primeiro botão visível de envio da página. Só passa no hook com aprovação nominal válida da vaga.
-export const scriptDeEnvio = vagaId => `(()=>{/*cb-envio:${String(vagaId).replace(/[^A-Za-z0-9._-]/g, '')}*/const E=${ENVIO_TEXTO},N=s=>(s||'').replace(/\\s+/g,' ').trim();`
+// A rota vai no script: página da Gupy só envia pela rota Gupy (aceite, etapa e cota) e a rota Gupy só envia na Gupy.
+export const scriptDeEnvio = (vagaId, rota = null) => `(()=>{/*cb-envio:${String(vagaId).replace(/[^A-Za-z0-9._-]/g, '')}:${rota === 'gupy' ? 'gupy' : 'outra'}*/const E=${ENVIO_TEXTO},N=s=>(s||'').replace(/\\s+/g,' ').trim();`
+  + `const G=/(^|\\.)gupy\\.io$/.test(location.hostname);`
+  + (rota === 'gupy' ? `if(!G)return{erro:'rota Gupy fora de página da Gupy'};` : `if(G)return{erro:'página da Gupy: use a rota Gupy (aceite, etapa e cota)'};`)
   + `const b=[...document.querySelectorAll('button,input[type=submit],[role=button]')].find(e=>e.offsetParent!==null&&E.test(N(e.innerText||e.value)));`
   + `if(!b)return{erro:'botão de envio não encontrado'};b.click();return{enviado:N(b.innerText||b.value)}})()`;

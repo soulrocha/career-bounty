@@ -95,7 +95,10 @@ test('fluxo completo: só a frase digitada pela pessoa aprova, e o envio consome
   assert.equal(decisao(hook('pre-tool-use.mjs', envio, dataRoot)), 'deny');
   const errada = hook('user-prompt-submit.mjs', { prompt: 'enviar estas 1: Empresa 02 (Gerente de Produto)' }, dataRoot);
   assert.match(errada.hookSpecificOutput.additionalContext, /nada foi aprovado/);
-  const certa = hook('user-prompt-submit.mjs', { prompt: 'Ok, enviar estas 1: Empresa 01 (Gerente de Produto)' }, dataRoot);
+  for (const negativa of ['NÃO quero enviar estas 1: Empresa 01 (Gerente de Produto)', 'Ok, enviar estas 1: Empresa 01 (Gerente de Produto)', 'enviar estas 1: Empresa 01 (Gerente de Produto), cancele tudo']) {
+    assert.match(hook('user-prompt-submit.mjs', { prompt: negativa }, dataRoot).hookSpecificOutput.additionalContext, /nada foi aprovado/, negativa);
+  }
+  const certa = hook('user-prompt-submit.mjs', { prompt: '  enviar estas 1: Empresa 01 (Gerente de Produto).' }, dataRoot);
   assert.match(certa.hookSpecificOutput.additionalContext, /aprovado pela pessoa para 1 vaga/);
   assert.equal(decisao(hook('pre-tool-use.mjs', envio, dataRoot)), 'allow');
   assert.equal(decisao(hook('pre-tool-use.mjs', envio, dataRoot)), 'deny', 'uso único');

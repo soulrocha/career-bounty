@@ -5,13 +5,16 @@
 
 // Sinais da etapa, lidos na página: títulos e rótulos de botão curtos, se há campos de formulário e a origem.
 // A descrição da vaga não entra: palavra solta no texto do anúncio não basta para classificar a etapa.
+// Só títulos de nível 1 e 2 (o h3 da descrição não conta) e só botões (links de menu como "Meus testes" não contam).
 export const SCRIPT_ETAPA_GUPY = '(()=>{const N=s=>(s||"").replace(/\\s+/g," ").trim(),V=e=>e.getClientRects().length>0&&getComputedStyle(e).visibility!=="hidden";'
-  + 'return{origem:location.origin,titulos:[...document.querySelectorAll("h1,h2,h3,[role=heading]")].filter(V).map(e=>N(e.textContent).slice(0,80)).slice(0,12),'
-  + 'botoes:[...document.querySelectorAll("button,[role=button],a")].filter(V).map(e=>N(e.textContent||e.getAttribute("aria-label")).slice(0,40)).filter(Boolean).slice(0,40),'
+  + 'return{origem:location.origin,titulos:[...document.querySelectorAll("h1,h2,[role=heading][aria-level=\\"1\\"],[role=heading][aria-level=\\"2\\"]")].filter(V).map(e=>N(e.textContent).slice(0,80)).slice(0,12),'
+  + 'botoes:[...document.querySelectorAll("button,input[type=submit],input[type=button]")].filter(V).map(e=>N(e.textContent||e.value||e.getAttribute("aria-label")).slice(0,40)).filter(Boolean).slice(0,40),'
   + 'campos:[...document.querySelectorAll("input:not([type=hidden]),select,textarea")].filter(V).length}})()';
 
-const POS_INSCRICAO = /\b(teste|testes|avalia[cç][aã]o (comportamental|de perfil|t[eé]cnica)|perfil comportamental|personalidade|v[ií]deo|grava[cç][aã]o|gravar|assessment|game|jogo|desafio|case t[eé]cnico|agendar|agendamento|entrevista)\b/i;
-const PERGUNTAS = /\b(perguntas?( da vaga| adicionais| do recrutador)?|question[aá]rio|informa[cç][oõ]es adicionais|responda)\b/i;
+// Na dúvida, é pós-inscrição (para): teste, prova, avaliação, fit cultural, quiz, personalidade, vídeo, agendamento.
+const POS_INSCRICAO = /\b(teste|testes|prova|provas|avalia[cç][aã]o|avalia[cç][oõ]es|fit cultural|quiz|question[aá]rio de (perfil|personalidade|conhecimento)|perfil comportamental|personalidade|v[ií]deo|grava[cç][aã]o|gravar|assessment|game|jogo|desafio|case|agendar|agendamento|entrevista)\b/i;
+// A etapa de perguntas precisa dizer "pergunta(s)" ou "informações adicionais" no título; "responda" sozinho não basta.
+const PERGUNTAS = /\b(perguntas?( da vaga| adicionais| do recrutador| da empresa)?|informa[cç][oõ]es adicionais)\b/i;
 const SUCESSO = /\b(candidatura (enviada|realizada|conclu[ií]da)|inscri[cç][aã]o (realizada|conclu[ií]da)|parab[eé]ns)\b/i;
 
 // { etapa: 'perguntas' | 'pos_inscricao' | 'sucesso' | 'desconhecida', motivo }.

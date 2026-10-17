@@ -7,7 +7,9 @@ const globais = new Set(['tabs_context', 'tabs_context_mcp', 'tabs_create', 'tab
 
 // Perfil antecede candidatura: uma permissão mais ampla do outro fluxo nunca libera esta aba.
 // Aba de perfil vale até expira_em (24 h desde iniciar) ou até `gupy perfil encerrar`: id de aba reaproveitado depois não fica preso.
-export const abasVivas = (estado, agora = new Date().toISOString()) => estado.abas.filter(a => !a.expira_em || Date.parse(a.expira_em) > Date.parse(agora));
+// Aba com item incerto não vence (precisa de reconciliação ou de encerrar --forcar); aba sem validade (estado antigo) vence.
+export const abasVivas = (estado, agora = new Date().toISOString()) => estado.abas.filter(a =>
+  (a.itens ?? []).some(i => ['incerta', 'humano'].includes(i.estado)) || (a.expira_em && Date.parse(a.expira_em) > Date.parse(agora)));
 
 export function decidirPerfil(entrada, estado, agora = new Date().toISOString()) {
   const m = NAVEGADOR.exec(String(entrada?.tool_name ?? ''));

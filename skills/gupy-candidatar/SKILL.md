@@ -21,8 +21,10 @@ Vale tudo da skill `aplicar` (lote nominal, custo baixo, dado sensível com a pe
 1. `tabs_context` e **aba nova** para cada vaga. Proibido captura de tela e `read_page` sem `ref_id`.
 2. `CB apply iniciar --vaga <id> --aba <tabId> --json` (reserva a tentativa e marca a aba). Login, captcha e MFA: pare,
    deixe a aba aberta e registre `CB apply desfecho --vaga <id> --aba <tabId> --estado bloqueada:humano --motivo "<motivo>"`.
-3. Na página de perguntas da vaga, rode o script de `CB apply etapa-gupy` e salve o JSON; rode também o `extrator`.
-   Depois `CB apply preparar --vaga <id> --extracao <arquivo> --etapa <arquivo-da-etapa> --json`.
+3. Na página de perguntas da vaga, rode o script de `CB apply etapa-gupy` com `javascript_tool` em **chamada individual**
+   (nunca em `browser_batch`): o hook observa a resposta e grava a etapa; você não declara a etapa. Rode também o `extrator`
+   e depois `CB apply preparar --vaga <id> --extracao <arquivo> --json`. Antes do envio, rode o script de etapa de novo:
+   o hook só libera o envio se a última etapa observada for a de perguntas.
 4. Se a etapa for de **teste, personalidade, vídeo ou agendamento** (ou desconhecida), o `preparar` para: não inicie nada,
    avise a pessoa e siga para a próxima vaga. Palavras na descrição da vaga não contam; só a etapa da página.
 5. Perguntas novas (factuais, sensíveis, eliminatórias) vão para a aba Perguntas do painel; as abertas só entram com rascunho
