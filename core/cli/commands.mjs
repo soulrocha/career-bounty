@@ -18,6 +18,7 @@ import { buildTaskXml } from '../schedule/taskXml.mjs';
 import { runDoctor } from '../doctor/index.mjs';
 import { validatePlugin } from '../plugin/validate.mjs';
 import { aplicarCommands } from './aplicar.mjs';
+import { gupyCommands } from './gupy.mjs';
 import { ensureSkeleton, resolveDataRoot } from '../store/dataRoot.mjs';
 import { formatFindings, scanMessageFile, scanStaged, scanTracked } from '../privacy/scan.mjs';
 import { buildDenylist, loadPrivacyContext } from '../privacy/context.mjs';
@@ -70,6 +71,7 @@ export const commands = {
   ...kbCommands,
   ...cvCommands,
   ...aplicarCommands,
+  ...gupyCommands,
   ...entrevistaCommands,
   ...mentorCommands,
   ...vaultCommands,
