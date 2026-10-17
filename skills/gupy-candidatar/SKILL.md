@@ -24,7 +24,8 @@ Vale tudo da skill `aplicar` (lote nominal, custo baixo, dado sensível com a pe
 3. Na página de perguntas da vaga, rode o script de `CB apply etapa-gupy` com `javascript_tool` em **chamada individual**
    (nunca em `browser_batch`): o hook observa a resposta e grava a etapa; você não declara a etapa. Rode também o `extrator`
    e depois `CB apply preparar --vaga <id> --extracao <arquivo> --json`. Antes do envio, rode o script de etapa de novo:
-   o hook só libera o envio se a última etapa observada for a de perguntas.
+   o hook só libera o envio se a última etapa observada for a de perguntas. Navegar, clicar ou preencher na aba apaga a
+   etapa observada, e ela vence em 10 minutos: rode o script de etapa logo antes do envio, depois do último preenchimento.
 4. Se a etapa for de **teste, personalidade, vídeo ou agendamento** (ou desconhecida), o `preparar` para: não inicie nada,
    avise a pessoa e siga para a próxima vaga. Palavras na descrição da vaga não contam; só a etapa da página.
 5. Perguntas novas (factuais, sensíveis, eliminatórias) vão para a aba Perguntas do painel; as abertas só entram com rascunho

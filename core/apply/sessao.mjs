@@ -46,6 +46,11 @@ export const registrarEtapaPendente = (dataRoot, { tabId, toolUseId, ts = new Da
   return { ...s, abas: s.abas.map(a => (a === aba ? { ...a, etapa_pendente: toolUseId } : a)) };
 });
 
+// Página mudou (navegação, clique, preenchimento): a etapa observada antes deixa de valer. Aba que não existe: nada muda.
+export const invalidarEtapa = (dataRoot, tabIds) => alterar(dataRoot, s => ({
+  ...s, abas: s.abas.map(a => (tabIds.includes(a.tab_id) && (a.etapa || a.etapa_pendente) ? { ...a, etapa: null, etapa_pendente: null } : a)),
+}));
+
 export async function observarEtapa(dataRoot, entrada, ts = new Date().toISOString()) {
   if (!/__javascript_tool$/.test(String(entrada?.tool_name ?? '')) || String(entrada?.tool_input?.text ?? '').trim() !== SCRIPT_ETAPA_GUPY) return false;
   const tab = String(entrada.tool_input.tabId ?? entrada.tool_input.tab_id ?? '');

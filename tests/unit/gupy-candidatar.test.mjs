@@ -168,6 +168,41 @@ test('envio na Gupy: só com aceite vigente, etapa de perguntas observada e scri
   assert.equal(hook('pre-tool-use.mjs', generico, dataRoot).hookSpecificOutput.permissionDecision, 'deny');
 });
 
+test('etapa observada vence ao navegar, ao rodar script que muda a página e depois do prazo', async t => {
+  const { dataRoot, vaga } = await vagaGupy(t);
+  await writeFile(path.join(dataRoot, 'config.yml'), JSON.stringify({ gupy: { aceite_termos: true } }));
+  assert.equal(run(['apply', 'iniciar', '--vaga', vaga.id, '--aba', '5', '--json'], { dataRoot }).status, 0);
+  const lote = run(['apply', 'lote', '--vagas', vaga.id, '--json'], { dataRoot });
+  hook('user-prompt-submit.mjs', { prompt: lote.json.frase }, dataRoot);
+  const envio = { tool_name: 'mcp__claude-in-chrome__javascript_tool', tool_use_id: 'tool-envio', tool_input: { tabId: 5, text: run(['apply', 'envio', '--vaga', vaga.id, '--json'], { dataRoot }).json.script } };
+  const perguntas = { origem: GUPY, titulos: ['Perguntas da vaga'], botoes: ['Finalizar candidatura'], campos: 1 };
+  const decisao = (entrada, agora) => hook('pre-tool-use.mjs', entrada, dataRoot, agora)?.hookSpecificOutput;
+
+  // Navegar na aba apaga a etapa: a página observada já não é a que está aberta.
+  observarEtapaPeloHook(dataRoot, perguntas, 'tool-etapa-a');
+  assert.equal(decisao({ tool_name: 'mcp__claude-in-chrome__navigate', tool_input: { tabId: 5, url: `${GUPY}/outra` } }), undefined);
+  assert.match(decisao(envio).permissionDecisionReason, /etapa observada/);
+
+  // Navegar em lote também apaga, e o envio no mesmo lote depois da navegação é negado.
+  observarEtapaPeloHook(dataRoot, perguntas, 'tool-etapa-b');
+  const lote2 = { tool_name: 'mcp__claude-in-chrome__browser_batch', tool_input: { actions: [{ name: 'navigate', input: { tabId: 5, url: `${GUPY}/x` } }, { name: 'javascript_tool', input: { tabId: 5, text: envio.tool_input.text } }] } };
+  assert.match(decisao(lote2).permissionDecisionReason, /etapa/);
+  // Lote negado não roda: a página não mudou. Lote só com navegação roda e apaga a etapa.
+  assert.equal(decisao({ ...lote2, tool_input: { actions: lote2.tool_input.actions.slice(0, 1) } }), undefined);
+  assert.match(decisao(envio).permissionDecisionReason, /etapa observada/);
+
+  // Script de clique (pode avançar a página) também apaga.
+  observarEtapaPeloHook(dataRoot, perguntas, 'tool-etapa-c');
+  const { scriptDeClique } = await import('../../core/apply/sessao.mjs');
+  decisao({ tool_name: 'mcp__claude-in-chrome__javascript_tool', tool_input: { tabId: 5, text: scriptDeClique('Próximo') } });
+  assert.match(decisao(envio).permissionDecisionReason, /etapa observada/);
+
+  // Etapa com mais de 10 minutos venceu.
+  observarEtapaPeloHook(dataRoot, perguntas, 'tool-etapa-d');
+  assert.match(decisao(envio, '2026-10-17T12:10:01.000Z').permissionDecisionReason, /etapa observada/);
+  assert.equal(decisao(envio, '2026-10-17T12:09:00.000Z').permissionDecision, 'allow');
+});
+
 test('aprovação antiga sem rota não é consumida; etapas de prova, fit cultural e avaliação param', async t => {
   const dataRoot = await tempDir(t);
   const { atomicJson } = await import('../../core/store/atomicWrite.mjs');
