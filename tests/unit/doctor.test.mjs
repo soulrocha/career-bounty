@@ -75,7 +75,7 @@ test('core.hooksPath que não aponta para .githooks falha', async t => {
 });
 
 test('regra de envio ativa ou LinkedIn guest ligado aparece como aviso em destaque', async t => {
-  const regra = await ready(t, { envio: { regras: [{ id: 'r', acao: 'enviar_automatico', limite_dia: 2 }] } });
+  const regra = await ready(t, { envio: { regras: [{ id: 'r', acao: 'enviar_automatico', limite_dia: 2, quando: { portal: ['greenhouse'] } }] } });
   const r1 = await runDoctor({ dataRoot: regra, ...healthyDeps });
   assert.equal(check(r1, 'envio').status, 'aviso');
   assert.match(check(r1, 'envio').mensagem, /^ATENÇÃO/);
