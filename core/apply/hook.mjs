@@ -3,6 +3,7 @@
 // fechado: clique por coordenada, Enter, espaço e script desconhecido são negados; o envio exige aprovação nominal.
 import { SCRIPT_EXTRATOR } from './extrator.mjs';
 import { SCRIPT_COMPROVANTE } from './receipt.mjs';
+import { SCRIPT_ETAPA_GUPY } from './gupyFlow.mjs';
 import { aprovacaoValida } from './approval.mjs';
 import { hashScript, scriptDeClique, scriptDeEnvio } from './sessao.mjs';
 
@@ -25,7 +26,7 @@ function abaAlvo(input, abas) {
 
 function decidirScript(texto, aba, { sessao, aprovacoes, agora }) {
   const t = String(texto ?? '').trim();
-  if (t === SCRIPT_EXTRATOR || t === SCRIPT_COMPROVANTE) return null;
+  if (t === SCRIPT_EXTRATOR || t === SCRIPT_COMPROVANTE || t === SCRIPT_ETAPA_GUPY) return null;
   if (vivas(sessao.scripts, agora).some(s => s.vaga_id === aba.vaga_id && s.hash === hashScript(t))) return null;
   const clique = /^\(\(\)=>\{const T=("(?:[^"\\]|\\.)*"),/.exec(t);
   if (clique) {

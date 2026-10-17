@@ -45,8 +45,11 @@ else if (!entrada || typeof entrada.tool_name !== 'string') {
     const r = decidirNavegador(entrada, { sessao: await lerSessao(dataRoot), aprovacoes: await lerAprovacoes(dataRoot), agora });
     if (r?.decisao === 'negar') saida('deny', r.motivo);
     else if (r?.consumir) {
-      if (await consumirAprovacao(dataRoot, { vagaId: r.consumir, ts: agora })) saida('allow', r.motivo);
-      else saida('deny', 'aprovação já usada ou vencida');
+      // A cota da Gupy vem da config pessoal; config ilegível nega (falha fechado).
+      const { gupy } = await loadSettings({ dataRoot });
+      const consumo = await consumirAprovacao(dataRoot, { vagaId: r.consumir, ts: agora, limiteGupy: gupy.max_por_dia });
+      if (consumo.ok) saida('allow', r.motivo);
+      else saida('deny', consumo.motivo);
     }
     }
   } catch (error) {
