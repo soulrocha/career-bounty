@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fold } from '../dedup/keys.mjs';
 import { atomicJson } from '../store/atomicWrite.mjs';
 import { withLock } from '../store/lock.mjs';
+import { localDay } from '../store/schema.mjs';
 
 export const VALIDADE_APROVACAO_MIN = 120;
 export const VALIDADE_LOTE_MIN = 60;
@@ -31,7 +32,7 @@ export async function proporLote(dataRoot, { vagas, ts = new Date().toISOString(
   if (!vagas.length) throw new Error('Lote vazio.');
   return withLock(trava(dataRoot), {}, async () => {
     const estado = await lerAprovacoes(dataRoot);
-    const lote = { frase: fraseDoLote(vagas), vagas: vagas.map(v => ({ vaga_id: v.vaga_id ?? v.id, chave: v.chave, empresa: v.empresa, cargo: v.cargo })), criado_em: ts };
+    const lote = { frase: fraseDoLote(vagas), vagas: vagas.map(v => ({ vaga_id: v.vaga_id ?? v.id, chave: v.chave, empresa: v.empresa, cargo: v.cargo, rota: v.rota ?? null })), criado_em: ts };
     await atomicJson(arquivo(dataRoot), { ...estado, lote });
     return lote;
   });
@@ -46,7 +47,7 @@ export async function aprovarPorMensagem(dataRoot, { mensagem, ts = new Date().t
     const vencido = Date.parse(ts) - Date.parse(lote.criado_em) > VALIDADE_LOTE_MIN * 60000;
     if (vencido || !normalizar(mensagem).includes(normalizar(lote.frase))) return [];
     const expira = new Date(Date.parse(ts) + VALIDADE_APROVACAO_MIN * 60000).toISOString();
-    const novas = lote.vagas.map(v => ({ id: randomBytes(12).toString('hex'), vaga_id: v.vaga_id, chave: v.chave, emitida_em: ts, expira_em: expira, usada_em: null }));
+    const novas = lote.vagas.map(v => ({ id: randomBytes(12).toString('hex'), vaga_id: v.vaga_id, chave: v.chave, rota: v.rota ?? null, emitida_em: ts, expira_em: expira, usada_em: null }));
     await atomicJson(arquivo(dataRoot), { ...estado, lote: null, aprovacoes: [...estado.aprovacoes.filter(a => Date.parse(a.expira_em) > Date.parse(ts) && !a.usada_em), ...novas] });
     return novas.map(a => a.vaga_id);
   });
@@ -54,13 +55,20 @@ export async function aprovarPorMensagem(dataRoot, { mensagem, ts = new Date().t
 
 export const aprovacaoValida = (estado, vagaId, ts) => estado.aprovacoes.find(a => a.vaga_id === vagaId && !a.usada_em && Date.parse(a.expira_em) > Date.parse(ts)) ?? null;
 
-// Consome a aprovação da vaga (uso único). Devolve false quando não há aprovação válida.
-export async function consumirAprovacao(dataRoot, { vagaId, ts = new Date().toISOString() }) {
+// Envios da Gupy consumidos no dia civil de São Paulo (trava de segurança gupy.max_por_dia). Conta o consumo da aprovação,
+// não o desfecho: tentativa incerta ou com falha também ocupa a vaga do dia (conservador, nunca devolve automaticamente).
+export const consumosGupyNoDia = (estado, ts) => (estado.consumos ?? []).filter(c => c.rota === 'gupy' && c.dia === localDay(ts)).length;
+
+// Consome a aprovação da vaga (uso único), sob o mesmo lock da emissão. Devolve { ok, motivo }.
+export async function consumirAprovacao(dataRoot, { vagaId, ts = new Date().toISOString(), limiteGupy = 5 }) {
   return withLock(trava(dataRoot), {}, async () => {
     const estado = await lerAprovacoes(dataRoot);
     const valida = aprovacaoValida(estado, vagaId, ts);
-    if (!valida) return false;
-    await atomicJson(arquivo(dataRoot), { ...estado, aprovacoes: estado.aprovacoes.map(a => (a.id === valida.id ? { ...a, usada_em: ts } : a)) });
-    return true;
+    if (!valida) return { ok: false, motivo: 'aprovação já usada ou vencida' };
+    if (valida.rota === 'gupy' && consumosGupyNoDia(estado, ts) >= limiteGupy) return { ok: false, motivo: `limite diário da Gupy atingido (${limiteGupy} por dia, gupy.max_por_dia)` };
+    const semana = Date.parse(ts) - 7 * 24 * 3600000;
+    const consumos = [...(estado.consumos ?? []).filter(c => Date.parse(c.ts) > semana), { vaga_id: vagaId, rota: valida.rota ?? null, dia: localDay(ts), ts }];
+    await atomicJson(arquivo(dataRoot), { ...estado, consumos, aprovacoes: estado.aprovacoes.map(a => (a.id === valida.id ? { ...a, usada_em: ts } : a)) });
+    return { ok: true, motivo: null };
   });
 }
