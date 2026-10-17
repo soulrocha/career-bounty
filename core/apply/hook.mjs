@@ -14,6 +14,11 @@ const ACOES_LIVRES = new Set(['screenshot', 'scroll', 'scroll_to', 'hover', 'zoo
 const TECLAS_DE_ENVIO = /(^|[\s+])(enter|return|kp_enter|space)($|[\s+])/i;
 
 const nega = motivo => ({ decisao: 'negar', motivo });
+// A etapa observada da Gupy vale para a página que estava aberta: navegar ou rodar script que pode mudar a página a apaga,
+// e ela vence em VALIDADE_ETAPA_MIN. O envio exige etapa de perguntas observada depois da última mudança.
+export const VALIDADE_ETAPA_MIN = 10;
+const muda = aba => (aba.rota === 'gupy' ? { invalidarEtapa: [aba.tab_id] } : null);
+const etapaVigente = (aba, agora) => aba.etapa?.etapa === 'perguntas' && Date.parse(agora) - Date.parse(aba.etapa.observada_em) <= VALIDADE_ETAPA_MIN * 60000;
 const vivas = (lista, agora) => (lista ?? []).filter(item => Date.parse(item.expira_em) > Date.parse(agora));
 
 // Qual aba de candidatura a chamada atinge. Sem tabId, com alguma aba marcada, vale a primeira (falha fechado).
@@ -29,23 +34,24 @@ function decidirScript(texto, aba, { sessao, aprovacoes, agora }) {
   if (t === SCRIPT_EXTRATOR || t === SCRIPT_COMPROVANTE) return null;
   // Etapa da Gupy: a leitura é observada pelo PostToolUse (o modelo não declara a etapa); exige chamada individual.
   if (t === SCRIPT_ETAPA_GUPY) return { decisao: 'permitir', observarEtapa: { tabId: aba.tab_id }, motivo: 'leitura da etapa da Gupy' };
-  if (vivas(sessao.scripts, agora).some(s => s.vaga_id === aba.vaga_id && s.hash === hashScript(t))) return null;
+  if (vivas(sessao.scripts, agora).some(s => s.vaga_id === aba.vaga_id && s.hash === hashScript(t))) return muda(aba);
   const clique = /^\(\(\)=>\{const T=("(?:[^"\\]|\\.)*"),/.exec(t);
   if (clique) {
     let alvo;
     try { alvo = JSON.parse(clique[1]); } catch { return nega('script de clique malformado'); }
-    if (t === scriptDeClique(alvo).trim()) return null;
+    if (t === scriptDeClique(alvo).trim()) return muda(aba);
   }
   // O script de envio carrega a rota da aba e confere o domínio da página: página da Gupy só pela rota Gupy.
   if (t === scriptDeEnvio(aba.vaga_id, aba.rota ?? null).trim()) {
     if (!aprovacoes || !aprovacaoValida(aprovacoes, aba.vaga_id, agora)) return nega(`envio sem aprovação: digite no chat a frase do lote ("enviar estas N: ...") para ${aba.vaga_id}`);
-    if (aba.rota === 'gupy' && aba.etapa?.etapa !== 'perguntas') return nega('Gupy: a última etapa observada na aba não é a de perguntas da vaga; rode o script de etapa (chamada individual) antes de enviar');
+    if (aba.rota === 'gupy' && !etapaVigente(aba, agora)) return nega(`Gupy: falta etapa observada de perguntas desde a última mudança da página (ou ela tem mais de ${VALIDADE_ETAPA_MIN} min); rode o script de etapa (chamada individual) antes de enviar`);
     return { decisao: 'permitir', consumir: aba.vaga_id, motivo: 'envio aprovado pela pessoa' };
   }
   return nega('aba de candidatura: só scripts do CareerBounty (extrator, preenchimento registrado, clique e envio aprovado)');
 }
 
 function decidirAcao(ferramenta, input, aba, ctx) {
+  if (ferramenta === 'navigate') return muda(aba);
   if (LIVRES.has(ferramenta)) return null;
   if (ferramenta === 'computer') {
     const acao = input?.action;
@@ -77,13 +83,20 @@ export function decidirNavegador(entrada, ctx) {
     const acoes = Array.isArray(input?.actions) ? input.actions : null;
     if (!acoes) return abas.length ? nega('lote de ações ilegível') : null;
     let consumir = null;
+    const invalidar = [];
     for (const item of acoes) {
       const r = decidirNavegador({ tool_name: `mcp__${m[1]}__${item?.name}`, tool_input: item?.input ?? {} }, ctx);
       if (r?.decisao === 'negar') return r;
       if (r?.observarEtapa) return nega('o script de etapa da Gupy deve ser chamada individual (não em lote de ações)');
-      if (r?.consumir) { if (consumir) return nega('mais de um envio no mesmo lote de ações'); consumir = r.consumir; }
+      if (r?.consumir) {
+        if (consumir) return nega('mais de um envio no mesmo lote de ações');
+        if (invalidar.length) return nega('envio no mesmo lote depois de mudar a página: a etapa observada já não vale');
+        consumir = r.consumir;
+      }
+      for (const tab of r?.invalidarEtapa ?? []) if (!invalidar.includes(tab)) invalidar.push(tab);
     }
-    return consumir ? { decisao: 'permitir', consumir, motivo: 'envio aprovado pela pessoa' } : null;
+    const extra = invalidar.length ? { invalidarEtapa: invalidar } : {};
+    return consumir ? { decisao: 'permitir', consumir, motivo: 'envio aprovado pela pessoa', ...extra } : invalidar.length ? extra : null;
   }
   const aba = abaAlvo(input, abas);
   if (!aba) return null;

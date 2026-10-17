@@ -4,7 +4,7 @@
 import { decidirFerramenta } from '../core/mail/hook.mjs';
 import { NAVEGADOR, decidirNavegador } from '../core/apply/hook.mjs';
 import { consumirAprovacao, lerAprovacoes } from '../core/apply/approval.mjs';
-import { lerSessao, registrarEtapaPendente } from '../core/apply/sessao.mjs';
+import { invalidarEtapa, lerSessao, registrarEtapaPendente } from '../core/apply/sessao.mjs';
 import { resolveDataRoot } from '../core/store/dataRoot.mjs';
 import { lerPerfil, autorizarPerfil, vincularSessaoExtracao } from '../core/apply/gupyProfile.mjs';
 import { decidirPerfil } from '../core/apply/gupyProfileHook.mjs';
@@ -43,6 +43,8 @@ else if (!entrada || typeof entrada.tool_name !== 'string') {
       } else saida('allow', perfil.motivo);
     } else {
     const r = decidirNavegador(entrada, { sessao: await lerSessao(dataRoot), aprovacoes: await lerAprovacoes(dataRoot), agora });
+    // Chamada que pode mudar a página da aba Gupy apaga a etapa observada antes de seguir (mesmo sem decisão própria).
+    if (r?.invalidarEtapa?.length && r.decisao !== 'negar') await invalidarEtapa(dataRoot, r.invalidarEtapa);
     if (r?.decisao === 'negar') saida('deny', r.motivo);
     else if (r?.observarEtapa) {
       // Etapa da Gupy: registra esta chamada para o PostToolUse observar a resposta dela (e só dela).
