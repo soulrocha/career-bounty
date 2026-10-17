@@ -29,7 +29,8 @@ export function projetarPerguntas(eventos) {
   const perguntas = new Map();
   for (const e of eventos) {
     if (e.tipo === 'pergunta.pendente') {
-      const p = perguntas.get(e.entidade_id) ?? { id: e.entidade_id, label: e.dados.label, tipo: e.dados.tipo, opcoes: e.dados.opcoes ?? null, categoria: e.dados.categoria, vagas: new Map() };
+      const p = perguntas.get(e.entidade_id) ?? { id: e.entidade_id, label: e.dados.label, tipo: e.dados.tipo, opcoes: e.dados.opcoes ?? null, categoria: e.dados.categoria, sugestao: null, vagas: new Map() };
+      if (e.dados.sugestao) p.sugestao = e.dados.sugestao;
       p.vagas.set(e.dados.vaga_id, { vaga_id: e.dados.vaga_id, empresa: e.dados.empresa, cargo: e.dados.cargo, portal: e.dados.portal });
       perguntas.set(e.entidade_id, p);
     } else if (e.tipo === 'pergunta.respondida') {

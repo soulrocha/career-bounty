@@ -128,3 +128,14 @@ test('na página: o script de clique recusa o botão de envio e o script de envi
   assert.deepEqual(await p.avaliar(scriptDeEnvio('vaga-01')), { enviado: 'Submit Application' });
   assert.equal(await p.avaliar('document.body.dataset.enviado'), '1');
 });
+
+test('na aba de candidatura, upload só do PDF ATS versionado da própria vaga', () => {
+  const H = 'b'.repeat(64);
+  const ok = ['D:', 'dados', 'artifacts', 'cv', 'vaga-01', H, 'cv-ats.pdf'].join(String.fromCharCode(92));
+  assert.equal(decidir(`${CHROME}file_upload`, { ref: 'ref_3', tabId: 7, paths: [ok] }), null);
+  assert.equal(decidir(`${CHROME}file_upload`, { ref: 'ref_3', tabId: 7, paths: [`/srv/dados/artifacts/cv/vaga-01/${H}/cv-ats.pdf`] }), null);
+  for (const paths of [[ok.replace('vaga-01', 'vaga-02')], [ok.replace('cv-ats', 'cv-visual')], ['D:/dados/outro.pdf'], [], [ok, 'D:/dados/.ssh/id_rsa']]) {
+    assert.equal(decidir(`${CHROME}file_upload`, { ref: 'ref_3', tabId: 7, paths })?.decisao, 'negar', JSON.stringify(paths));
+  }
+  assert.equal(decidir(`${CHROME}file_upload`, { ref: 'ref_3', tabId: 7, paths: [ok], files: [{ name: 'x', data: 'eA==' }] })?.decisao, 'negar');
+});

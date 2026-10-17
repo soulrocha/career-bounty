@@ -4,7 +4,7 @@ import { projetarPerguntas } from '../core/apply/perguntas.mjs';
 
 export async function listarPerguntas({ dataRoot }) {
   const { pendentes } = projetarPerguntas((await readEvents(dataRoot)).eventos);
-  return { perguntas: pendentes.map(p => ({ id: p.id, label: p.label, tipo: p.tipo, opcoes: p.opcoes, categoria: p.categoria, vagas: p.vagas })) };
+  return { perguntas: pendentes.map(p => ({ id: p.id, label: p.label, tipo: p.tipo, opcoes: p.opcoes, categoria: p.categoria, sugestao: p.sugestao, vagas: p.vagas })) };
 }
 
 const ESTILO = `<style>
@@ -30,12 +30,12 @@ function campo(p){
  if(p.tipo==='select'||p.tipo==='radio'){var s=el('select');s.appendChild(el('option','Escolha...'));s.options[0].value='';(p.opcoes||[]).forEach(function(o){var x=el('option',o);x.value=o;s.appendChild(x)});return {no:s,valor:function(){return s.value}}}
  if(p.tipo==='checkbox_grupo'){var d=el('div');(p.opcoes||[]).forEach(function(o){var l=el('label');var c=el('input');c.type='checkbox';c.value=o;l.appendChild(c);l.appendChild(document.createTextNode(' '+o+' '));d.appendChild(l)});return {no:d,valor:function(){return Array.prototype.filter.call(d.querySelectorAll('input'),function(c){return c.checked}).map(function(c){return c.value})}}}
  if(p.tipo==='checkbox'){var s2=el('select');[['','Escolha...'],['sim','Sim'],['nao','Não']].forEach(function(o){var x=el('option',o[1]);x.value=o[0];s2.appendChild(x)});return {no:s2,valor:function(){return s2.value===''?'':s2.value==='sim'}}}
- var t=el(p.tipo==='textarea'?'textarea':'input');if(t.tagName==='INPUT')t.type='text';return {no:t,valor:function(){return t.value}}}
+ var t=el(p.tipo==='textarea'||p.sugestao?'textarea':'input');if(t.tagName==='INPUT')t.type='text';if(p.sugestao)t.value=p.sugestao;return {no:t,valor:function(){return t.value}}}
 function escopos(p){var s=el('select');var o=el('option','Para todas as vagas');o.value='global';s.appendChild(o);
  var vistos={};p.vagas.forEach(function(v){[['empresa',v.empresa,'Só para '],['portal',v.portal,'Só no portal ']].forEach(function(e){if(e[1]&&!vistos[e[0]+e[1]]){vistos[e[0]+e[1]]=1;var x=el('option',e[2]+e[1]);x.value=e[0]+'|'+e[1];s.appendChild(x)}})});return s}
 function item(p){
  var box=el('div',undefined,'p-item');box.appendChild(el('p',p.label,'p-label'));
- box.appendChild(el('p',(p.categoria==='sensivel'?'Dado sensível: fica só no seu computador e nunca vai ao modelo. ':'')+'Esperando: '+p.vagas.map(function(v){return (v.empresa||'?')+' ('+(v.cargo||'')+')'}).join('; '),'p-meta'));
+ box.appendChild(el('p',(p.sugestao?'Rascunho do redator a partir das suas afirmações: revise antes de salvar. ':'')+(p.categoria==='sensivel'?'Dado sensível: fica só no seu computador e nunca vai ao modelo. ':'')+'Esperando: '+p.vagas.map(function(v){return (v.empresa||'?')+' ('+(v.cargo||'')+')'}).join('; '),'p-meta'));
  var c=campo(p),esc=escopos(p),b=el('button','Salvar resposta'),erro=el('p','','p-erro'),linha=el('div',undefined,'p-linha');b.type='button';
  linha.appendChild(c.no);linha.appendChild(esc);linha.appendChild(b);box.appendChild(linha);box.appendChild(erro);
  b.addEventListener('click',function(){var v=c.valor();if(v===''||(Array.isArray(v)&&!v.length)){erro.textContent='Preencha a resposta.';return}

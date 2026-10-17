@@ -48,6 +48,14 @@ function decidirAcao(ferramenta, input, aba, ctx) {
     return nega(`aba de candidatura: ${acao ?? 'ação'} por coordenada negado; use o script de clique do CareerBounty`);
   }
   if (ferramenta === 'javascript_tool') return decidirScript(input?.text, aba, ctx);
+  if (ferramenta === 'file_upload') {
+    // Só o PDF ATS versionado da vaga da aba (artifacts/cv/<vaga>/<hash>/cv-ats.pdf); arquivo sem caminho não é conferível.
+    const vaga = String(aba.vaga_id).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const cv = new RegExp(`[\\\\/]artifacts[\\\\/]cv[\\\\/]${vaga}[\\\\/][0-9a-f]{64}[\\\\/]cv-ats\\.pdf$`);
+    const caminhos = Array.isArray(input?.paths) ? input.paths : [];
+    if (!caminhos.length || input?.files?.length || !caminhos.every(c => typeof c === 'string' && cv.test(c))) return nega('aba de candidatura: só o PDF ATS aprovado desta vaga pode ser anexado');
+    return null;
+  }
   return nega(`aba de candidatura: ferramenta ${ferramenta} não liberada`);
 }
 

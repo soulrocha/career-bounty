@@ -11,12 +11,13 @@ import { projectEvents } from '../core/store/project.mjs';
 import { renderPainelDe } from './render.mjs';
 import { ABA_QUADRANTES, respostaQuadrantes } from './quadrantes.mjs';
 import { ABA_PERGUNTAS, listarPerguntas } from './perguntas.mjs';
+import { ABA_FILA, listarFila } from './fila.mjs';
 import { injetarAbas } from './abas.mjs';
 import { responderPergunta } from '../core/apply/perguntas.mjs';
 import { createMaterials, namedMaterialsOf, privateFile, validateBaseFiles } from './materials.mjs';
 import { arquivosServiveis, congelarCvEnviado, lerManifesto } from '../core/cv/artifacts.mjs';
 
-const ABAS = [ABA_QUADRANTES, ABA_PERGUNTAS];
+const ABAS = [ABA_QUADRANTES, ABA_PERGUNTAS, ABA_FILA];
 
 // Painel sem recurso externo: nada carrega nem envia dado para fora de 127.0.0.1. Script e estilo inline vêm do template local.
 const CSP = ["default-src 'none'", "script-src 'unsafe-inline'", "style-src 'unsafe-inline'", "img-src 'self' data:", "font-src 'self' data:", "connect-src 'self'", "base-uri 'self'", "form-action 'none'", "frame-ancestors 'none'", "object-src 'none'"].join('; ');
@@ -118,6 +119,10 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
         if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
         const vagas = writable ? projectEvents((await readEvents(dataRoot)).eventos).vagas : pipeline.vagas;
         return send(200, { vagas: vagas.map(publicMarker) });
+      }
+      if (path === '/api/fila') {
+        if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
+        return send(200, await listarFila({ dataRoot }));
       }
       if (path === '/api/perguntas') {
         if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
