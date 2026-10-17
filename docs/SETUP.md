@@ -55,6 +55,10 @@ Erros CLI terminam com código 2. Em `--json`, a saída, inclusive erro, vai com
 no stdout; comparação divergente retorna código 1. O painel aceita apenas loopback,
 exige token nas APIs protegidas e responde 409 às gravações autenticadas em sombra.
 
+Base de conhecimento (afirmações, quadrantes, entrevista e mentor): `kb sync`, `quadrantes`,
+`kb suggest`, `entrevista`, `mentor contexto` e `vault plan`. As fontes vêm de `DATA_ROOT/fontes.yml`
+e a descrição completa está em [KNOWLEDGE.md](KNOWLEDGE.md).
+
 ## Retomar
 
 1. Confira a branch e o estado do Git; preserve alterações existentes.

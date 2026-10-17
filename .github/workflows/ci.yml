@@ -32,6 +32,10 @@ jobs:
 
   gitleaks:
     runs-on: ubuntu-latest
+    # Em pull_request a action lista os commits do PR pela API; sem esta leitura ela cai com 403.
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
         with:

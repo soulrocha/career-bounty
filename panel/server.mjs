@@ -9,6 +9,7 @@ import { descartar } from '../core/store/commands/descartar.mjs';
 import { readEvents } from '../core/store/events.mjs';
 import { projectEvents } from '../core/store/project.mjs';
 import { renderPainelDe } from './render.mjs';
+import { injetarAbaQuadrantes, respostaQuadrantes } from './quadrantes.mjs';
 import { createMaterials, namedMaterialsOf, privateFile, validateBaseFiles } from './materials.mjs';
 
 // Painel sem recurso externo: nada carrega nem envia dado para fora de 127.0.0.1. Script e estilo inline vêm do template local.
@@ -89,6 +90,11 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
         const vagas = writable ? projectEvents((await readEvents(dataRoot)).eventos).vagas : pipeline.vagas;
         return send(200, { vagas: vagas.map(publicMarker) });
       }
+      if (path === '/api/quadrantes') {
+        if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
+        const { status, corpo } = await respostaQuadrantes({ dataRoot });
+        return send(status, corpo);
+      }
       if (['/', '/carreira/busca-vagas/painel-vagas.html'].includes(path)) {
         const init = `<script>window.PAINEL_API=${JSON.stringify({ token })};</script>`;
         const source = pageSource ?? await renderPainelDe(writable ? projectEvents((await readEvents(dataRoot)).eventos) : pipeline, { dataRoot, perfil });
@@ -98,7 +104,7 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
           .replaceAll('applicationApiReady=true', 'applicationApiReady=false')
           .replaceAll('Marcações salvas neste computador e consideradas nas próximas buscas.', 'SOMBRA — gravação desligada. Marcações importadas para consulta.')
           .replaceAll('Abra o painel interativo para salvar.', 'SOMBRA — gravação desligada.');
-        return send(200, Buffer.from(page), 'text/html; charset=utf-8');
+        return send(200, Buffer.from(injetarAbaQuadrantes(page)), 'text/html; charset=utf-8');
       }
       const material = await materialsPolicy.read(path);
       if (material) return send(200, material.bytes, material.type);

@@ -1,0 +1,87 @@
+{
+  "hash": "e2d5ad2ee15ab83eda306f07cc50527ae7f8c1393d59e0c8b025c19202cd602c",
+  "agente": "mapeador",
+  "modelo": "sonnet",
+  "versaoPrompt": "38dc1c44592f",
+  "entrada": {
+    "itens": [
+      {
+        "ref": "modelo-base:9",
+        "texto": "Atuou na melhoria contínua dos processos de atendimento.",
+        "candidatas_por_numero": []
+      }
+    ],
+    "afirmacoes": [
+      {
+        "id": "AF-101",
+        "texto": "Reduziu o tempo de fechamento de pedidos em 34%, de 12 para 8 dias.",
+        "nivel_prova": "verificado",
+        "numeros": [
+          "34%",
+          "12",
+          "8"
+        ]
+      },
+      {
+        "id": "AF-102",
+        "texto": "Implantou um painel de indicadores usado por 14 pessoas na operação.",
+        "nivel_prova": "entregue",
+        "numeros": [
+          "14"
+        ]
+      },
+      {
+        "id": "AF-103",
+        "texto": "Liderou a migração de 5 sistemas legados.",
+        "nivel_prova": "relato",
+        "numeros": [
+          "5"
+        ]
+      },
+      {
+        "id": "AF-104",
+        "texto": "Criou uma rotina de revisão que reduziu o retrabalho em 60%, de 20 para 8 horas por semana.",
+        "nivel_prova": "verificado",
+        "numeros": [
+          "60%",
+          "20",
+          "8"
+        ]
+      },
+      {
+        "id": "AF-105",
+        "texto": "Treinou 3 pessoas novas no processo de revisão.",
+        "nivel_prova": "verificado",
+        "numeros": [
+          "3"
+        ]
+      },
+      {
+        "id": "AF-106",
+        "texto": "Economizou R$ 2,3 mi em renegociação de contratos.",
+        "nivel_prova": "entregue",
+        "numeros": [
+          "R$ 2,3 mi"
+        ]
+      },
+      {
+        "id": "AF-107",
+        "texto": "Conduziu alinhamentos técnicos com um fornecedor internacional.",
+        "nivel_prova": "relato",
+        "numeros": []
+      }
+    ],
+    "prioridade": [
+      "AF-104",
+      "AF-106"
+    ]
+  },
+  "saida": "{\"sugestoes\":[{\"ref\":\"modelo-base:9\",\"claim_ids\":[\"AF-104\"],\"confianca\":\"baixa\",\"motivo\":\"AF-104 (rotina de revisão que reduziu retrabalho) sustenta melhoria de processo em sentido amplo, mas nenhuma afirmação cita processos de atendimento; vai para mapeamento manual.\"}]}",
+  "uso": {
+    "tokens_in": 2,
+    "tokens_out": 413,
+    "tokens_cache_leitura": 0,
+    "tokens_cache_criacao": 1859,
+    "custo_usd": 0.01157
+  }
+}
