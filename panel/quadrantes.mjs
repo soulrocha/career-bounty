@@ -45,17 +45,12 @@ const ESTILO = `<style>
 .abas button:focus-visible,#quadrantes-painel button:focus-visible,#quadrantes-painel summary:focus-visible{outline:2px solid #00a4d7;outline-offset:3px}
 </style>`;
 
-const NAV = '<nav id="abas-painel" aria-label="Abas do painel"><button type="button" role="tab" id="aba-vagas" aria-selected="true" aria-controls="painel-vagas">Vagas</button><button type="button" role="tab" id="aba-quadrantes" aria-selected="false" aria-controls="quadrantes-painel">Quadrantes</button></nav>';
-
-const PAINEL = '<section id="quadrantes-painel" role="tabpanel" aria-labelledby="aba-quadrantes" hidden><div id="quadrantes-conteudo" aria-live="polite"></div></section>';
+const PAINEL = '<section id="quadrantes-painel" role="tabpanel" aria-labelledby="aba-quadrantes" data-aba-painel="quadrantes" hidden><div id="quadrantes-conteudo" aria-live="polite"></div></section>';
 
 const SCRIPT = `<script id="quadrantes-painel-script">(function(){
-var nav=document.getElementById('abas-painel'),painel=document.getElementById('quadrantes-painel'),conteudo=document.getElementById('quadrantes-conteudo');
-var abaV=document.getElementById('aba-vagas'),abaQ=document.getElementById('aba-quadrantes'),carregado=false;
+var conteudo=document.getElementById('quadrantes-conteudo'),carregado=false;
 var TITULOS=[['a','(a) Dado e CV conferem'],['b','(b) Dado fora do CV'],['c','(c) CV sem dado'],['d','(d) Lacunas, da mais pesada para a mais leve']];
 function el(tag,texto,cls){var n=document.createElement(tag);if(texto!==undefined)n.textContent=texto;if(cls)n.className=cls;return n}
-function outros(){return Array.prototype.filter.call(document.body.children,function(n){return n!==nav&&n!==painel&&n.tagName!=='SCRIPT'&&n.tagName!=='STYLE'})}
-function mostrar(q){outros().forEach(function(n){n.hidden=q});painel.hidden=!q;abaV.setAttribute('aria-selected',String(!q));abaQ.setAttribute('aria-selected',String(q));if(q&&!carregado)carregar()}
 function estado(texto,botao){conteudo.textContent='';var d=el('div',texto,'q-estado');if(botao){var b=el('button','Tentar de novo');b.type='button';b.addEventListener('click',carregar);d.appendChild(document.createElement('br'));d.appendChild(b)}conteudo.appendChild(d)}
 function linha(q,i){
  if(q==='a')return i.texto+' ('+i.claim_ids.join(', ')+')';
@@ -81,12 +76,8 @@ function carregar(){
    if(d.estado==='sem_dados'){carregado=true;estado('Nada para mostrar ainda. '+(d.mensagem||''));return}
    carregado=true;render(d)})
  }).catch(function(){estado('Não foi possível carregar os quadrantes. Verifique se o painel local está rodando.',true)})}
-abaV.addEventListener('click',function(){mostrar(false)});abaQ.addEventListener('click',function(){mostrar(true)});
+window.CB_ABAS=window.CB_ABAS||{};window.CB_ABAS.quadrantes=function(){if(!carregado)carregar()};
 })();</script>`;
 
-// Insere a barra de abas logo depois de <body> e o painel (com o script) antes de </body>.
-export function injetarAbaQuadrantes(html) {
-  const comNav = /<body[^>]*>/i.test(html) ? html.replace(/<body[^>]*>/i, corpo => `${corpo}${ESTILO}${NAV}`) : `${ESTILO}${NAV}${html}`;
-  const bloco = `${PAINEL}${SCRIPT}`;
-  return /<\/body>/i.test(comNav) ? comNav.replace(/<\/body>/i, () => `${bloco}</body>`) : `${comNav}${bloco}`;
-}
+// Aba para a barra genérica (panel/abas.mjs): o estilo comum das abas vem junto com o desta.
+export const ABA_QUADRANTES = { id: 'quadrantes', titulo: 'Quadrantes', estilo: ESTILO, html: `${PAINEL}${SCRIPT}` };
