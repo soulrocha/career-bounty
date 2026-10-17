@@ -7,7 +7,7 @@ import { planejarAplicacao } from '../apply/plan.mjs';
 import { proporLote } from '../apply/approval.mjs';
 import { SCRIPT_EXTRATOR } from '../apply/extrator.mjs';
 import { scriptDeClique, scriptDeEnvio } from '../apply/sessao.mjs';
-import { encerrarCandidatura, iniciarCandidatura, prepararPreenchimento, registrarPreparacao } from '../apply/session.mjs';
+import { encerrarCandidatura, iniciarCandidatura, prepararPreenchimento, registrarPreparacao, registrarResumoPreparacao } from '../apply/session.mjs';
 import { lerRespostas } from '../apply/answers.mjs';
 import { rascunharRespostas } from '../apply/rascunho.mjs';
 import { projetarTentativas, chaveTentativa } from '../apply/attempts.mjs';
@@ -18,6 +18,7 @@ import { loadIdentityValues } from '../privacy/redact.mjs';
 import { readEvents } from '../store/events.mjs';
 import { projectEvents } from '../store/project.mjs';
 import { localDay } from '../store/schema.mjs';
+import { registrarTokensNavegador } from '../apply/tokens.mjs';
 
 const NL = String.fromCharCode(10);
 const USO = 'Uso: apply plan | lote --vagas a,b | iniciar --vaga <id> --aba <tabId> | preparar --vaga <id> --extracao <arquivo.json> [--live|--replay <pasta>] | clique --texto "<botão>" | envio --vaga <id> | desfecho --vaga <id> --aba <tabId> --estado <estado> [--comprovante <arquivo.json>]';
@@ -47,6 +48,11 @@ export const aplicarCommands = {
     }
     const settings = await loadSettings();
     const dataRoot = settings.dataRoot;
+    if (sub === 'tokens') {
+      const values = parseFlags(flags, { allowed: ['--vaga', '--tentativa', '--uso'], withValue: ['--vaga', '--tentativa', '--uso'] });
+      if (!values['--vaga'] || !values['--tentativa'] || !values['--uso']) throw new Error('Uso: apply tokens --vaga <id> --tentativa <id> --uso <arquivo.json>');
+      return { result: await registrarTokensNavegador(dataRoot, { vagaId: values['--vaga'], tentativaId: values['--tentativa'], uso: await lerJson(values['--uso']) }) };
+    }
     if (sub === 'lote') {
       const values = parseFlags(flags, { allowed: ['--vagas'], withValue: ['--vagas'] });
       const ids = String(values['--vagas'] ?? '').split(',').map(s => s.trim()).filter(Boolean);
@@ -75,10 +81,13 @@ export const aplicarCommands = {
       const tentativa = projetarTentativas((await readEvents(dataRoot)).eventos).get(chaveTentativa(vaga));
       if (tentativa?.estado !== 'em_andamento' || tentativa.vaga_id !== vaga.id) throw new Error('Rode apply iniciar para esta vaga antes de preparar.');
       const { portal } = (await import('../apply/route.mjs')).rotaDe(vaga);
-      const preparo = await prepararPreenchimento({ extracao: await lerJson(values['--extracao']), respostas: await lerRespostas(dataRoot), vaga, portal, hoje: localDay(new Date()), runner, identity: await loadIdentityValues() });
+      const meta = { vaga_id: vaga.id, tentativa_id: tentativa.tentativa_id, origem: 'runner' };
+      const ts = new Date().toISOString();
+      const preparo = await prepararPreenchimento({ extracao: await lerJson(values['--extracao']), respostas: await lerRespostas(dataRoot), vaga, portal, hoje: localDay(new Date()), runner, identity: await loadIdentityValues(), meta,
+        aoPreparar: resumo => registrarResumoPreparacao(dataRoot, { vaga, tentativa_id: tentativa.tentativa_id, resumo, ts }) });
       let sugestoes = {};
-      if (runner && preparo.rascunhos?.length) sugestoes = await rascunharRespostas({ runner, campos: preparo.rascunhos, vaga, afirmacoes: (await lerBase((await carregarFontes({ dataRoot, settings })).fontes)).claims });
-      const { perguntas } = await registrarPreparacao(dataRoot, { vaga, preparo, portal, rascunhosSugeridos: sugestoes });
+      if (runner && preparo.rascunhos?.length) sugestoes = await rascunharRespostas({ runner, campos: preparo.rascunhos, vaga, afirmacoes: (await lerBase((await carregarFontes({ dataRoot, settings })).fontes)).claims, meta });
+      const { perguntas } = await registrarPreparacao(dataRoot, { vaga, preparo, portal, tentativa_id: tentativa.tentativa_id, rascunhosSugeridos: sugestoes, ts });
       const atual = tentativa.cv;
       const resultado = { ...preparo, perguntas_criadas: perguntas, cv_ats: preparo.anexar_cv && atual ? path.join(dataRoot, atual.ats) : null };
       const texto = preparo.bloqueada ? `bloqueada: ${preparo.motivo}`

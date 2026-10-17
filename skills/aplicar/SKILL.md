@@ -42,3 +42,14 @@ Use só em sessão interativa, com a pessoa presente. CB é `node "${CLAUDE_PLUG
 9. Rode `SCRIPT_COMPROVANTE` (devolvido por `CB apply comprovante`) na aba, salve o JSON e registre
    `CB apply desfecho --vaga <id> --aba <tabId> --estado enviada --comprovante <arquivo>`. Sem confirmação na página, o estado
    fica `enviada_sem_comprovante` e a pessoa confere no painel.
+
+## Medição de tokens
+
+Use sessão dedicada a uma candidatura. Guarde o `tentativa_id` de `apply iniciar` e registre apenas os contadores
+efetivamente fornecidos pelo ambiente da sessão. Normalize manualmente num arquivo privado com o formato
+`{"medicao_id":"sessao-1","tokens_in":100,"tokens_out":20,"tokens_cache_leitura":0,"tokens_cache_criacao":0}`
+e rode `CB apply tokens --vaga <id> --tentativa <id> --uso <arquivo.json> --json` (também aceita após o desfecho).
+Um ID representa um incremento distinto; repetir o mesmo registro é seguro, repetir um total cumulativo com outro ID duplica o consumo.
+Não inclua conteúdo de página, respostas, identidade ou credenciais. Não estime tokens por caracteres ou ferramentas.
+Sem contador disponível, deixe ausente e relate não verificado. Confira `CB report tokens --by application --json`:
+as fontes navegador e runner ficam separadas; fake/replay ou medição incompleta não comprovam a meta de 15 mil.

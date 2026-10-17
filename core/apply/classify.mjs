@@ -37,7 +37,7 @@ export function validarClassificacao(json, refs) {
 }
 
 // desconhecidos: saída do matcher. identity: valores de identidade para tirar de qualquer rótulo devolvido.
-export async function classificarDesconhecidos({ desconhecidos, runner = null, identity = [] }) {
+export async function classificarDesconhecidos({ desconhecidos, runner = null, identity = [], meta }) {
   const limpar = campo => ({ ref: campo.ref, label: redact(campo.label, identity), tipo: campo.tipo, obrigatorio: campo.obrigatorio, ...(campo.opcoes ? { opcoes: campo.opcoes.map(o => redact(o, identity)) } : {}) });
   const resultado = [];
   const restantes = [];
@@ -52,7 +52,7 @@ export async function classificarDesconhecidos({ desconhecidos, runner = null, i
     for (const lote of chunk(restantes, LOTE_CLASSIFICACAO)) {
       const refs = new Set(lote.map(c => c.ref));
       const entrada = { campos: lote.map(c => ({ ref: c.ref, label: redact(c.label, identity).slice(0, 120), tipo: c.tipo })) };
-      const { json } = await runner.run({ agente: 'classificador-campos', modelo: agente.modelo, versaoPrompt: agente.versaoPrompt, sistema: agente.sistema, entrada, validar: saida => validarClassificacao(saida, refs) });
+      const { json } = await runner.run({ agente: 'classificador-campos', modelo: agente.modelo, versaoPrompt: agente.versaoPrompt, sistema: agente.sistema, entrada, meta, validar: saida => validarClassificacao(saida, refs) });
       chamadas += 1;
       for (const campo of lote) {
         const categoria = json.itens.find(i => i.ref === campo.ref)?.categoria ?? 'ambigua';
