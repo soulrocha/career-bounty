@@ -43,8 +43,12 @@ export async function gravarCv(dataRoot, { vagaId, versao, tipo, payload, arquiv
     }
     await atomicJson(path.join(temporaria, 'payload.json'), payload);
     await atomicJson(path.join(temporaria, 'gate.json'), gate);
-    if (await existe(pasta)) await rm(pasta, { recursive: true, force: true });
-    await rename(temporaria, pasta);
+    // Regravação da mesma versão: a antiga sai para o lado, a nova entra e só então a antiga é apagada.
+    const antiga = `${pasta}.old-${process.pid}`;
+    const havia = await existe(pasta);
+    if (havia) await rename(pasta, antiga);
+    try { await rename(temporaria, pasta); } catch (error) { if (havia) await rename(antiga, pasta); throw error; }
+    if (havia) await rm(antiga, { recursive: true, force: true });
     const entrada = { hash: versao, gerado_em: ts, tipo, gate: { status: gate.status, motivos: gate.motivos.map(m => m.motivo) } };
     manifesto.versoes = [...manifesto.versoes.filter(v => v.hash !== versao), entrada].sort((a, b) => a.gerado_em.localeCompare(b.gerado_em) || a.hash.localeCompare(b.hash));
     await atomicJson(caminhoManifesto(dataRoot, vagaId), manifesto);
@@ -65,6 +69,17 @@ export async function marcarEnviado(dataRoot, { vagaId, versao, ts }) {
     await atomicJson(caminhoManifesto(dataRoot, vagaId), manifesto);
     return manifesto;
   });
+}
+
+// Candidatura marcada no painel: congela o CV aprovado mais novo como enviado. Sem CV aprovado, ou já com enviado, nada muda.
+// Devolve o hash congelado ou null.
+export async function congelarCvEnviado(dataRoot, { vagaId, ts }) {
+  let manifesto;
+  try { manifesto = await lerManifesto(dataRoot, vagaId); } catch { return null; }
+  const atual = cvDoPainel(manifesto)?.atual;
+  if (!atual || manifesto.enviado) return manifesto?.enviado?.hash ?? null;
+  await marcarEnviado(dataRoot, { vagaId, versao: atual.hash, ts });
+  return atual.hash;
 }
 
 // Resultado de uma reavaliação vai para o manifesto (os arquivos da versão não mudam).

@@ -11,7 +11,7 @@ import { projectEvents } from '../core/store/project.mjs';
 import { renderPainelDe } from './render.mjs';
 import { injetarAbaQuadrantes, respostaQuadrantes } from './quadrantes.mjs';
 import { createMaterials, namedMaterialsOf, privateFile, validateBaseFiles } from './materials.mjs';
-import { arquivosServiveis, lerManifesto } from '../core/cv/artifacts.mjs';
+import { arquivosServiveis, congelarCvEnviado, lerManifesto } from '../core/cv/artifacts.mjs';
 
 // Painel sem recurso externo: nada carrega nem envia dado para fora de 127.0.0.1. Script e estilo inline vêm do template local.
 const CSP = ["default-src 'none'", "script-src 'unsafe-inline'", "style-src 'unsafe-inline'", "img-src 'self' data:", "font-src 'self' data:", "connect-src 'self'", "base-uri 'self'", "form-action 'none'", "frame-ancestors 'none'", "object-src 'none'"].join('; ');
@@ -73,6 +73,8 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
           const result = route === '/api/candidaturas'
             ? await marcarCandidatura({ ...options, id: body.id, aplicada: body.aplicada, data: body.data })
             : await descartar({ ...options, id: body.id, descartada: body.descartada });
+          // Candidatura marcada: o CV aprovado da vaga vira o enviado e fica imutável (F5.7).
+          if (route === '/api/candidaturas' && body.aplicada === true) await congelarCvEnviado(dataRoot, { vagaId: body.id, ts: now?.() ?? new Date().toISOString() });
           return send(200, result);
         } catch (error) {
           if (error.code === 'nao_encontrado') return send(404, { erro: 'Vaga não encontrada.' });
@@ -112,7 +114,8 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
       if (cv) {
         const permitido = arquivosServiveis(await lerManifesto(dataRoot, cv[1]).catch(() => null)).includes(path.slice(1));
         if (!permitido) return send(404, { erro: 'Arquivo indisponível.' });
-        return send(200, await privateFile(dataRoot, path.slice(1)), 'application/pdf');
+        const bytes = await privateFile(dataRoot, path.slice(1)).catch(() => null);
+        return bytes ? send(200, bytes, 'application/pdf') : send(404, { erro: 'Arquivo indisponível.' });
       }
       const material = await materialsPolicy.read(path);
       if (material) return send(200, material.bytes, material.type);
