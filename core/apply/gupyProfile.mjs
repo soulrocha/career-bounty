@@ -7,15 +7,35 @@ import { atomicJson } from '../store/atomicWrite.mjs';
 import { withLock } from '../store/lock.mjs';
 import { appendEvent } from '../store/events.mjs';
 
+// Duas versões de DOM: gupy-curriculo-v1 (página real "Meu currículo", estrutura observada em 17/10/2026, só leitura) e
+// synthetic-v1 (fixture de contrato). A real não tem "Sobre você" (sobre: null) nem id de conta visível: a conta é um hash
+// opaco das empresas das experiências. Nada de contato, documento ou diversidade é lido.
 export function extrairPerfil(doc, loc) {
   try {
     if (!/^https:\/\/(?:[a-z0-9-]+\.)?gupy\.io$/.test(loc.origin)) throw Error('origem não reconhecida');
+    const leitura = { leitura_id: `document-${performance.timeOrigin.toString(16).replace('.', '-')}`, recarregada: performance.getEntriesByType('navigation')[0]?.type === 'reload' };
+    if (!doc.querySelector('[data-gupy-profile]')) {
+      const titulo = [...doc.querySelectorAll('h1')].filter(h => h.textContent.replace(/\s+/g, ' ').trim() === 'Meu currículo');
+      if (titulo.length !== 1 || (loc.pathname !== undefined && loc.pathname !== '/candidates/curriculum')) throw Error('DOM não reconhecido');
+      const indices = [...doc.querySelectorAll('input[id^="companyName-"]')].map(e => /^companyName-(\d{1,3})$/.exec(e.id)?.[1]);
+      if (!indices.length || indices.some(i => i === undefined) || new Set(indices).size !== indices.length) throw Error('experiências não reconhecidas');
+      const unico = id => { const l = doc.querySelectorAll(`#${CSS.escape(id)}`); if (l.length !== 1) throw Error('campo ambíguo'); return l[0]; };
+      const experiencias = indices.map(n => {
+        const empresa = unico(`companyName-${n}`), cargo = unico(`role-${n}`), descricao = unico(`activitiesPerformed-${n}`);
+        if (empresa.tagName !== 'INPUT' || cargo.tagName !== 'INPUT' || descricao.tagName !== 'TEXTAREA') throw Error('campo inesperado');
+        return { id: `p${n}`, empresa: empresa.value, cargo: cargo.value, descricao: descricao.value };
+      });
+      const habilidades = [...doc.querySelectorAll('[data-testid="candidate-skill"]')].map(b => b.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean);
+      let h = 0x811c9dc5;
+      for (const ch of experiencias.map(e => e.empresa.trim().toLowerCase()).join('|')) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; }
+      return { versao: 'gupy-curriculo-v1', origem: loc.origin, perfil_id: `conta-${h.toString(16).padStart(8, '0')}`, ...leitura, sobre: null, experiencias, habilidades };
+    }
     const roots = doc.querySelectorAll('[data-gupy-profile]');
     if (roots.length !== 1 || roots[0].getAttribute('data-gupy-profile') !== 'synthetic-v1') throw Error('DOM não reconhecido');
     const root = roots[0], id = root.getAttribute('data-profile-id');
     if (!/^[A-Za-z0-9_-]{3,100}$/.test(id || '')) throw Error('conta não reconhecida');
     const sections = [...root.querySelectorAll('[data-profile-section]')], seen = new Set();
-    const out = { versao: 'synthetic-v1', origem: loc.origin, perfil_id: id, leitura_id: `document-${performance.timeOrigin.toString(16).replace('.', '-')}`, recarregada: performance.getEntriesByType('navigation')[0]?.type === 'reload', sobre: '', experiencias: [], habilidades: [] };
+    const out = { versao: 'synthetic-v1', origem: loc.origin, perfil_id: id, ...leitura, sobre: '', experiencias: [], habilidades: [] };
     for (const s of sections) {
       const field = s.getAttribute('data-profile-section'), values = s.querySelectorAll('[data-profile-value]');
       if (seen.has(field) || values.length !== 1) throw Error('seção ambígua');
@@ -44,7 +64,8 @@ const texto = (s, max) => { if (typeof s !== 'string' || s.length > max) throw E
 
 export function normalizarPerfil(v) {
   somente(v, ['versao', 'origem', 'perfil_id', 'leitura_id', 'recarregada', 'sobre', 'experiencias', 'habilidades']);
-  if (v.versao !== 'synthetic-v1' || !/^https:\/\/(?:[a-z0-9-]+\.)?gupy\.io$/.test(v.origem) || !opaco(v.perfil_id) || !opaco(v.leitura_id)) throw Error('Conta, origem ou leitura não reconhecida.');
+  if (!VERSOES.includes(v.versao) || !/^https:\/\/(?:[a-z0-9-]+\.)?gupy\.io$/.test(v.origem) || !opaco(v.perfil_id) || !opaco(v.leitura_id)) throw Error('Conta, origem ou leitura não reconhecida.');
+  if (v.sobre === null && v.versao !== 'gupy-curriculo-v1') throw Error('Seção Sobre ausente.');
   if (!Array.isArray(v.experiencias) || v.experiencias.length > 100 || !Array.isArray(v.habilidades) || v.habilidades.length > 100) throw Error('Seções profissionais inválidas.');
   const ids = new Set();
   const experiencias = v.experiencias.map(e => {
@@ -53,19 +74,31 @@ export function normalizarPerfil(v) {
     ids.add(e.id);
     return { id: e.id, empresa: texto(e.empresa, 300), cargo: texto(e.cargo, 300), descricao: texto(e.descricao, 10000) };
   });
-  return { versao: v.versao, origem: v.origem, perfil_id: v.perfil_id, leitura_id: v.leitura_id, recarregada: v.recarregada === true, sobre: texto(v.sobre, 10000), experiencias, habilidades: v.habilidades.map(h => texto(h, 200)) };
+  return { versao: v.versao, origem: v.origem, perfil_id: v.perfil_id, leitura_id: v.leitura_id, recarregada: v.recarregada === true, sobre: v.sobre === null ? null : texto(v.sobre, 10000), experiencias, habilidades: v.habilidades.map(h => texto(h, 200)) };
 }
+
+export const VERSOES = ['synthetic-v1', 'gupy-curriculo-v1'];
+// Na página real, habilidades usam autocomplete e chips: o diff mostra o que mudar e a pessoa faz à mão.
+const manualNaVersao = (versao, secao) => versao === 'gupy-curriculo-v1' && secao === 'habilidades';
+
+// Abre o acordeão "Experiência" da página real, se estiver fechado. Não altera nem salva nada.
+export const SCRIPT_ABRIR_EXPERIENCIA = '(()=>{const N=s=>(s||"").replace(/\\s+/g," ").trim(),b=[...document.querySelectorAll("button,[role=\\"button\\"]")].filter(e=>N(e.textContent)==="Experiência");if(b.length!==1)return{erro:"botão Experiência não encontrado ou ambíguo"};const t=document.querySelector("textarea[id^=\\"activitiesPerformed-\\"]");if(t&&t.getClientRects().length>0)return{aberta:true};b[0].click();return{aberta:"clicada"}})()';
 
 const valor = (p, s) => s === 'sobre' ? p.sobre : s === 'habilidades' ? p.habilidades : p.experiencias.find(e => `experiencia:${e.id}` === s)?.descricao;
 export function diffPerfil({ extracao, proposta, afirmacoes }) {
   const perfil = normalizarPerfil(extracao);
   if (proposta?.tipo !== 'proposta' || proposta.portal !== 'gupy' || !Array.isArray(proposta.secoes)) throw Error('Proposta F5.6 inválida.');
-  const secoes = proposta.secoes.map(s => {
+  const todas = proposta.secoes.map(s => {
     somente(s, ['campo', 'atual', 'proposto', 'afirmacoes']);
     return { campo: s.campo, proposto: s.proposto, afirmacoes: s.afirmacoes };
   });
-  validarProposta({ secoes }, { limites: LIMITES_PORTAL.gupy, porId: new Map(afirmacoes.map(a => [a.id, a])), atual: perfil, afirmacoes });
-  return { perfil, proposta_hash: hashPerfil(secoes), itens: secoes.map(s => ({ secao: s.campo, atual: valor(perfil, s.campo), proposto: s.proposto, hash: hashPerfil(s.proposto), antes_hash: hashPerfil(valor(perfil, s.campo)) })).filter(s => s.antes_hash !== s.hash) };
+  // Página sem "Sobre você": a seção sai do diff, com o motivo, em vez de virar edição impossível.
+  const ignoradas = perfil.sobre === null ? todas.filter(s => s.campo === 'sobre').map(s => ({ secao: s.campo, motivo: 'a página de currículo da Gupy não tem campo Sobre você' })) : [];
+  const secoes = todas.filter(s => !(perfil.sobre === null && s.campo === 'sobre'));
+  validarProposta({ secoes }, { limites: LIMITES_PORTAL.gupy, porId: new Map(afirmacoes.map(a => [a.id, a])), atual: { ...perfil, sobre: perfil.sobre ?? '' }, afirmacoes });
+  const itens = secoes.map(s => ({ secao: s.campo, atual: valor(perfil, s.campo), proposto: s.proposto, hash: hashPerfil(s.proposto), antes_hash: hashPerfil(valor(perfil, s.campo)),
+    ...(manualNaVersao(perfil.versao, s.campo) ? { manual: true } : {}) })).filter(s => s.antes_hash !== s.hash);
+  return { perfil, proposta_hash: hashPerfil(secoes), itens, ignoradas };
 }
 
 const arquivo = root => path.join(root, 'state', 'perfil-gupy.json');
@@ -169,6 +202,43 @@ async function aplicarItem(extrair, vinculo) {
     if (hash !== v.antes_hash) return fail();
     const q = extrair(document, location);
     if (JSON.stringify(p) !== JSON.stringify(q)) return fail();
+    if (v.versao === 'gupy-curriculo-v1') {
+      // Página real (observada em 17/10/2026): a descrição é editada no próprio campo, com o acordeão "Experiência" aberto
+      // (cabeçalho div[role=button]); não há <form>; o "Salvar" da seção fica escondido e aparece depois da alteração.
+      // Sem exatamente um "Salvar" visível depois da alteração, o texto original é restaurado e nada é salvo.
+      const n = /^experiencia:p(\d{1,3})$/.exec(v.secao)?.[1];
+      if (n === undefined) return fail();
+      const N = t => (t || '').replace(/\s+/g, ' ').trim();
+      const vis = e => !!e && e.isConnected && !e.closest('[hidden],[inert],[aria-hidden="true"]') && !['hidden', 'collapse'].includes(getComputedStyle(e).visibility) && getComputedStyle(e).display !== 'none' && e.getClientRects().length > 0;
+      const espera = ms => new Promise(r => setTimeout(r, ms));
+      let campo = document.getElementById(`activitiesPerformed-${n}`);
+      if (campo && !vis(campo)) {
+        const abrir = [...document.querySelectorAll('button,[role="button"]')].filter(b => N(b.textContent) === 'Experiência');
+        if (abrir.length !== 1) return fail();
+        abrir[0].click();
+        await espera(600);
+        campo = document.getElementById(`activitiesPerformed-${n}`);
+      }
+      const campoOk = () => vis(campo) && campo.tagName === 'TEXTAREA' && document.querySelectorAll(`#activitiesPerformed-${n}`).length === 1 && !campo.disabled && !campo.readOnly;
+      if (!campoOk()) return fail();
+      const salvar = () => [...document.querySelectorAll('button')].filter(b => N(b.textContent) === 'Salvar' && vis(b));
+      const valido = b => !!b && ['button', 'submit'].includes(b.type) && !b.form && !b.disabled && b.getAttribute('aria-disabled') !== 'true';
+      const escrever = valor => {
+        Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(campo, valor);
+        campo.dispatchEvent(new Event('input', { bubbles: true }));
+        campo.dispatchEvent(new Event('change', { bubbles: true }));
+      };
+      const original = campo.value;
+      const desfazer = () => { try { if (campo.value !== original) escrever(original); } catch { /* sem desfazer: a página não salvou */ } return fail(); };
+      escrever(v.proposto);
+      await espera(500);
+      const esperado = JSON.parse(JSON.stringify(p));
+      esperado.experiencias.find(e => `experiencia:${e.id}` === v.secao).descricao = v.proposto;
+      const s = salvar();
+      if (!campoOk() || s.length !== 1 || !valido(s[0]) || JSON.stringify(extrair(document, location)) !== JSON.stringify(esperado)) return desfazer();
+      s[0].click();
+      return { estado: 'incerta', secao: v.secao };
+    }
     const roots = document.querySelectorAll('[data-gupy-profile]');
     const sections = [...roots[0].querySelectorAll('[data-profile-section]')].filter(s => s.getAttribute('data-profile-section') === v.secao);
     if (sections.length !== 1) return fail();
@@ -197,13 +267,14 @@ async function aplicarItem(extrair, vinculo) {
   } catch { return fail(); }
 }
 export const SCRIPT_RECARREGAR_PERFIL = '(()=>{location.reload();return {releitura:"necessaria"}})()';
-export const scriptDoItem = (a, i) => `(${aplicarItem.toString()})(${extrairPerfil.toString()},${JSON.stringify({ perfil_id: a.perfil.perfil_id, origem: a.perfil.origem, documento_id: a.observacao.leitura_id, secao: i.secao, antes_hash: i.antes_hash, proposto: i.proposto, ...(i.secao.startsWith('experiencia:') ? { experiencia: (({ empresa, cargo }) => ({ empresa, cargo }))(a.perfil.experiencias.find(e => `experiencia:${e.id}` === i.secao)) } : {}) })})`;
+export const scriptDoItem = (a, i) => `(${aplicarItem.toString()})(${extrairPerfil.toString()},${JSON.stringify({ versao: a.perfil.versao, perfil_id: a.perfil.perfil_id, origem: a.perfil.origem, documento_id: a.observacao.leitura_id, secao: i.secao, antes_hash: i.antes_hash, proposto: i.proposto, ...(i.secao.startsWith('experiencia:') ? { experiencia: (({ empresa, cargo }) => ({ empresa, cargo }))(a.perfil.experiencias.find(e => `experiencia:${e.id}` === i.secao)) } : {}) })})`;
 
 export async function editarPerfil(root, args) {
   return alterar(root, s => {
     const a = abaDe(s, args); revalidar(a, args.afirmacoes);
     const i = a.itens.find(i => i.secao === args.secao && i.hash === args.hash);
     if (!i || !['editavel', 'anterior'].includes(i.estado)) throw Error('Item não editável; reler perfil incerto ou conferir hash.');
+    if (i.manual) throw Error('Habilidades na Gupy usam busca com autocomplete: altere à mão na página seguindo o diff (atual e proposto).');
     i.script = scriptDoItem(a, i);
     return i.script;
   });

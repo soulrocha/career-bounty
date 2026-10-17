@@ -1,6 +1,18 @@
 # Perfil profissional Gupy — F6.13
 
-Implementação de contrato sintético, sem atuação em conta real. O DOM, a referência estável da conta real e o MCP/guia oficial da Gupy permanecem **não verificados**. A fixture não prova suporte real: o extrator reconhece explicitamente `data-gupy-profile="synthetic-v1"`, origem HTTPS Gupy e conta opaca única; outros contratos bloqueiam.
+Duas versões de DOM são reconhecidas; qualquer outra bloqueia:
+
+- `gupy-curriculo-v1`: a página real "Meu currículo" (`https://login.gupy.io/candidates/curriculum`), estrutura observada em
+  17/10/2026 só com leitura. Experiências por `#companyName-N`, `#role-N` e `textarea#activitiesPerformed-N` (id `pN`),
+  habilidades por `[data-testid="candidate-skill"]`; contato, documento e diversidade não são lidos. Não há campo "Sobre você"
+  (`sobre: null`; a seção sai do diff em `ignoradas`) nem id de conta visível (a conta é `conta-<fnv1a das empresas>`).
+  Os acordeões têm cabeçalho `div[role=button]`, não há `<form>` e o "Salvar" da seção fica escondido até haver alteração.
+  Habilidades usam autocomplete e ficam como item manual. A **leitura** foi verificada na conta real (6 experiências, 30
+  habilidades); a **gravação** foi feita sobre a estrutura observada e testada em fixture equivalente, mas não foi exercitada
+  em conta real: o primeiro item aprovado é o aceite manual.
+- `synthetic-v1`: contrato semântico das fixtures de teste (`data-gupy-profile`).
+
+O MCP/guia oficial da Gupy continua não verificado.
 
 ## Comandos
 
