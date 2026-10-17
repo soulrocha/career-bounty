@@ -10,6 +10,8 @@ export function defaultSettings() {
     vault_root: null,
     backups_retidos: 3,
     portais_extras: {},
+    // Portais que não recebem CV por vaga (o perfil do portal é o documento): rótulos de portalCandidatura.
+    cv_skip_portals: ['gupy'],
     manifesto_kb: null,
     identidade: null,
     ai_memory: { url: null },
@@ -59,6 +61,10 @@ export function validateSettings(raw) {
       throw invalid('portais_extras', 'deve ser objeto { "Rótulo": ["host.exemplo"] } com hosts sem esquema nem caminho');
     }
     settings.portais_extras = extras;
+  }
+  if (raw.cv_skip_portals !== undefined) {
+    if (!Array.isArray(raw.cv_skip_portals) || raw.cv_skip_portals.some(p => typeof p !== 'string' || !p.trim())) throw invalid('cv_skip_portals', 'deve ser lista de rótulos de portal (ex.: ["gupy"])');
+    settings.cv_skip_portals = raw.cv_skip_portals;
   }
   settings.manifesto_kb = optionalString(raw.manifesto_kb, 'manifesto_kb', { absolute: true });
   settings.identidade = optionalString(raw.identidade, 'identidade', { absolute: true });

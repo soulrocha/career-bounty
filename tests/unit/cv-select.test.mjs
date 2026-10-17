@@ -154,3 +154,17 @@ test('montarPayload aplica a seleção do redator: ordem, variante cadastrada, r
   ]);
   assert.deepEqual(payload.cards, perfil.cards);
 });
+
+test('cv_skip_portals vem da config (padrão Gupy) e valor inválido é recusado', async t => {
+  const { loadSettings } = await import('../../core/config.mjs');
+  const { tempDir } = await import('../helpers/cli.mjs');
+  const { writeFile } = await import('node:fs/promises');
+  const path = (await import('node:path')).default;
+  const dataRoot = await tempDir(t);
+  assert.deepEqual((await loadSettings({ dataRoot })).cv_skip_portals, ['gupy']);
+  await writeFile(path.join(dataRoot, 'config.yml'), JSON.stringify({ cv_skip_portals: [] }));
+  const settings = await loadSettings({ dataRoot });
+  assert.equal(decidirCv(vagaGupy(), settings).gerar, true);
+  await writeFile(path.join(dataRoot, 'config.yml'), JSON.stringify({ cv_skip_portals: 'gupy' }));
+  await assert.rejects(loadSettings({ dataRoot }), /cv_skip_portals/);
+});
