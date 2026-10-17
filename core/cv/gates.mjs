@@ -5,6 +5,8 @@ import { createHash } from 'node:crypto';
 import { removerMarcas } from '../kb/cvItems.mjs';
 import { motivoInelegivel } from './elegibilidade.mjs';
 import { verificarTexto } from './facts.mjs';
+import { quantidadesPorExtenso } from './extenso.mjs';
+import { fold } from '../dedup/keys.mjs';
 
 const normalizar = texto => removerMarcas(String(texto ?? '')).replace(/\s+/g, ' ').trim();
 const minusculo = texto => normalizar(texto).toLowerCase();
@@ -44,6 +46,9 @@ function conferirCards(payload, porId, afirmacoes) {
   const ligadas = [];
   payload.cards.forEach((card, i) => {
     const onde = `card ${i + 1}`;
+    for (const id of (card.claim_ids ?? []).filter(id => !porId.has(id))) {
+      motivos.push({ codigo: 'afirmacao_inexistente', onde, motivo: `${onde}: afirmação ${String(id).slice(0, 40)} não existe na base` });
+    }
     const ids = (card.claim_ids ?? []).filter(id => porId.has(id));
     if (!ids.length) { motivos.push({ codigo: 'card_sem_afirmacao', onde, motivo: `${onde}: sem afirmação ligada que sustente "${normalizar(card.valor)}"` }); return; }
     for (const id of ids) {
@@ -56,17 +61,31 @@ function conferirCards(payload, porId, afirmacoes) {
   return { motivos, ligadas };
 }
 
+// Texto do perfil que não vem de afirmação: título, intros e seções fixas. Número aqui também precisa de prova.
+const textosFixos = payload => [
+  ['titulo', payload.titulo],
+  ...payload.experiencias.filter(exp => exp.intro).map(exp => [`${exp.id}, intro`, exp.intro]),
+  ...(payload.competencias ?? []).map((c, i) => [`competência ${i + 1}`, `${c.grupo}: ${c.itens}`]),
+  ...(payload.cursos ?? []).map((c, i) => [`curso ${i + 1}`, c]),
+  ['idiomas', payload.idiomas],
+].filter(([, texto]) => texto);
+
 // Todo texto visível do CV, para procurar termo que devia ter sido anonimizado.
-const textoVisivel = payload => minusculo([
-  payload.titulo, payload.resumo, ...payload.palavras_chave,
+const textoVisivel = payload => [
+  payload.titulo, payload.resumo, ...payload.palavras_chave, ...(payload.cabecalho?.contatos ?? []),
   ...payload.cards.flatMap(c => [c.valor, c.rotulo]),
   ...payload.experiencias.flatMap(exp => [exp.empresa, exp.cargo, exp.intro, ...exp.itens.map(i => i.texto)]),
-].filter(Boolean).join(' \n '));
+  ...(payload.formacao ?? []).flatMap(f => [f.curso, f.instituicao]), ...(payload.cursos ?? []),
+  ...(payload.competencias ?? []).flatMap(c => [c.grupo, c.itens]), payload.idiomas,
+].filter(Boolean).join(' \n ');
+
+// Sem acento, sem caixa e com pontuação ou hífen virando espaço: "Sistema-Órion" casa com "Sistema Orion".
+const comparavel = texto => ` ${fold(removerMarcas(String(texto ?? ''))).replace(/[^a-z0-9]+/g, ' ').trim()} `;
 
 function conferirAnonimizacao(payload, afirmacoes) {
-  const texto = textoVisivel(payload);
+  const texto = comparavel(textoVisivel(payload));
   return afirmacoes.flatMap(af => (af.anonimizar ?? [])
-    .filter(termo => termo.trim() && texto.includes(minusculo(termo)))
+    .filter(termo => comparavel(termo).trim() && texto.includes(comparavel(termo)))
     .map(() => ({ codigo: 'termo_anonimizado', onde: 'cv', motivo: `um termo que ${af.id} manda anonimizar aparece no CV` })));
 }
 
@@ -85,10 +104,16 @@ export function avaliarGate({ payload, afirmacoes, textoAts }) {
   const itens = conferirItens(payload, porId, afirmacoes);
   const cards = conferirCards(payload, porId, afirmacoes);
   const usadas = afirmacoes.filter(af => itens.usadas.includes(af.id) || cards.ligadas.includes(af.id));
+  const ligadas = [...new Set([...itens.usadas, ...cards.ligadas])];
+  // O resumo é escrito pelo modelo: além dos dígitos, quantidade por extenso só com a mesma expressão numa afirmação usada.
+  const extenso = quantidadesPorExtenso(payload.resumo, usadas.map(af => af.texto))
+    .map(palavra => ({ codigo: 'numero_por_extenso', onde: 'resumo', numero: palavra, motivo: `resumo: "${palavra}" sem afirmação que use a mesma expressão` }));
   const motivos = [
     ...itens.motivos,
     ...cards.motivos,
-    ...conferirNumeros({ texto: payload.resumo, ligadas: [...new Set([...itens.usadas, ...cards.ligadas])], afirmacoes, onde: 'resumo' }),
+    ...conferirNumeros({ texto: payload.resumo, ligadas, afirmacoes, onde: 'resumo' }),
+    ...extenso,
+    ...textosFixos(payload).flatMap(([onde, texto]) => conferirNumeros({ texto, ligadas, afirmacoes, onde })),
     ...conferirAnonimizacao(payload, usadas),
     ...conferirAts(payload, textoAts),
   ];

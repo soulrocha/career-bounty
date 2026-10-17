@@ -15,7 +15,12 @@ oferecido e como portais que não recebem CV (Gupy) ganham uma proposta de perfi
    e para o evento `cv.gate`.
 5. O painel mostra "PDF para enviar" (ATS) e "PDF visual" do CV aprovado mais novo, o PDF já enviado e o motivo de um bloqueio.
 
-`cv gate --vaga <id>` reavalia a versão mais nova contra a base atual (por exemplo, depois de uma afirmação ser rebaixada).
+`cv gate --vaga <id>` reavalia todas as versões da vaga contra a base atual (por exemplo, depois de uma afirmação ser
+rebaixada); `cv gerar` faz o mesmo com as versões anteriores. Assim uma versão antiga nunca volta a ser oferecida com fato
+que deixou de ter prova.
+
+Em modo sombra (antes do corte da migração), `cv gerar` e `cv gate` gravam o artefato e o manifesto, mas não gravam evento:
+o legado continua o escritor oficial do pipeline. A saída avisa.
 
 ## Quem recebe adaptação
 
@@ -63,8 +68,11 @@ O CV fica "bloqueado" quando qualquer item abaixo falha. O motivo aparece no pai
 
 - Afirmação inexistente, sem prova, não publicável ou sem uso de CV.
 - Texto do bullet diferente do texto da afirmação e das variantes cadastradas.
-- Número sem afirmação ligada que o sustente (bullet, resumo ou card), inclusive arredondado.
-- Termo marcado para anonimizar presente no CV.
+- Número sem afirmação ligada que o sustente (bullet, resumo, card, título, intro, competências, cursos ou idiomas),
+  inclusive arredondado. A escala conta ("41k" é 41 mil, "R$ 5 bilhões" é 5 bilhões) e moeda abaixo de mil não se confunde
+  com contagem ("R$ 41" não é "41 pessoas").
+- No resumo, quantidade por extenso ("dobrou", "dez vezes", "centenas", "uma década") sem afirmação usada que traga a mesma expressão.
+- Termo marcado para anonimizar presente em qualquer parte do CV (sem diferença de acento, caixa ou hífen).
 - Resumo ou bullet ausente no texto extraído do PDF ATS.
 
 Uma versão nova bloqueada não apaga a anterior aprovada: o painel continua oferecendo a aprovada e avisa do bloqueio.
@@ -73,7 +81,9 @@ Uma versão nova bloqueada não apaga a anterior aprovada: o painel continua ofe
 
 `DATA_ROOT/artifacts/cv/<vaga>/<hash>/` guarda `payload.json`, `cv-visual.html|pdf`, `cv-ats.html|pdf` e `gate.json`; o hash
 é o sha256 do payload. `manifesto.json` na pasta da vaga lista data, hash, tipo e gate de cada versão e qual foi enviada.
-A versão enviada fica imutável. O servidor do painel entrega só os PDFs listados no manifesto.
+A versão enviada fica imutável: marcar "Já me candidatei" no painel congela o CV aprovado mais novo da vaga como enviado.
+O servidor do painel entrega só os PDFs listados no manifesto. A versão cobre também a foto e os templates: trocar qualquer
+um gera versão nova.
 
 ## PDFs e navegador
 
@@ -86,4 +96,8 @@ lido por um leitor mínimo (`core/cv/pdf.mjs`) feito para o PDF que o Chrome ger
 `core/cv/perfilPortal.mjs` gera, com o agente `perfil-portal` (Sonnet), uma proposta de "Sobre você", descrição de
 experiências e habilidades a partir das afirmações. Cada campo traz o texto atual, o proposto e as afirmações ligadas;
 campo igual ao atual sai da proposta. Nada é aplicado no portal: a pessoa revisa e copia o que quiser.
+
+`cv perfil-portal [--portal gupy] (--live | --replay <pasta>)` lê o perfil atual copiado do portal em
+`DATA_ROOT/cv/perfil-gupy.json` (`sobre`, `experiencias` com `id`, `empresa`, `cargo` e `descricao`, e `habilidades`) e grava a
+proposta em `DATA_ROOT/outbox/cv/perfil-gupy-<data>.md` e `.json`.
 Os limites de caracteres por campo ficam em `LIMITES_PORTAL` e devem ser conferidos no portal.

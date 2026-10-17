@@ -5,6 +5,7 @@ import { fold } from '../dedup/keys.mjs';
 import { loadAgent } from '../llm/agents.mjs';
 import { embrulhar, limparCampoCurto, limparTextoNaoConfiavel } from '../privacy/untrusted.mjs';
 import { verificarTexto } from './facts.mjs';
+import { quantidadesPorExtenso } from './extenso.mjs';
 import { motivoInelegivel } from './elegibilidade.mjs';
 import { DESTAQUES, experienciaDaAfirmacao } from './experiencias.mjs';
 
@@ -67,6 +68,8 @@ export function validarSelecao(json, ctx) {
   const ligadas = [...new Set([...escolhidas, ...ctx.afirmacoesDosCards.filter(id => ctx.todas.has(id) && !motivoInelegivel(ctx.todas.get(id)))])];
   const conferencia = verificarTexto({ texto: json.resumo, ligadas, afirmacoes: [...ctx.todas.values()] });
   if (!conferencia.ok) throw new Error(`resumo com fato sem afirmação: ${conferencia.problemas.map(p => p.motivo).join('; ')}`);
+  const extenso = quantidadesPorExtenso(json.resumo, ligadas.map(id => ctx.todas.get(id).texto));
+  if (extenso.length) throw new Error(`resumo com quantidade por extenso sem afirmação que use a mesma expressão: ${extenso.join(', ')}`);
 }
 
 const contem = (texto, termo) => new RegExp(`(^|[^a-z0-9])${fold(termo).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z0-9]|$)`).test(texto);

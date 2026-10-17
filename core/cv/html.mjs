@@ -18,8 +18,9 @@ export async function carregarTemplate(nome) {
   return readFile(path.join(TEMPLATES, nome), 'utf8');
 }
 
-// O template só tem dois espaços: {{titulo}} e {{conteudo}}. Substituição por função para não interpretar "$" do conteúdo.
-export const preencher = (template, { titulo, conteudo }) => template.replace('{{titulo}}', () => titulo).replace('{{conteudo}}', () => conteudo);
+// O template só tem dois espaços: {{titulo}} e {{conteudo}}. Uma passada só sobre o template, por função: um "{{conteudo}}"
+// ou "$&" vindo do texto da vaga nunca é reprocessado.
+export const preencher = (template, valores) => template.replace(/\{\{(titulo|conteudo)\}\}/g, (_, nome) => valores[nome]);
 
 export async function fotoComoDataUri(caminho) {
   const mime = MIMES[path.extname(caminho).toLowerCase()];

@@ -6,6 +6,7 @@ import { loadAgent } from '../llm/agents.mjs';
 import { embrulhar, limparTextoNaoConfiavel } from '../privacy/untrusted.mjs';
 import { motivoInelegivel } from './elegibilidade.mjs';
 import { verificarTexto } from './facts.mjs';
+import { quantidadesPorExtenso } from './extenso.mjs';
 
 // Limites por portal (caracteres por campo de texto, quantidade e tamanho de habilidade). Conferir no portal ao revisar a proposta.
 export const LIMITES_PORTAL = {
@@ -38,6 +39,7 @@ function validarSecao(secao, i, ctx) {
     if (secao.proposto.length > limites.habilidades) throw new Error(`habilidades acima do limite de ${limites.habilidades}`);
     for (const h of secao.proposto) {
       if (tamanho(h) > limites.habilidade) throw new Error(`habilidade excede ${limites.habilidade} caracteres`);
+      if (tamanho(h.trim()) < 2) throw new Error('habilidade com menos de 2 caracteres');
       if (!ligadas.some(af => contem(af.texto, h))) throw new Error(`habilidade sem afirmação ligada que a mencione: ${h.slice(0, 40)}`);
     }
     return;
@@ -55,6 +57,8 @@ function validarSecao(secao, i, ctx) {
   if (tamanho(secao.proposto) > limite) throw new Error(`${secao.campo} excede ${limite} caracteres (${tamanho(secao.proposto)})`);
   const conferencia = verificarTexto({ texto: secao.proposto, ligadas: secao.afirmacoes, afirmacoes });
   if (!conferencia.ok) throw new Error(`${secao.campo} com fato sem afirmação: ${conferencia.problemas.map(p => p.motivo).join('; ')}`);
+  const extenso = quantidadesPorExtenso(secao.proposto, ligadas.map(af => af.texto));
+  if (extenso.length) throw new Error(`${secao.campo} com quantidade por extenso sem afirmação que use a mesma expressão: ${extenso.join(', ')}`);
 }
 
 export function validarProposta(json, ctx) {
