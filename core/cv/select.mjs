@@ -47,7 +47,7 @@ function selecaoDeterministica({ perfil, liberadas, requisitos, maxItens }) {
     const ordenada = [...base].sort((a, b) => (pesoDe.get(b.id) ?? 0) - (pesoDe.get(a.id) ?? 0));
     if (ordenada.length) experiencias.push({ id, itens: ordenada.slice(0, maxItens).map(af => ({ afirmacao: af.id, variante: null })) });
   }
-  return { resumo: perfil.resumo_base, palavras_chave: [], experiencias };
+  return { resumo: perfil.resumo_base, palavras_chave: [], experiencias, origem: 'perfil' };
 }
 
 // Payload que o render consome. selecao tem o formato do redator ({ resumo, palavras_chave, experiencias }), já validada.
@@ -64,6 +64,8 @@ export function montarPayload({ perfil, afirmacoes, selecao, vaga, tipo, requisi
     cards: perfil.cards,
     titulo: perfil.cabecalho.titulo,
     resumo: selecao.resumo,
+    // Quem escreveu o resumo: 'perfil' (resumo-base da pessoa) ou 'redator' (modelo). O gate só confere extenso no do modelo.
+    resumo_origem: selecao.origem ?? 'redator',
     palavras_chave: selecao.palavras_chave,
     experiencias: selecao.experiencias.map(exp => {
       const dados = dadosExp.get(exp.id);
