@@ -152,6 +152,9 @@ export async function encerrarPerfil(root, { tabId, forcar = false }) {
     const a = s.abas.find(x => x.tab_id === String(tabId));
     if (!a) return { encerrada: false };
     if (pendente(a) && !forcar) throw Error('Há item incerto nesta aba: releia e confirme antes de encerrar (ou use --forcar depois de conferir na Gupy).');
+    // Encerrar à força com item incerto: o documento aberto pode ter texto não confirmado; a próxima proposta nesta aba
+    // só vale com leitura de documento recarregado.
+    if (pendente(a)) s.exige_recarga = [...new Set([...(s.exige_recarga ?? []), String(tabId)])];
     s.abas = s.abas.filter(x => x !== a);
     return { encerrada: true };
   });
@@ -198,6 +201,10 @@ export async function proporPerfil(root, args) {
     if (a.itens.some(i => ['incerta', 'humano'].includes(i.estado))) throw Error('Perfil incerto: reler e reconciliar antes de nova proposta.');
     const d = diffPerfil(args);
     if (!a.observacao || a.observacao.perfil_hash !== hashPerfil(d.perfil)) throw Error('Proposta exige extração observada pelo PostToolUse oficial.');
+    if ((s.exige_recarga ?? []).includes(a.tab_id)) {
+      if (!a.observacao.recarregada) throw Error('Esta aba foi encerrada à força com item incerto: recarregue a página e leia de novo antes de propor.');
+      s.exige_recarga = s.exige_recarga.filter(t => t !== a.tab_id);
+    }
     if (a.perfil && (a.perfil.perfil_id !== d.perfil.perfil_id || a.perfil.origem !== d.perfil.origem)) {
       // Na página real, a conta é o hash das empresas: experiência nova ou renomeada muda o id. Sem item pendente, a nova
       // leitura simplesmente substitui a proposta anterior; com item incerto, é preciso reconciliar antes.
@@ -268,6 +275,8 @@ async function aplicarItem(extrair, vinculo) {
       const OUTRAS = '#skills-search-autocomplete,[data-testid="candidate-skill"],#identityCardNumber,#linkedinProfileUrl,#addressZipCode';
       let secao = campo;
       while (secao.parentElement && !secao.parentElement.querySelector(OUTRAS)) secao = secao.parentElement;
+      // Sem limite reconhecível (a seção subiu até o documento), não há como saber de qual seção é o "Salvar".
+      if (secao === document.documentElement || secao === document.body || !secao.parentElement) return fail();
       const valido = b => !!b && secao.contains(b) && ['button', 'submit'].includes(b.type) && !b.form && !b.disabled && b.getAttribute('aria-disabled') !== 'true';
       const escrever = (alvo, valor) => {
         Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(alvo, valor);

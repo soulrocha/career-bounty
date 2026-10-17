@@ -45,7 +45,9 @@ export async function aprovarPorMensagem(dataRoot, { mensagem, ts = new Date().t
     const lote = estado.lote;
     if (!lote) return [];
     const vencido = Date.parse(ts) - Date.parse(lote.criado_em) > VALIDADE_LOTE_MIN * 60000;
-    if (vencido || !normalizar(mensagem).includes(normalizar(lote.frase))) return [];
+    // A mensagem inteira tem de ser a frase (pontuação e espaço nas pontas tolerados): "NÃO quero enviar estas 2: ..." ou
+    // "enviar estas 2: ... cancele tudo" não aprovam.
+    if (vencido || normalizar(mensagem) !== normalizar(lote.frase)) return [];
     const expira = new Date(Date.parse(ts) + VALIDADE_APROVACAO_MIN * 60000).toISOString();
     const novas = lote.vagas.map(v => ({ id: randomBytes(12).toString('hex'), vaga_id: v.vaga_id, chave: v.chave, rota: v.rota ?? null, emitida_em: ts, expira_em: expira, usada_em: null }));
     await atomicJson(arquivo(dataRoot), { ...estado, lote: null, aprovacoes: [...estado.aprovacoes.filter(a => Date.parse(a.expira_em) > Date.parse(ts) && !a.usada_em), ...novas] });
@@ -60,11 +62,14 @@ export const aprovacaoValida = (estado, vagaId, ts) => estado.aprovacoes.find(a 
 export const consumosGupyNoDia = (estado, ts) => (estado.consumos ?? []).filter(c => c.rota === 'gupy' && c.dia === localDay(ts)).length;
 
 // Consome a aprovação da vaga (uso único), sob o mesmo lock da emissão. Devolve { ok, motivo }.
-export async function consumirAprovacao(dataRoot, { vagaId, ts = new Date().toISOString(), limiteGupy = 5 }) {
+export async function consumirAprovacao(dataRoot, { vagaId, ts = new Date().toISOString(), limiteGupy = 5, aceiteGupy = false }) {
   return withLock(trava(dataRoot), {}, async () => {
     const estado = await lerAprovacoes(dataRoot);
     const valida = aprovacaoValida(estado, vagaId, ts);
     if (!valida) return { ok: false, motivo: 'aprovação já usada ou vencida' };
+    // Aprovação sem rota (emitida antes da trava da Gupy) não é contável: refaça o lote.
+    if (valida.rota === undefined) return { ok: false, motivo: 'aprovação antiga sem rota: monte o lote de novo' };
+    if (valida.rota === 'gupy' && !aceiteGupy) return { ok: false, motivo: 'rota Gupy desligada (gupy.aceite_termos): envio negado' };
     if (valida.rota === 'gupy' && consumosGupyNoDia(estado, ts) >= limiteGupy) return { ok: false, motivo: `limite diário da Gupy atingido (${limiteGupy} por dia, gupy.max_por_dia)` };
     const semana = Date.parse(ts) - 7 * 24 * 3600000;
     const consumos = [...(estado.consumos ?? []).filter(c => Date.parse(c.ts) > semana), { vaga_id: vagaId, rota: valida.rota ?? null, dia: localDay(ts), ts }];

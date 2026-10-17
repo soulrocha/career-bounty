@@ -23,7 +23,7 @@ async function preparar(p) {
 const marcas = p => p.avaliar('({ exp: document.body.dataset.salvo ?? null, hab: document.body.dataset.salvoHabilidades ?? null, dados: document.body.dataset.salvoDados ?? null })');
 
 test('QA 1: batch que toca a aba de perfil não leva ação a outra aba (envio, clique, script livre, navegação)', () => {
-  const estado = { abas: [{ tab_id: '7', session_id: 's1', itens: [] }] };
+  const estado = { abas: [{ tab_id: '7', session_id: 's1', itens: [], expira_em: '2999-01-01T00:00:00.000Z' }] };
   const batch = outro => decidirPerfil({ tool_name: 'mcp__claude-in-chrome__browser_batch', session_id: 's1', tool_input: { actions: [{ name: 'computer', input: { action: 'scroll', tabId: 7 } }, outro] } }, estado, AGORA);
   for (const outro of [
     { name: 'javascript_tool', input: { tabId: 8, text: scriptDeEnvio('vaga-x') } },
@@ -132,4 +132,22 @@ test('QA 3: com um item incerto na aba, o próximo item não é autorizado (o Sa
   const segundo = await g.autorizarPerfil(dataRoot, { ...ctx, script: scripts[1], afirmacoes });
   assert.equal(segundo.decisao, 'negar');
   assert.match(segundo.motivo, /Outro item desta aba está incerto/);
+});
+
+test('re-QA: item incerto não vence com o tempo; aba antiga sem validade vence', () => {
+  const semAba = { tool_name: 'mcp__claude-in-chrome__computer', tool_input: { action: 'left_click', coordinate: [1, 1] } };
+  const incerta = { abas: [{ tab_id: '7', session_id: 's1', itens: [{ estado: 'incerta' }], expira_em: '2026-10-17T13:00:00.000Z' }] };
+  assert.equal(decidirPerfil(semAba, incerta, '2026-10-20T00:00:00.000Z')?.decisao, 'negar');
+  const antiga = { abas: [{ tab_id: '7', session_id: 's1', itens: [] }] };
+  assert.equal(decidirPerfil(semAba, antiga, AGORA), null);
+});
+
+test('re-QA: depois de encerrar à força com item incerto, propor na mesma aba exige leitura recarregada', async t => {
+  const { atomicJson } = await import('../../core/store/atomicWrite.mjs');
+  const path = (await import('node:path')).default;
+  const dataRoot = await tempDir(t);
+  await atomicJson(path.join(dataRoot, 'state', 'perfil-gupy.json'), { versao: 1, abas: [{ tab_id: '7', session_id: 's1', itens: [{ secao: 'experiencia:p0', estado: 'incerta' }], expira_em: '2999-01-01T00:00:00.000Z' }] });
+  await assert.rejects(encerrarPerfil(dataRoot, { tabId: '7' }), /item incerto/);
+  assert.deepEqual(await encerrarPerfil(dataRoot, { tabId: '7', forcar: true }), { encerrada: true });
+  assert.deepEqual((await lerPerfil(dataRoot)).exige_recarga, ['7']);
 });

@@ -4,7 +4,7 @@
 import { decidirFerramenta } from '../core/mail/hook.mjs';
 import { NAVEGADOR, decidirNavegador } from '../core/apply/hook.mjs';
 import { consumirAprovacao, lerAprovacoes } from '../core/apply/approval.mjs';
-import { lerSessao } from '../core/apply/sessao.mjs';
+import { lerSessao, registrarEtapaPendente } from '../core/apply/sessao.mjs';
 import { resolveDataRoot } from '../core/store/dataRoot.mjs';
 import { lerPerfil, autorizarPerfil, vincularSessaoExtracao } from '../core/apply/gupyProfile.mjs';
 import { decidirPerfil } from '../core/apply/gupyProfileHook.mjs';
@@ -44,10 +44,14 @@ else if (!entrada || typeof entrada.tool_name !== 'string') {
     } else {
     const r = decidirNavegador(entrada, { sessao: await lerSessao(dataRoot), aprovacoes: await lerAprovacoes(dataRoot), agora });
     if (r?.decisao === 'negar') saida('deny', r.motivo);
-    else if (r?.consumir) {
-      // A cota da Gupy vem da config pessoal; config ilegível nega (falha fechado).
+    else if (r?.observarEtapa) {
+      // Etapa da Gupy: registra esta chamada para o PostToolUse observar a resposta dela (e só dela).
+      await registrarEtapaPendente(dataRoot, { tabId: r.observarEtapa.tabId, toolUseId: entrada.tool_use_id, ts: agora });
+      saida('allow', r.motivo);
+    } else if (r?.consumir) {
+      // Cota e aceite da Gupy vêm da config pessoal, lidos agora (aceite revogado vale na hora); config ilegível nega.
       const { gupy } = await loadSettings({ dataRoot });
-      const consumo = await consumirAprovacao(dataRoot, { vagaId: r.consumir, ts: agora, limiteGupy: gupy.max_por_dia });
+      const consumo = await consumirAprovacao(dataRoot, { vagaId: r.consumir, ts: agora, limiteGupy: gupy.max_por_dia, aceiteGupy: gupy.aceite_termos === true });
       if (consumo.ok) saida('allow', r.motivo);
       else saida('deny', consumo.motivo);
     }

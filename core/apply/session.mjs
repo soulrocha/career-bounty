@@ -23,7 +23,7 @@ export async function iniciarCandidatura(dataRoot, { vaga, tabId, ts = new Date(
   const atual = cvDoPainel(await lerManifesto(dataRoot, vaga.id))?.atual;
   const cv = atual ? { hash: atual.hash, ats: atual.ats, pdf_sha256: createHash('sha256').update(await readFile(path.join(dataRoot, atual.ats))).digest('hex') } : null;
   const tentativa = await reservarTentativa(dataRoot, { vaga, rota, cv, ts });
-  await marcarAba(dataRoot, { tabId, vagaId: vaga.id, tentativaId: tentativa.tentativa_id, cvAts: cv ? path.join(dataRoot, cv.ats) : null, ts });
+  await marcarAba(dataRoot, { tabId, vagaId: vaga.id, tentativaId: tentativa.tentativa_id, cvAts: cv ? path.join(dataRoot, cv.ats) : null, rota, ts });
   return { ...tentativa, rota, portal };
 }
 

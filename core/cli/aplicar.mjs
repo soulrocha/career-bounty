@@ -12,7 +12,8 @@ import { lerRespostas } from '../apply/answers.mjs';
 import { rascunharRespostas } from '../apply/rascunho.mjs';
 import { projetarTentativas, chaveTentativa } from '../apply/attempts.mjs';
 import { SCRIPT_COMPROVANTE } from '../apply/receipt.mjs';
-import { SCRIPT_ETAPA_GUPY, classificarEtapa, exigirAceiteGupy } from '../apply/gupyFlow.mjs';
+import { SCRIPT_ETAPA_GUPY, exigirAceiteGupy } from '../apply/gupyFlow.mjs';
+import { lerSessao } from '../apply/sessao.mjs';
 import { lerBase } from '../kb/base.mjs';
 import { carregarFontes } from '../kb/fontes.mjs';
 import { loadIdentityValues } from '../privacy/redact.mjs';
@@ -77,15 +78,16 @@ export const aplicarCommands = {
       return { result: { ...r, extrator: SCRIPT_EXTRATOR, cv_ats: r.cv ? path.join(dataRoot, r.cv.ats) : null } };
     }
     if (sub === 'preparar') {
-      const values = parseFlags(flags, { allowed: ['--vaga', '--extracao', '--etapa', '--live', '--replay', '--gravar'], withValue: ['--vaga', '--extracao', '--etapa', '--replay'] });
+      const values = parseFlags(flags, { allowed: ['--vaga', '--extracao', '--live', '--replay', '--gravar'], withValue: ['--vaga', '--extracao', '--replay'] });
       if (!values['--vaga'] || !values['--extracao']) throw new Error(USO);
       const vaga = await vagaDaProjecao(dataRoot, values['--vaga']);
       // Gupy: só a etapa de perguntas da vaga recebe preenchimento; o resto para (pós-inscrição nunca é iniciada).
       if ((await import('../apply/route.mjs')).rotaDe(vaga).rota === 'gupy') {
         exigirAceiteGupy(settings);
-        if (!values['--etapa']) throw new Error('Na Gupy, rode SCRIPT_ETAPA_GUPY (apply etapa-gupy) na aba e passe o resultado em --etapa <arquivo.json>.');
-        const etapa = classificarEtapa(await lerJson(values['--etapa']));
-        if (etapa.etapa !== 'perguntas') return { result: { bloqueada: true, etapa: etapa.etapa, motivo: etapa.motivo }, text: `parada: ${etapa.motivo}` };
+        // A etapa vale só se foi observada pelo hook (script de etapa rodado na aba, chamada individual), nunca por arquivo.
+        const aba = (await lerSessao(dataRoot)).abas.find(a => a.vaga_id === vaga.id && Date.parse(a.expira_em) > Date.now());
+        if (!aba?.etapa) throw new Error('Na Gupy, rode o script de "apply etapa-gupy" na aba desta vaga (chamada individual de javascript_tool) antes de preparar.');
+        if (aba.etapa.etapa !== 'perguntas') return { result: { bloqueada: true, etapa: aba.etapa.etapa, motivo: aba.etapa.motivo }, text: `parada: ${aba.etapa.motivo}` };
       }
       const runner = values['--live'] || values['--replay'] ? await runnerDasOpcoes(values, settings) : null;
       const tentativa = projetarTentativas((await readEvents(dataRoot)).eventos).get(chaveTentativa(vaga));
@@ -120,7 +122,9 @@ export const aplicarCommands = {
     if (sub === 'envio') {
       const values = parseFlags(flags, { allowed: ['--vaga'], withValue: ['--vaga'] });
       if (!values['--vaga']) throw new Error(USO);
-      return { result: { script: scriptDeEnvio(values['--vaga']) }, text: scriptDeEnvio(values['--vaga']) };
+      const vagaEnvio = await vagaDaProjecao(dataRoot, values['--vaga']);
+      const script = scriptDeEnvio(vagaEnvio.id, (await import('../apply/route.mjs')).rotaDe(vagaEnvio).rota);
+      return { result: { script }, text: script };
     }
     if (sub === 'desfecho') {
       const values = parseFlags(flags, { allowed: ['--vaga', '--aba', '--estado', '--comprovante', '--motivo'], withValue: ['--vaga', '--aba', '--estado', '--comprovante', '--motivo'] });

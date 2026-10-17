@@ -26,7 +26,9 @@ function abaAlvo(input, abas) {
 
 function decidirScript(texto, aba, { sessao, aprovacoes, agora }) {
   const t = String(texto ?? '').trim();
-  if (t === SCRIPT_EXTRATOR || t === SCRIPT_COMPROVANTE || t === SCRIPT_ETAPA_GUPY) return null;
+  if (t === SCRIPT_EXTRATOR || t === SCRIPT_COMPROVANTE) return null;
+  // Etapa da Gupy: a leitura é observada pelo PostToolUse (o modelo não declara a etapa); exige chamada individual.
+  if (t === SCRIPT_ETAPA_GUPY) return { decisao: 'permitir', observarEtapa: { tabId: aba.tab_id }, motivo: 'leitura da etapa da Gupy' };
   if (vivas(sessao.scripts, agora).some(s => s.vaga_id === aba.vaga_id && s.hash === hashScript(t))) return null;
   const clique = /^\(\(\)=>\{const T=("(?:[^"\\]|\\.)*"),/.exec(t);
   if (clique) {
@@ -34,8 +36,10 @@ function decidirScript(texto, aba, { sessao, aprovacoes, agora }) {
     try { alvo = JSON.parse(clique[1]); } catch { return nega('script de clique malformado'); }
     if (t === scriptDeClique(alvo).trim()) return null;
   }
-  if (t === scriptDeEnvio(aba.vaga_id).trim()) {
+  // O script de envio carrega a rota da aba e confere o domínio da página: página da Gupy só pela rota Gupy.
+  if (t === scriptDeEnvio(aba.vaga_id, aba.rota ?? null).trim()) {
     if (!aprovacoes || !aprovacaoValida(aprovacoes, aba.vaga_id, agora)) return nega(`envio sem aprovação: digite no chat a frase do lote ("enviar estas N: ...") para ${aba.vaga_id}`);
+    if (aba.rota === 'gupy' && aba.etapa?.etapa !== 'perguntas') return nega('Gupy: a última etapa observada na aba não é a de perguntas da vaga; rode o script de etapa (chamada individual) antes de enviar');
     return { decisao: 'permitir', consumir: aba.vaga_id, motivo: 'envio aprovado pela pessoa' };
   }
   return nega('aba de candidatura: só scripts do CareerBounty (extrator, preenchimento registrado, clique e envio aprovado)');
@@ -76,6 +80,7 @@ export function decidirNavegador(entrada, ctx) {
     for (const item of acoes) {
       const r = decidirNavegador({ tool_name: `mcp__${m[1]}__${item?.name}`, tool_input: item?.input ?? {} }, ctx);
       if (r?.decisao === 'negar') return r;
+      if (r?.observarEtapa) return nega('o script de etapa da Gupy deve ser chamada individual (não em lote de ações)');
       if (r?.consumir) { if (consumir) return nega('mais de um envio no mesmo lote de ações'); consumir = r.consumir; }
     }
     return consumir ? { decisao: 'permitir', consumir, motivo: 'envio aprovado pela pessoa' } : null;

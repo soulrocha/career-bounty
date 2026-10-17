@@ -86,7 +86,7 @@ test('alvo ambíguo ou alterado: nada é salvo e o texto original volta', { skip
 });
 
 test('o hook libera o script fixo de abrir a seção Experiência na aba de perfil', () => {
-  const estado = { abas: [{ tab_id: '9', session_id: 's1', itens: [] }] };
+  const estado = { abas: [{ tab_id: '9', session_id: 's1', itens: [], expira_em: '2999-01-01T00:00:00.000Z' }] };
   const entrada = text => ({ tool_name: 'mcp__claude-in-chrome__javascript_tool', session_id: 's1', tool_input: { tabId: 9, text } });
   assert.equal(decidirPerfil(entrada(SCRIPT_ABRIR_EXPERIENCIA), estado).decisao, 'permitir');
   assert.equal(decidirPerfil(entrada("document.getElementById('abrir-exp').click()"), estado).decisao, 'negar');
