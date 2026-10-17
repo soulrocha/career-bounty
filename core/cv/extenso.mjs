@@ -16,14 +16,16 @@ const NAO_QUANTIDADE = /^(?:seis sigma|sete habitos)/;
 const PADROES = [
   /\b(?:dobr|tripl|quadrupl|quintupl|decupl|decuplo)\w*/g,
   /\bvezes\s+mais\b/g,
-  /\b(?:dezenas|centenas|milhares)\b/g,
+  /\b(?:dezenas|centenas|milhares|duzias)\b/g,
+  /\bum[a]?\s+(?:dezena|centena|milhar|duzia)\b/g,
   // Escala por extenso sem dígito antes ("um milhão", "meio milhão"); "R$ 2,3 milhões" já é tratado pelo extrator de números.
   /(?<!\d[\d.,]*\s*)\b(?:milhao|milhoes|bilhao|bilhoes|trilhao|trilhoes)\b/g,
   /\bdecadas?\b/g,
   /\bmetade\b/g,
   /\bum\s+(?:terco|quarto)\b/g,
 ];
-const CARDINAL = new RegExp(`\\b(${NOMES})\\b(?!\\s*\\/)(?!\\s*\\d)`, 'g');
+// Mês abreviado ("dez/2018", "dez. de 2018") e cardinal colado a dígito não são quantidade.
+const CARDINAL = new RegExp(`\\b(${NOMES})\\b(?!\\s*[/.])(?!\\s*\\d)`, 'g');
 
 const palavraInteira = (texto, palavra) => new RegExp(`(^|[^a-z0-9])${palavra.replace(/\s+/g, '\\s+')}([^a-z0-9]|$)`).test(texto);
 

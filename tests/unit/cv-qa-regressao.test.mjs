@@ -140,7 +140,7 @@ test('QA 5: card com afirmação inexistente e termo anonimizado com acento ou h
 test('QA 6: quantidade por extenso sem afirmação não passa no resumo do gate nem do redator', async () => {
   const { base, payload, gate } = await payloadOk();
   for (const resumo of ['Tornou a consulta dez vezes mais rápida.', 'Dobrou a receita da área.', 'Uma década de experiência.', 'Atendeu centenas de clientes.']) {
-    assert.equal((await gate({ ...structuredClone(payload), resumo })).status, 'bloqueado', resumo);
+    assert.equal((await gate({ ...structuredClone(payload), resumo, resumo_origem: 'redator' })).status, 'bloqueado', resumo);
   }
   const perfil = await perfilCvBruto();
   const { runner } = runnerFake(() => ({ resumo: 'Dobrou a receita da área.', palavras_chave: [], experiencias: [{ id: 'exp-alfa', itens: [{ afirmacao: 'AF-202' }] }] }));
@@ -211,4 +211,17 @@ test('re-QA 5: cv gerar com a mesma entrada de um CV já enviado mantém a vers�
   assert.equal(de_novo.status, 0, de_novo.stderr);
   assert.equal(de_novo.json.versao, v1.json.versao);
   assert.ok(de_novo.json.avisos.some(a => /já enviado/.test(a)));
+});
+
+test('QA final: coletivo no singular é barrado, "dez." não, e o resumo-base da pessoa não passa pelo conferidor de extenso', async () => {
+  const { quantidadesPorExtenso } = await import('../../core/cv/extenso.mjs');
+  for (const texto of ['Atendeu uma centena de clientes.', 'Liderou uma dezena de squads.', 'Abriu um milhar de lojas.', 'Treinou uma dúzia de pessoas.']) {
+    assert.notDeepEqual(quantidadesPorExtenso(texto, []), [], texto);
+  }
+  assert.deepEqual(quantidadesPorExtenso('Na área desde dez. de 2018.', []), []);
+  const { payload, gate } = await payloadOk();
+  assert.equal(payload.resumo_origem, 'perfil');
+  const doPerfil = { ...structuredClone(payload), resumo: 'Analista com passagem por duas empresas de varejo.' };
+  assert.equal((await gate(doPerfil)).status, 'ok');
+  assert.equal((await gate({ ...doPerfil, resumo_origem: 'redator' })).status, 'bloqueado');
 });

@@ -77,8 +77,11 @@ O CV fica "bloqueado" quando qualquer item abaixo falha. O motivo aparece no pai
 Título, intros, competências, cursos e idiomas vêm do `perfil.json` escrito pela pessoa, nunca do modelo: número ali
 ("Office 365", "ISO 27001", "TOEFL 100") não passa pelo conferidor de números; só a busca de termo a anonimizar vale para eles.
 
+O resumo-base do perfil (CV sem redator) também é da pessoa e não passa pelo conferidor de extenso; o resumo do redator passa.
+
 Limitações conhecidas: de mil para cima, moeda e contagem com o mesmo valor casam ("R$ 41 mil" sustenta "41 mil usuários");
-números colados a letras ("#1", "top10", "15anos") não são extraídos.
+um cardinal por extenso é liberado por qualquer afirmação usada com o mesmo valor, mesmo em outro sentido ("cinco vezes" com
+"5 sistemas"); números colados a letras ("#1", "top10", "15anos") não são extraídos.
 - Termo marcado para anonimizar presente em qualquer parte do CV (sem diferença de acento, caixa ou hífen).
 - Resumo ou bullet ausente no texto extraído do PDF ATS.
 

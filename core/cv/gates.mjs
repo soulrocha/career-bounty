@@ -97,7 +97,7 @@ export function avaliarGate({ payload, afirmacoes, textoAts }) {
   const usadas = afirmacoes.filter(af => itens.usadas.includes(af.id) || cards.ligadas.includes(af.id));
   const ligadas = [...new Set([...itens.usadas, ...cards.ligadas])];
   // O resumo é escrito pelo modelo: além dos dígitos, quantidade por extenso só com a mesma expressão numa afirmação usada.
-  const extenso = quantidadesPorExtenso(payload.resumo, usadas)
+  const extenso = (payload.resumo_origem === 'perfil' ? [] : quantidadesPorExtenso(payload.resumo, usadas))
     .map(palavra => ({ codigo: 'numero_por_extenso', onde: 'resumo', numero: palavra, motivo: `resumo: "${palavra}" sem afirmação que use a mesma expressão` }));
   const motivos = [
     ...itens.motivos,
