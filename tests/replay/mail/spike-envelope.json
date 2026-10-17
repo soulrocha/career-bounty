@@ -1,0 +1,15 @@
+{
+  "type": "result",
+  "subtype": "success",
+  "is_error": false,
+  "duration_ms": 10400,
+  "num_turns": 3,
+  "result": "```json\n{\n  \"cursor_usado\": null,\n  \"consultado_em\": \"2026-10-15T12:00:00.000Z\",\n  \"itens\": [\n    {\n      \"message_id\": \"msg-0001\",\n      \"data\": \"2026-10-14\",\n      \"remetente_nome\": \"Portal Exemplo\",\n      \"remetente_dominio\": \"gupy.com.br\",\n      \"assunto\": \"Confirmação de inscrição\",\n      \"trecho\": \"Recebemos sua inscrição para a vaga Analista - Empresa Alfa\"\n    }\n  ],\n  \"precisa_abrir\": []\n}\n```",
+  "total_cost_usd": 0.007,
+  "usage": {
+    "input_tokens": 1100,
+    "output_tokens": 700,
+    "cache_read_input_tokens": 138000,
+    "cache_creation_input_tokens": 0
+  }
+}

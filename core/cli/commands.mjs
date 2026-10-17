@@ -27,6 +27,9 @@ import { compararRadar } from '../radar/compare.mjs';
 import { buildDigest } from '../score/digest.mjs';
 import { readEvents } from '../store/events.mjs';
 import { projectEvents } from '../store/project.mjs';
+import { mail } from './mail.mjs';
+import { report } from './report.mjs';
+import { avisoEmailNaoConferido, sincronizarEmail } from '../mail/sync.mjs';
 
 // Relógio simulado só com --teste: sem a flag, --now é recusado para não gravar marcador, rodada ou orçamento num dia que não é o real.
 function relogio(values) {
@@ -71,6 +74,8 @@ export const commands = {
     return { result: { dataRoot, created, ok: true } };
   },
   privacy,
+  mail,
+  report,
   async 'audit-template'(rest, { parseFlags }) {
     const [file, ...flags] = rest;
     if (!file || file.startsWith('--')) throw new Error('Uso: audit-template <arquivo>');
@@ -101,9 +106,10 @@ export const commands = {
     const settings = await loadSettings();
     const { eventos } = await readEvents(settings.dataRoot);
     const rodadas = eventos.filter(evento => evento.tipo === 'radar.rodada').map(evento => evento.dados);
-    if (!rodadas.length) return { result: { vazio: true, texto: 'Nenhuma rodada registrada.' }, text: 'Nenhuma rodada registrada.' };
+    const aviso = await avisoEmailNaoConferido(settings.dataRoot, { ativo: settings.mail.ativo });
+    if (!rodadas.length) return { result: { vazio: true, texto: 'Nenhuma rodada registrada.', ...(aviso ? { email_nao_conferido: true } : {}) }, text: ['Nenhuma rodada registrada.', aviso].filter(Boolean).join(String.fromCharCode(10)) };
     const result = buildDigest({ rodada: rodadas.at(-1), projecao: projectEvents(eventos).vagas, historico: rodadas.slice(0, -1) });
-    return { result, text: result.texto };
+    return { result: aviso ? { ...result, email_nao_conferido: true } : result, text: [result.texto, aviso].filter(Boolean).join(String.fromCharCode(10, 10)) };
   },
   async 'daily-run'(rest, { parseFlags }) {
     const values = parseFlags(rest, { allowed: ['--dry-run', '--now', '--host', '--teste'], withValue: ['--now', '--host'] });
@@ -114,9 +120,16 @@ export const commands = {
     const result = await dailyRun({ dataRoot: settings.dataRoot, config: settings.radar.agenda ?? {}, host, now, dryRun: Boolean(values['--dry-run']),
       estagio1: async () => collect({ settings, now }),
       estagio2: async () => {
-        const runner = createRunner({ modo: 'live', dataRoot: settings.dataRoot, identity: await loadIdentityValues(), env: { ...process.env, LIVE: '1' } });
+        const runner = createRunner({ modo: 'live', dataRoot: settings.dataRoot, identity: await loadIdentityValues(), env: { ...process.env, CAREER_BOUNTY_LIVE: '1' } });
         return runStage2({ dataRoot: settings.dataRoot, runner, afirmacoes: await createMarkdownFolder(kbRoot).claims(), brief: await loadBrief(kbRoot), now });
       } });
+    // E-mail depois do radar: falha aqui nunca derruba a rodada; vira "e-mail não conferido hoje" no digest.
+    if (!values['--dry-run'] && result.executou && !result.falha && settings.mail.ativo) {
+      try {
+        const runner = createRunner({ modo: 'live', dataRoot: settings.dataRoot, identity: await loadIdentityValues(), env: { ...process.env, CAREER_BOUNTY_LIVE: '1' }, timeoutMs: 300000, now: () => now });
+        result.email = await sincronizarEmail({ dataRoot: settings.dataRoot, settings, runner, now });
+      } catch (error) { result.email = { ok: false, falha: { etapa: 'inicio', erro: String(error.message ?? error).slice(0, 200) } }; }
+    }
     return { result, text: result.dry_run ? `executaria: ${result.executaria} (${result.motivo})` : (result.executou ? 'rodada concluída' : `não rodou: ${result.motivo}`), exitCode: result.falha ? 1 : 0 };
   },
   async schedule(rest, { parseFlags }) {
@@ -172,7 +185,7 @@ export const commands = {
     }
     const ledger = await mkdtemp(path.join(tmpdir(), 'cb-eval-'));
     try {
-      const runner = createRunner({ modo: values['--live'] ? 'live' : 'replay', dataRoot: ledger, replayDir, identity: await loadIdentityValues(), env: { ...process.env, LIVE: values['--live'] ? '1' : process.env.LIVE },
+      const runner = createRunner({ modo: values['--live'] ? 'live' : 'replay', dataRoot: ledger, replayDir, identity: await loadIdentityValues(), env: { ...process.env, CAREER_BOUNTY_LIVE: values['--live'] ? '1' : undefined },
         gravar: Boolean(values['--gravar']), maxChamadasLive: values['--max-chamadas'] ? Number(values['--max-chamadas']) : Infinity });
       const resultado = await avaliarGolden({ golden, runner, dataRoot: ledger, afirmacoes: await createMarkdownFolder(kbRoot).claims(), brief: await loadBrief(kbRoot) });
       const ok = resultado.concordancia !== null && resultado.concordancia >= minimo;

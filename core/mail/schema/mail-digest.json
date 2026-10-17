@@ -1,0 +1,28 @@
+{
+  "$id": "mail-digest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["cursor_usado", "consultado_em", "itens", "precisa_abrir"],
+  "properties": {
+    "cursor_usado": { "type": ["string", "null"] },
+    "consultado_em": { "type": "string" },
+    "itens": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["message_id", "data", "assunto", "trecho"],
+        "properties": {
+          "message_id": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "data": { "type": "string" },
+          "remetente": { "type": "string" },
+          "remetente_nome": { "type": "string" },
+          "remetente_dominio": { "type": "string" },
+          "assunto": { "type": "string" },
+          "trecho": { "type": "string" }
+        }
+      }
+    },
+    "precisa_abrir": { "type": "array", "items": { "type": "string" } }
+  }
+}
