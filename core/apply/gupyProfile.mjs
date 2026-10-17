@@ -124,13 +124,36 @@ const avancar = s => (s.sequencia = (s.sequencia ?? 0) + 1);
 const instante = ts => { if (!Number.isFinite(Date.parse(ts))) throw Error('Instante inválido.'); return Date.parse(ts); };
 const revalidar = (a, afirmacoes) => diffPerfil({ extracao: a.perfil, proposta: a.proposta, afirmacoes });
 
-export async function iniciarPerfil(root, { tabId }) {
+export const VALIDADE_ABA_PERFIL_H = 24;
+const pendente = a => a.itens.some(i => ['incerta', 'humano'].includes(i.estado));
+const expiraEm = ts => new Date(Date.parse(ts) + VALIDADE_ABA_PERFIL_H * 3600000).toISOString();
+
+export async function iniciarPerfil(root, { tabId, ts = new Date().toISOString() }) {
   if (!/^[A-Za-z0-9_-]{1,100}$/.test(String(tabId ?? ''))) throw Error('Aba explícita obrigatória.');
   return alterar(root, s => {
-    const existente = s.abas.find(a => a.tab_id === String(tabId));
-    if (existente) return { protegida: true, script: SCRIPT_PERFIL };
-    s.abas.push({ tab_id: String(tabId), session_id: null, perfil: null, proposta: null, itens: [] });
+    const i = s.abas.findIndex(a => a.tab_id === String(tabId));
+    const existente = s.abas[i];
+    const vencida = existente?.expira_em && Date.parse(existente.expira_em) <= Date.parse(ts);
+    if (existente && !vencida) {
+      // Recomeçar na mesma aba descarta a proposta antiga (conta ou experiências podem ter mudado), salvo item incerto.
+      if (!pendente(existente)) Object.assign(existente, { perfil: null, proposta: null, proposta_hash: null, observacao: null, itens: [] });
+      existente.expira_em = expiraEm(ts);
+      return { protegida: true, script: SCRIPT_PERFIL, recomecada: !pendente(existente) };
+    }
+    if (vencida) s.abas.splice(i, 1);
+    s.abas.push({ tab_id: String(tabId), session_id: null, perfil: null, proposta: null, itens: [], expira_em: expiraEm(ts) });
     return { protegida: true, script: SCRIPT_PERFIL };
+  });
+}
+
+// Libera a aba: o navegador volta a ser decidido só pelas outras regras. Item incerto exige reconciliar antes.
+export async function encerrarPerfil(root, { tabId, forcar = false }) {
+  return alterar(root, s => {
+    const a = s.abas.find(x => x.tab_id === String(tabId));
+    if (!a) return { encerrada: false };
+    if (pendente(a) && !forcar) throw Error('Há item incerto nesta aba: releia e confirme antes de encerrar (ou use --forcar depois de conferir na Gupy).');
+    s.abas = s.abas.filter(x => x !== a);
+    return { encerrada: true };
   });
 }
 
@@ -175,7 +198,11 @@ export async function proporPerfil(root, args) {
     if (a.itens.some(i => ['incerta', 'humano'].includes(i.estado))) throw Error('Perfil incerto: reler e reconciliar antes de nova proposta.');
     const d = diffPerfil(args);
     if (!a.observacao || a.observacao.perfil_hash !== hashPerfil(d.perfil)) throw Error('Proposta exige extração observada pelo PostToolUse oficial.');
-    if (a.perfil && (a.perfil.perfil_id !== d.perfil.perfil_id || a.perfil.origem !== d.perfil.origem)) throw Error('Conta do perfil mudou.');
+    if (a.perfil && (a.perfil.perfil_id !== d.perfil.perfil_id || a.perfil.origem !== d.perfil.origem)) {
+      // Na página real, a conta é o hash das empresas: experiência nova ou renomeada muda o id. Sem item pendente, a nova
+      // leitura simplesmente substitui a proposta anterior; com item incerto, é preciso reconciliar antes.
+      if (pendente(a) || a.itens.some(i => i.token && !i.token.usada_em)) throw Error('Conta do perfil mudou com item pendente ou aprovado: reconcilie antes.');
+    }
     a.perfil = d.perfil;
     a.proposta = args.proposta;
     a.proposta_hash = d.proposta_hash;
@@ -209,33 +236,60 @@ async function aplicarItem(extrair, vinculo) {
       const n = /^experiencia:p(\d{1,3})$/.exec(v.secao)?.[1];
       if (n === undefined) return fail();
       const N = t => (t || '').replace(/\s+/g, ' ').trim();
-      const vis = e => !!e && e.isConnected && !e.closest('[hidden],[inert],[aria-hidden="true"]') && !['hidden', 'collapse'].includes(getComputedStyle(e).visibility) && getComputedStyle(e).display !== 'none' && e.getClientRects().length > 0;
+      // Visível de verdade: sem hidden/inert/aria-hidden, display/visibility/opacity nos ancestrais, tamanho > 0 e sem
+      // ancestral com overflow escondido e tamanho zero.
+      const vis = e => {
+        if (!e || !e.isConnected || e.closest('[hidden],[inert],[aria-hidden="true"]')) return false;
+        const r = e.getBoundingClientRect();
+        if (!(r.width > 0 && r.height > 0)) return false;
+        for (let x = e; x && x.nodeType === 1; x = x.parentElement) {
+          const c = getComputedStyle(x);
+          if (c.display === 'none' || ['hidden', 'collapse'].includes(c.visibility) || Number(c.opacity) === 0) return false;
+          if (x !== e && c.overflow !== 'visible') { const q = x.getBoundingClientRect(); if (!(q.width > 0 && q.height > 0)) return false; }
+        }
+        return true;
+      };
       const espera = ms => new Promise(r => setTimeout(r, ms));
-      let campo = document.getElementById(`activitiesPerformed-${n}`);
+      const pegar = () => document.getElementById(`activitiesPerformed-${n}`);
+      let campo = pegar();
       if (campo && !vis(campo)) {
         const abrir = [...document.querySelectorAll('button,[role="button"]')].filter(b => N(b.textContent) === 'Experiência');
         if (abrir.length !== 1) return fail();
         abrir[0].click();
         await espera(600);
-        campo = document.getElementById(`activitiesPerformed-${n}`);
+        campo = pegar();
       }
       const campoOk = () => vis(campo) && campo.tagName === 'TEXTAREA' && document.querySelectorAll(`#activitiesPerformed-${n}`).length === 1 && !campo.disabled && !campo.readOnly;
       if (!campoOk()) return fail();
-      const salvar = () => [...document.querySelectorAll('button')].filter(b => N(b.textContent) === 'Salvar' && vis(b));
-      const valido = b => !!b && ['button', 'submit'].includes(b.type) && !b.form && !b.disabled && b.getAttribute('aria-disabled') !== 'true';
-      const escrever = valor => {
-        Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(campo, valor);
-        campo.dispatchEvent(new Event('input', { bubbles: true }));
-        campo.dispatchEvent(new Event('change', { bubbles: true }));
+      const salvarVisiveis = () => [...document.querySelectorAll('button')].filter(b => N(b.textContent) === 'Salvar' && vis(b));
+      // "Salvar" visível antes de alterar = outra seção com alteração não salva: clicar persistiria o que a pessoa não aprovou.
+      if (salvarVisiveis().length) return { erro: 'há alteração não salva na página (um "Salvar" já está visível); salve ou descarte antes; ação humana necessária' };
+      // Seção Experiência: o maior ancestral do campo que não contém outras seções (habilidades, dados pessoais).
+      const OUTRAS = '#skills-search-autocomplete,[data-testid="candidate-skill"],#identityCardNumber,#linkedinProfileUrl,#addressZipCode';
+      let secao = campo;
+      while (secao.parentElement && !secao.parentElement.querySelector(OUTRAS)) secao = secao.parentElement;
+      const valido = b => !!b && secao.contains(b) && ['button', 'submit'].includes(b.type) && !b.form && !b.disabled && b.getAttribute('aria-disabled') !== 'true';
+      const escrever = (alvo, valor) => {
+        Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(alvo, valor);
+        alvo.dispatchEvent(new Event('input', { bubbles: true }));
+        alvo.dispatchEvent(new Event('change', { bubbles: true }));
       };
       const original = campo.value;
-      const desfazer = () => { try { if (campo.value !== original) escrever(original); } catch { /* sem desfazer: a página não salvou */ } return fail(); };
-      escrever(v.proposto);
+      // Desfazer relê o campo (a página pode ter re-renderizado) e confere a página inteira contra a leitura aprovada.
+      const desfazer = async () => {
+        try { const atualCampo = pegar(); if (atualCampo && atualCampo.value !== original) escrever(atualCampo, original); } catch { /* conferido abaixo */ }
+        await espera(300);
+        const relida = extrair(document, location);
+        return JSON.stringify(relida) === JSON.stringify(p)
+          ? { erro: 'perfil/alvo/hash/formulário mudou; ação humana necessária', restaurado: true }
+          : { erro: 'restauração não confirmada: recarregue a página SEM salvar e confira na Gupy; ação humana necessária', restaurado: false };
+      };
+      escrever(campo, v.proposto);
       await espera(500);
       const esperado = JSON.parse(JSON.stringify(p));
       esperado.experiencias.find(e => `experiencia:${e.id}` === v.secao).descricao = v.proposto;
-      const s = salvar();
-      if (!campoOk() || s.length !== 1 || !valido(s[0]) || JSON.stringify(extrair(document, location)) !== JSON.stringify(esperado)) return desfazer();
+      const s = salvarVisiveis();
+      if (pegar() !== campo || !campoOk() || s.length !== 1 || !valido(s[0]) || JSON.stringify(extrair(document, location)) !== JSON.stringify(esperado)) return desfazer();
       s[0].click();
       return { estado: 'incerta', secao: v.secao };
     }
@@ -308,6 +362,8 @@ export async function autorizarPerfil(root, args) {
       const a = abaDe(s, args); revalidar(a, args.afirmacoes);
       const i = a.itens.find(i => i.script === args.script && i.script === scriptDoItem(a, i));
       if (!i || !['editavel', 'anterior'].includes(i.estado)) return negar('Item sem aprovação disponível.');
+      // Outro item da aba ainda incerto: o documento pode ter texto não confirmado; o próximo "Salvar" o persistiria.
+      if (a.itens.some(x => x !== i && ['incerta', 'humano'].includes(x.estado))) return negar('Outro item desta aba está incerto: recarregue, releia e confirme antes do próximo.');
       const t = i.token;
       if (!t || t.usada_em || !(instante(t.expira_em) > instante(args.ts)) || t.session_id !== args.sessionId || t.tab_id !== String(args.tabId) || t.perfil_id !== a.perfil.perfil_id || t.proposta_hash !== a.proposta_hash || t.secao !== i.secao || t.hash !== i.hash) return negar('Token de perfil ausente, vencido ou vínculo alterado.');
       t.usada_em = args.ts;
@@ -331,7 +387,7 @@ export async function confirmarPerfil(root, args) {
     const h = hashPerfil(valor(p, i.secao));
     if (h === i.hash) {
       const id = hashPerfil([a.session_id, a.tab_id, a.perfil.perfil_id, a.proposta_hash, i.secao, i.antes_hash, i.hash]);
-      await appendEvent(root, { id: `perfil.atualizado:${id}`, ts: args.ts ?? new Date().toISOString(), ator: 'gupy-perfil', tipo: 'perfil.atualizado', entidade: 'perfil', entidade_id: hashPerfil(a.perfil.perfil_id), dados: { antes_hash: i.antes_hash, depois_hash: i.hash, proposta_hash: a.proposta_hash, secao: i.secao } });
+      await appendEvent(root, { id: `perfil.atualizado:${id}`, ts: args.ts ?? new Date().toISOString(), ator: 'gupy-perfil', tipo: 'perfil.atualizado', entidade: 'perfil', entidade_id: hashPerfil([s.sal ??= randomUUID(), a.perfil.perfil_id]), dados: { antes_hash: i.antes_hash, depois_hash: i.hash, proposta_hash: a.proposta_hash, secao: i.secao } });
       i.estado = 'confirmada';
       i.confirmacao_hash = perfilHash;
     } else {

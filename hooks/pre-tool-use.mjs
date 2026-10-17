@@ -28,7 +28,7 @@ else if (!entrada || typeof entrada.tool_name !== 'string') {
   try {
     const dataRoot = resolveDataRoot();
     const agora = process.env.CAREER_BOUNTY_NOW ?? new Date().toISOString();
-    const perfil = decidirPerfil(entrada, await lerPerfil(dataRoot));
+    const perfil = decidirPerfil(entrada, await lerPerfil(dataRoot), agora);
     if (perfil) {
       if (perfil.decisao === 'negar') saida('deny', perfil.motivo);
       else if (perfil.vincular) {
