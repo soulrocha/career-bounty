@@ -11,6 +11,7 @@ import { projectEvents } from '../core/store/project.mjs';
 import { renderPainelDe } from './render.mjs';
 import { injetarAbaQuadrantes, respostaQuadrantes } from './quadrantes.mjs';
 import { createMaterials, namedMaterialsOf, privateFile, validateBaseFiles } from './materials.mjs';
+import { arquivosServiveis, lerManifesto } from '../core/cv/artifacts.mjs';
 
 // Painel sem recurso externo: nada carrega nem envia dado para fora de 127.0.0.1. Script e estilo inline vêm do template local.
 const CSP = ["default-src 'none'", "script-src 'unsafe-inline'", "style-src 'unsafe-inline'", "img-src 'self' data:", "font-src 'self' data:", "connect-src 'self'", "base-uri 'self'", "form-action 'none'", "frame-ancestors 'none'", "object-src 'none'"].join('; ');
@@ -105,6 +106,13 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
           .replaceAll('Marcações salvas neste computador e consideradas nas próximas buscas.', 'SOMBRA — gravação desligada. Marcações importadas para consulta.')
           .replaceAll('Abra o painel interativo para salvar.', 'SOMBRA — gravação desligada.');
         return send(200, Buffer.from(injetarAbaQuadrantes(page)), 'text/html; charset=utf-8');
+      }
+      // PDFs de CV (F5.8): só os listados no manifesto da vaga, lidos sem seguir link e sem sair do DATA_ROOT.
+      const cv = /^\/artifacts\/cv\/([A-Za-z0-9][A-Za-z0-9._-]*)\/[0-9a-f]{64}\/cv-(?:ats|visual)\.pdf$/.exec(path);
+      if (cv) {
+        const permitido = arquivosServiveis(await lerManifesto(dataRoot, cv[1]).catch(() => null)).includes(path.slice(1));
+        if (!permitido) return send(404, { erro: 'Arquivo indisponível.' });
+        return send(200, await privateFile(dataRoot, path.slice(1)), 'application/pdf');
       }
       const material = await materialsPolicy.read(path);
       if (material) return send(200, material.bytes, material.type);
