@@ -17,7 +17,7 @@ import { dailyRun } from '../schedule/dailyRun.mjs';
 import { buildTaskXml } from '../schedule/taskXml.mjs';
 import { runDoctor } from '../doctor/index.mjs';
 import { validatePlugin } from '../plugin/validate.mjs';
-import { planApply } from '../apply/plan.mjs';
+import { planejarAplicacao } from '../apply/plan.mjs';
 import { ensureSkeleton, resolveDataRoot } from '../store/dataRoot.mjs';
 import { formatFindings, scanMessageFile, scanStaged, scanTracked } from '../privacy/scan.mjs';
 import { buildDenylist, loadPrivacyContext } from '../privacy/context.mjs';
@@ -235,7 +235,13 @@ export const commands = {
   },
   async apply(rest, { parseFlags }) {
     if (rest[0] !== 'plan') throw new Error(`Subcomando apply desconhecido: ${rest[0] ?? ''}`.trim());
-    parseFlags(rest.slice(1), { allowed: [] });
-    return { result: planApply(await loadSettings()) };
+    const values = parseFlags(rest.slice(1), { allowed: ['--aderencia'], withValue: ['--aderencia'] });
+    const aderencias = values['--aderencia'] ? values['--aderencia'].split(',').map(a => a.trim()) : undefined;
+    if (aderencias?.some(a => !['alta', 'media'].includes(a))) throw new Error('--aderencia aceita alta, media ou alta,media.');
+    const settings = await loadSettings();
+    const plano = await planejarAplicacao({ dataRoot: settings.dataRoot, settings, aderencias });
+    const linhas = [`ação padrão: ${plano.acao}; ${plano.fila.length} vaga(s) na fila, ${plano.excluidas.length} fora`,
+      ...plano.fila.map(f => `  [${f.rota}] ${f.empresa} — ${f.cargo} (${f.aderencia})`)];
+    return { result: plano, text: linhas.join(String.fromCharCode(10)) };
   },
 };
