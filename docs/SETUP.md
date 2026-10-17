@@ -11,17 +11,14 @@ do processamento/renderização, conectores, envio de candidaturas e publicaçã
 
 ## Estado desta preparação
 
-O repositório começou vazio, sem código, manifestos ou suíte de testes.
-F0.1 tem CLI inicial e três testes de subprocesso: versão, comando desconhecido
-e saída JSON. A seam S1 foi confirmada pelo usuário.
+As fatias F0 a F6 estão implementadas: fundação e pacote público, migração em modo sombra, radar e fontes,
+leitura de e-mail, base de carreira, currículos com gates e candidatura assistida (inclusive perfil e candidatura
+na Gupy). A F7 (envio automático por política) está em andamento e a F8 (contribuição externa) não começou.
 
-Execute `npm test` com Node >=20 para verificar a base. A CI está configurada
-para Node 20 em Windows e Ubuntu; sua execução remota ainda não foi verificada.
+Execute `npm test` com Node >=20 para verificar a base. A CI roda Node 20 em Windows e Ubuntu.
 
-Foi implementado um recorte de migração em sombra, com resolução mínima da pasta
-privada e configuração. Isso não conclui integralmente F0.2 nem F1.
-A continuidade depende do plano completo e de suas decisões pendentes no handoff
-do projeto.
+O corte da migração continua pendente: até ele, o radar legado é o escritor oficial e o CareerBounty roda em
+sombra. A continuidade depende do plano completo e das decisões pendentes no handoff do projeto.
 
 ## Configuração e uso
 
@@ -62,6 +59,10 @@ e a descrição completa está em [KNOWLEDGE.md](KNOWLEDGE.md).
 Currículos (dois PDFs com gates e proposta de perfil de portal): `cv gerar --vaga <id>` e `cv gate --vaga <id>`.
 O perfil de CV fica em `DATA_ROOT/cv/perfil.json`, os PDFs saem do Chrome ou Edge instalados e a descrição completa
 está em [CV.md](CV.md).
+
+Candidaturas: `apply plan`, `apply iniciar`, `apply preparar`, `apply lote`, `apply envio`, `apply comprovante` e
+`apply desfecho`, conduzidos pela skill `aplicar` e protegidos pelos hooks. Perfil da Gupy: `gupy perfil iniciar|propor|confirmar|encerrar`,
+descrito em [GUPY-PERFIL.md](GUPY-PERFIL.md).
 
 ## Retomar
 
