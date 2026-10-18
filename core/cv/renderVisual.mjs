@@ -17,7 +17,7 @@ function cabecalho(payload, fotoDataUri) {
 const cards = lista => `<div class="impact">${lista.map(card => `<div class="stat"><strong>${esc(card.valor)}</strong><span>${esc(card.rotulo)}</span></div>`).join('')}</div>`;
 
 function experiencia(exp) {
-  const itens = `<ul>${exp.itens.map(item => `<li>${esc(item.texto)}</li>`).join('')}</ul>`;
+  const itens = exp.itens.length ? `<ul>${exp.itens.map(item => `<li>${esc(item.texto)}</li>`).join('')}</ul>` : '';
   if (exp.id === DESTAQUES) return itens;
   return `<article class="job"><div class="job-head"><div><h3>${esc(exp.cargo)}</h3><p class="company">${esc(exp.empresa)}</p></div>`
     + `<p class="dates">${esc(exp.periodo)}</p></div>${exp.intro ? `<p class="intro">${esc(exp.intro)}</p>` : ''}${itens}</article>`;

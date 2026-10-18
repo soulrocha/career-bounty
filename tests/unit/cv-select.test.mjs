@@ -147,8 +147,9 @@ test('montarPayload aplica a seleção do redator: ordem, variante cadastrada, r
   const payload = montarPayload({ perfil, afirmacoes: base.claims, selecao, vaga: vagaAlta(), tipo: 'adaptado' });
   assert.equal(payload.resumo, selecao.resumo);
   assert.deepEqual(payload.palavras_chave, ['indicadores']);
-  assert.deepEqual(payload.experiencias.map(exp => exp.id), ['exp-alfa']);
-  assert.deepEqual(payload.experiencias[0].itens, [
+  // As outras experiências do perfil entram sem bullet (ver o teste do histórico abaixo).
+  assert.deepEqual(payload.experiencias.map(exp => [exp.id, exp.itens.length]), [['exp-gama', 0], ['exp-beta', 0], ['exp-alfa', 2]]);
+  assert.deepEqual(payload.experiencias.find(exp => exp.id === 'exp-alfa').itens, [
     { afirmacao: 'AF-201', texto: 'Cortou o tempo de fechamento de pedidos em 34%, de 12 para 8 dias.' },
     { afirmacao: 'AF-202', texto: 'Implantou um painel de indicadores usado por 41 pessoas na operação.' },
   ]);
@@ -167,4 +168,26 @@ test('cv_skip_portals vem da config (padrão Gupy) e valor inválido é recusado
   assert.equal(decidirCv(vagaGupy(), settings).gerar, true);
   await writeFile(path.join(dataRoot, 'config.yml'), JSON.stringify({ cv_skip_portals: 'gupy' }));
   await assert.rejects(loadSettings({ dataRoot }), /cv_skip_portals/);
+});
+
+// Experiência sem afirmação liberada (cargo antigo, só relato) continua no CV com cargo, período e intro, sem bullet:
+// sem isso o histórico sumia e o CV parecia começar na última empresa com prova.
+const perfilComAntiga = perfil => ({
+  ...perfil,
+  experiencias: [...perfil.experiencias, { id: 'exp-sigma', empresa: 'Empresa Sigma', cargo: 'Estagiária de Operações', periodo: 'jan/2016 - dez/2017', inicio: '2016-01', fim: '2017-12', intro: 'Apoio à rotina de pedidos.' }],
+});
+
+test('experiência sem afirmação liberada aparece sem bullet, na ordem do perfil e antes dos destaques', async () => {
+  const { base, perfil } = await ambiente();
+  const payload = selecionarCv({ vaga: vagaAlta(), perfil: perfilComAntiga(perfil), afirmacoes: base.claims, config: {} });
+  assert.deepEqual(payload.experiencias.map(exp => exp.id), ['exp-gama', 'exp-beta', 'exp-alfa', 'exp-sigma', 'destaques']);
+  const delta = payload.experiencias.find(exp => exp.id === 'exp-sigma');
+  assert.deepEqual(delta, { id: 'exp-sigma', empresa: 'Empresa Sigma', cargo: 'Estagiária de Operações', periodo: 'jan/2016 - dez/2017', intro: 'Apoio à rotina de pedidos.', itens: [] });
+});
+
+test('o payload do redator também mantém a experiência sem bullet, na ordem do perfil, com os destaques no fim', async () => {
+  const { base, perfil } = await ambiente();
+  const selecao = { resumo: 'Resumo.', palavras_chave: [], experiencias: [{ id: 'exp-alfa', itens: [{ afirmacao: 'AF-201', variante: null }] }, { id: 'destaques', itens: [{ afirmacao: 'AF-212', variante: null }] }, { id: 'exp-gama', itens: [{ afirmacao: 'AF-209', variante: null }] }] };
+  const payload = montarPayload({ perfil: perfilComAntiga(perfil), afirmacoes: base.claims, selecao, vaga: vagaAlta(), tipo: 'adaptado' });
+  assert.deepEqual(payload.experiencias.map(exp => [exp.id, exp.itens.length]), [['exp-gama', 1], ['exp-beta', 0], ['exp-alfa', 1], ['exp-sigma', 0], ['destaques', 1]]);
 });

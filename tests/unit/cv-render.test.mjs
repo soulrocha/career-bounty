@@ -117,3 +117,14 @@ test('as fontes do PDF ATS estão embutidas e o texto é selecionável', { skip:
   assert.ok(lista.every(f => f.embutida), JSON.stringify(lista));
   assert.ok(extrairTexto(ats.pdf).length > 500);
 });
+
+test('experiência sem bullet sai com cargo, período e intro, sem lista vazia (visual e ATS)', async () => {
+  const payload = await payloadBase();
+  payload.experiencias.push({ id: 'exp-sigma', empresa: 'Empresa Sigma', cargo: 'Estagiária de Operações', periodo: 'jan/2016 - dez/2017', intro: 'Apoio à rotina de pedidos.', itens: [] });
+  for (const html of [await renderVisual(payload), await renderAts(payload)]) {
+    assert.match(html, /Estagiária de Operações/);
+    assert.match(html, /jan\/2016 - dez\/2017/);
+    assert.match(html, /Apoio à rotina de pedidos\./);
+    assert.doesNotMatch(html, /<ul[^>]*><\/ul>/);
+  }
+});

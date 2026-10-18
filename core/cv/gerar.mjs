@@ -13,7 +13,7 @@ import { atualizarGateNoManifesto, cvDoPainel, gravarCv, lerManifesto } from './
 import { avaliarGate, eventoGate } from './gates.mjs';
 import { carregarTemplate, fotoComoDataUri } from './html.mjs';
 import { extrairTexto } from './pdf.mjs';
-import { redigirCv } from './redator.mjs';
+import { ITENS_MAX_PADRAO, redigirCv } from './redator.mjs';
 import { gerarPdfAts } from './renderAts.mjs';
 import { gerarPdfVisual } from './renderVisual.mjs';
 import { decidirCv, montarPayload, selecionarCv } from './select.mjs';
@@ -34,8 +34,14 @@ export async function carregarPerfilCv(dataRoot) {
   if (!perfil?.cabecalho?.nome || !Array.isArray(perfil.cards) || !Array.isArray(perfil.experiencias)) throw new Error('Perfil de CV incompleto: precisa de cabecalho.nome, cards e experiencias.');
   if (perfil.cards.length !== 4) throw new Error(`Perfil de CV com ${perfil.cards.length} cards; o CV usa exatamente 4.`);
   if (perfil.foto && (path.isAbsolute(perfil.foto) || perfil.foto.split(/[\\/]/).includes('..'))) throw new Error('perfil.foto deve ser um arquivo dentro de DATA_ROOT/cv.');
+  if (perfil.itens_por_experiencia !== undefined && !(Number.isInteger(perfil.itens_por_experiencia) && perfil.itens_por_experiencia >= 1 && perfil.itens_por_experiencia <= 10)) {
+    throw new Error('perfil.itens_por_experiencia deve ser inteiro de 1 a 10.');
+  }
   return perfil;
 }
+
+// Limite de bullets por experiência: do perfil (histórico longo precisa de menos para caber em 2 páginas) ou o padrão.
+export const itensPorExperiencia = perfil => perfil.itens_por_experiencia ?? ITENS_MAX_PADRAO;
 
 async function contexto({ dataRoot, settings, vagaId }) {
   const { eventos } = await readEvents(dataRoot);
@@ -78,11 +84,12 @@ export async function gerarCvDaVaga({ dataRoot, settings, vagaId, runner = null,
   const decisao = decidirCv(vaga, settings);
   if (!decisao.gerar) return { gerado: false, motivo: decisao.motivo };
   const perfil = await carregarPerfilCv(dataRoot);
-  let payload = selecionarCv({ vaga, perfil, afirmacoes: base.claims, config: settings });
+  const maxItens = itensPorExperiencia(perfil);
+  let payload = selecionarCv({ vaga, perfil, afirmacoes: base.claims, config: settings, maxItens });
   let avisos = [];
   // O redator só entra quando a seleção achou alvo: vaga sem requisito atendido ligado a afirmação fica no CV-base.
   if (runner && payload.tipo === 'adaptado') {
-    const redigido = await redigirCv({ runner, vaga, afirmacoes: base.claims, experiencias: perfil.experiencias, afirmacoesDosCards: perfil.cards.flatMap(c => c.claim_ids ?? []) });
+    const redigido = await redigirCv({ runner, vaga, afirmacoes: base.claims, experiencias: perfil.experiencias, maxItens, afirmacoesDosCards: perfil.cards.flatMap(c => c.claim_ids ?? []) });
     payload = montarPayload({ perfil, afirmacoes: base.claims, selecao: redigido.selecao, vaga, tipo: 'adaptado', requisitos_atendidos: payload.requisitos_atendidos });
     avisos = redigido.avisos;
   }
