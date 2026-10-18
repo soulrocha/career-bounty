@@ -170,3 +170,70 @@ test('projectContatos suporta contato sem nome de pessoa', () => {
   assert.ok(projecao.por_pessoa['con-sem-nome']);
   assert.equal(projecao.por_pessoa['con-sem-nome'].nome, 'Sem nome');
 });
+
+test('projectContatos remove contato quando recebe evento contato.removido', () => {
+  const eventos = [
+    {
+      id: 'e-1',
+      ts: '2026-10-15T10:00:00.000-03:00',
+      host: 'host-1',
+      seq: 1,
+      ator: 'usuario',
+      tipo: 'contato.registrado',
+      entidade: 'contato',
+      entidade_id: 'con-001',
+      dados: {
+        id: 'con-001',
+        vaga_id: 'vaga-abc',
+        canal: 'linkedin',
+        direcao: 'recebido',
+        pessoa: { nome: 'Camila Silva', papel: 'Tech Recruiter' },
+        resumo: 'Primeiro contato no LinkedIn',
+        data: '2026-10-15',
+      },
+    },
+    {
+      id: 'e-2',
+      ts: '2026-10-16T14:00:00.000-03:00',
+      host: 'host-1',
+      seq: 2,
+      ator: 'usuario',
+      tipo: 'contato.registrado',
+      entidade: 'contato',
+      entidade_id: 'con-002',
+      dados: {
+        id: 'con-002',
+        vaga_id: 'vaga-abc',
+        canal: 'email',
+        direcao: 'recebido',
+        pessoa: { nome: 'Rodrigo Santos', papel: 'Headhunter' },
+        resumo: 'Oportunidade',
+        data: '2026-10-16',
+      },
+    },
+    {
+      id: 'e-3',
+      ts: '2026-10-17T09:00:00.000-03:00',
+      host: 'host-1',
+      seq: 3,
+      ator: 'usuario',
+      tipo: 'contato.removido',
+      entidade: 'contato',
+      entidade_id: 'con-001',
+      dados: {
+        contato_id: 'con-001',
+        motivo: 'Registro de teste inserido por engano',
+      },
+    },
+  ];
+
+  const projecao = projectContatos(eventos, { now: NOW });
+  assert.equal(projecao.total, 1);
+  assert.equal(projecao.contatos.length, 1);
+  assert.equal(projecao.contatos[0].id, 'con-002');
+  assert.equal(projecao.por_vaga['vaga-abc'].total, 1);
+  assert.deepEqual(projecao.por_vaga['vaga-abc'].contatos.map(c => c.id), ['con-002']);
+  assert.equal(projecao.por_pessoa['camila-silva'], undefined);
+  assert.ok(projecao.por_pessoa['rodrigo-santos']);
+});
+

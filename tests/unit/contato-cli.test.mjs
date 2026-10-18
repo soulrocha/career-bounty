@@ -197,3 +197,62 @@ test('contato sugerir gera rascunho em outbox/contatos sem enviar mensagem', asy
   assert.match(conteudo, /Trabalho com Node\.js/);
   assert.match(conteudo, new RegExp(contatoId));
 });
+
+test('contato remover grava contato.removido e remove o contato da listagem', async t => {
+  const dataRoot = await ambiente(t);
+
+  // Registra um contato de teste
+  const reg = run([
+    'contato', 'registrar',
+    '--canal', 'linkedin',
+    '--direcao', 'recebido',
+    '--resumo', 'Contato teste para remover',
+    '--data', '2026-10-18',
+    '--now', NOW,
+    '--teste',
+    '--json',
+  ], { dataRoot });
+  assert.equal(reg.status, 0);
+  const contatoId = reg.json.id;
+
+  // Verifica que consta na listagem
+  const antes = run(['contato', 'listar', '--now', NOW, '--teste', '--json'], { dataRoot });
+  assert.equal(antes.json.total, 1);
+
+  // Tenta remover sem --contato -> erro
+  const semId = run(['contato', 'remover', '--now', NOW, '--teste'], { dataRoot });
+  assert.notEqual(semId.status, 0);
+  assert.match(semId.stderr, /Informe --contato/i);
+
+  // Tenta remover ID inexistente -> erro
+  const naoExiste = run(['contato', 'remover', '--contato', 'con-fantasma', '--now', NOW, '--teste'], { dataRoot });
+  assert.notEqual(naoExiste.status, 0);
+  assert.match(naoExiste.stderr, /Contato não encontrado/i);
+
+  // Remove com motivo
+  const rem = run([
+    'contato', 'remover',
+    '--contato', contatoId,
+    '--motivo', 'Inserido por engano em teste manual',
+    '--now', NOW,
+    '--teste',
+    '--json',
+  ], { dataRoot });
+  assert.equal(rem.status, 0, rem.stderr);
+  assert.equal(rem.json.ok, true);
+  assert.equal(rem.json.contato_id, contatoId);
+
+  // Verifica que evento contato.removido foi gravado
+  const { eventos } = await readEvents(dataRoot);
+  const eventoRem = eventos.find(e => e.tipo === 'contato.removido');
+  assert.ok(eventoRem);
+  assert.equal(eventoRem.entidade_id, contatoId);
+  assert.equal(eventoRem.dados.contato_id, contatoId);
+  assert.equal(eventoRem.dados.motivo, 'Inserido por engano em teste manual');
+
+  // Verifica que a listagem agora está vazia
+  const depois = run(['contato', 'listar', '--now', NOW, '--teste', '--json'], { dataRoot });
+  assert.equal(depois.json.total, 0);
+  assert.deepEqual(depois.json.contatos, []);
+});
+
