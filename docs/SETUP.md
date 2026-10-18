@@ -11,17 +11,15 @@ do processamento/renderização, conectores, envio de candidaturas e publicaçã
 
 ## Estado desta preparação
 
-O repositório começou vazio, sem código, manifestos ou suíte de testes.
-F0.1 tem CLI inicial e três testes de subprocesso: versão, comando desconhecido
-e saída JSON. A seam S1 foi confirmada pelo usuário.
+As fatias F0 a F7 estão implementadas: fundação e pacote público, instalação nova e demonstração, migração em modo sombra
+com ferramenta segura de corte (`migrate --corte`), radar e fontes, leitura de e-mail, base de carreira, currículos com
+gates, candidatura assistida (inclusive perfil e candidatura na Gupy) e o motor de envio automático por política com
+drivers (Greenhouse, Lever, Ashby), kill switch e auditoria de decisões. O motor ainda não tem comando que o dispare.
 
-Execute `npm test` com Node >=20 para verificar a base. A CI está configurada
-para Node 20 em Windows e Ubuntu; sua execução remota ainda não foi verificada.
+Execute `npm test` com Node >=20 para verificar a base. A CI roda Node 20 em Windows e Ubuntu.
 
-Foi implementado um recorte de migração em sombra, com resolução mínima da pasta
-privada e configuração. Isso não conclui integralmente F0.2 nem F1.
-A continuidade depende do plano completo e de suas decisões pendentes no handoff
-do projeto.
+O roteiro de primeira execução, para instalação nova ou para quem traz um pipeline antigo, está em
+[PRONTIDAO.md](PRONTIDAO.md).
 
 ## Configuração e uso
 
@@ -43,7 +41,9 @@ de currículos autorizados no painel; por padrão, a lista é vazia.
 4. `node bin/career-bounty.mjs project --json` reconstrói a projeção pelo log.
 5. `node bin/career-bounty.mjs migrate --rollback --out <arquivo-novo-privado> --json`
    exporta o documento integral sem sobrescrever arquivo existente ou origem.
-6. `node bin/career-bounty.mjs panel --port 8880` inicia o painel local de consulta.
+6. `node bin/career-bounty.mjs migrate --corte --confirmar-corte` conclui o corte
+   e passa a gravação de candidaturas para o modo ativo (exige paridade estrita).
+7. `node bin/career-bounty.mjs panel --port 8880` inicia o painel local de consulta.
 
 O snapshot preserva os arquivos privados em `backups/`, com manifesto de tamanhos
 e SHA-256. O log fica em `events/`; a projeção, em `projections/`.
@@ -63,6 +63,14 @@ Currículos (dois PDFs com gates e proposta de perfil de portal): `cv gerar --va
 O perfil de CV fica em `DATA_ROOT/cv/perfil.json`, os PDFs saem do Chrome ou Edge instalados e a descrição completa
 está em [CV.md](CV.md).
 
+Candidaturas: `apply plan`, `apply iniciar`, `apply preparar`, `apply lote`, `apply envio`, `apply comprovante` e
+`apply desfecho`, conduzidos pela skill `aplicar` e protegidos pelos hooks. Perfil da Gupy: `gupy perfil iniciar|propor|confirmar|encerrar`,
+descrito em [GUPY-PERFIL.md](GUPY-PERFIL.md).
+
+Envio por política e Kill Switch: `envio pausar [--motivo "..."]`, `envio retomar` e `envio audit [--dia YYYY-MM-DD]`.
+O kill switch cria `DATA_ROOT/envio.pausado` e bloqueia instantaneamente qualquer envio no driver e no hook PreToolUse.
+Diagnóstico completo: `node bin/career-bounty.mjs doctor`.
+
 ## Retomar
 
 1. Confira a branch e o estado do Git; preserve alterações existentes.
@@ -78,8 +86,6 @@ está em [CV.md](CV.md).
 - A sincronização da pasta privada entre máquinas não está configurada por este setup.
 - O corte definitivo exige cinco dias úteis reais com diff zero, teste de escrita
   em dados sintéticos e decisão explícita de congelar o escritor anterior.
-- A publicação (F0.9) é manual e continua pendente: F0.2 a F0.8, F0.10 e F0.11 estão implementadas
-  na branch `feat/F0-fundacao`; falta a auditoria do histórico, a revisão dos textos que citam
-  ferramentas pessoais (este arquivo e `CLAUDE.md`) e a decisão de tornar o repositório público.
+- A publicação do repositório e a primeira versão (0.2.0) são manuais e ficam a cargo de quem mantém o projeto.
 - O setup global de skills não foi executado; o comando citado nas regras não
   está disponível no catálogo desta sessão.

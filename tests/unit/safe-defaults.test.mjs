@@ -45,7 +45,7 @@ test('regra de envio enviar_automatico sem limite_dia é recusada', async t => {
   await assert.rejects(loadSettings({ dataRoot: await withConfig(t, semLimite) }), /envio\.regras\[0\].*limite_dia/);
   const limiteRuim = { envio: { regras: [{ id: 'r1', acao: 'enviar_automatico', limite_dia: 0 }] } };
   await assert.rejects(loadSettings({ dataRoot: await withConfig(t, limiteRuim) }), /limite_dia/);
-  const ok = { envio: { regras: [{ id: 'r1', acao: 'enviar_automatico', limite_dia: 5 }] } };
+  const ok = { envio: { regras: [{ id: 'r1', acao: 'enviar_automatico', limite_dia: 5, quando: { portal: ['greenhouse'] } }] } };
   assert.equal((await loadSettings({ dataRoot: await withConfig(t, ok) })).envio.regras.length, 1);
 });
 
@@ -63,7 +63,7 @@ test('doctor imprime os padrões ativos em uma linha', async t => {
   const text = run(['doctor'], { dataRoot });
   assert.match(text.stdout, /^envio: manual; LinkedIn guest: desligado$/m);
   assert.equal(run(['doctor', '--json'], { dataRoot }).json.padroes, 'envio: manual; LinkedIn guest: desligado');
-  const ligado = await withConfig(t, { fontes: { linkedin_guest: { ativo: true, aceite_termos: true } }, envio: { regras: [{ id: 'r', acao: 'enviar_automatico', limite_dia: 3 }] } });
+  const ligado = await withConfig(t, { fontes: { linkedin_guest: { ativo: true, aceite_termos: true } }, envio: { regras: [{ id: 'r', acao: 'enviar_automatico', limite_dia: 3, quando: { portal: ['lever'] } }] } });
   assert.equal(run(['doctor', '--json'], { dataRoot: ligado }).json.padroes, 'envio: automático (1 regra ativa); LinkedIn guest: ligado');
 });
 

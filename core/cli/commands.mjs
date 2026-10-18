@@ -20,6 +20,7 @@ import { validatePlugin } from '../plugin/validate.mjs';
 import { aplicarCommands } from './aplicar.mjs';
 import { gupyCommands } from './gupy.mjs';
 import { ensureSkeleton, resolveDataRoot } from '../store/dataRoot.mjs';
+import { iniciarInstalacaoNova } from '../migration/legacy.mjs';
 import { formatFindings, scanMessageFile, scanStaged, scanTracked } from '../privacy/scan.mjs';
 import { buildDenylist, loadPrivacyContext } from '../privacy/context.mjs';
 import { auditTemplateFile } from '../privacy/auditTemplate.mjs';
@@ -36,6 +37,8 @@ import { kbCommands } from './kb.mjs';
 import { cvCommands } from './cv.mjs';
 import { mentorCommands } from './mentor.mjs';
 import { vaultCommands } from './vault.mjs';
+import { envioCommands } from './envio.mjs';
+import { demoCommands } from './demo.mjs';
 
 // Relógio simulado só com --teste: sem a flag, --now é recusado para não gravar marcador, rodada ou orçamento num dia que não é o real.
 function relogio(values) {
@@ -75,16 +78,21 @@ export const commands = {
   ...entrevistaCommands,
   ...mentorCommands,
   ...vaultCommands,
+  ...envioCommands,
+  ...demoCommands,
   async doctor(rest, { parseFlags }) {
     parseFlags(rest, { allowed: [] });
     const report = await runDoctor();
     const lines = report.checks.map(c => `[${c.status}] ${c.id}: ${c.mensagem}`);
     return { result: report, exitCode: report.ok ? 0 : 1, text: [...lines, report.padroes, report.ok ? 'ok' : 'falha'].join(String.fromCharCode(10)) };
   },
-  async setup() {
+  async setup(rest, { parseFlags }) {
+    const values = parseFlags(rest, { allowed: ['--com-legado'] });
     const dataRoot = resolveDataRoot();
     const created = await ensureSkeleton(dataRoot);
-    return { result: { dataRoot, created, ok: true } };
+    // Instalação nova já nasce em modo ativo (painel e coleta funcionando). Quem vai migrar o legado usa --com-legado.
+    const { iniciada } = values['--com-legado'] ? { iniciada: false } : await iniciarInstalacaoNova({ dataRoot });
+    return { result: { dataRoot, created, instalacao_nova: iniciada, ok: true } };
   },
   privacy,
   mail,

@@ -50,7 +50,7 @@ export async function runDoctor({
   let installed = null;
   try { installed = JSON.parse(await readFile(path.join(engine, 'package.json'), 'utf8')).version ?? null; } catch { /* ausente */ }
   if (installed === null) {
-    add('career_ops', 'aviso', `career-ops ausente: clone a tag fixada com git clone --branch ${CAREER_OPS_TAG} <repositório do career-ops> "${engine}".`);
+    add('career_ops', 'ok', `career-ops não instalado (opcional: só a fonte-ponte usa). Para usar, clone a tag ${CAREER_OPS_TAG} em "${engine}" com git clone --branch.`);
   } else if (`v${installed}` !== CAREER_OPS_TAG) {
     add('career_ops', 'aviso', `career-ops v${installed} instalado; a versão fixada é ${CAREER_OPS_TAG}.`);
   } else add('career_ops', 'ok', `career-ops ${CAREER_OPS_TAG}`);
@@ -70,8 +70,37 @@ export async function runDoctor({
   const rules = activeRules(settings);
   if (rules.length) add('envio', 'aviso', `ATENÇÃO: ${rules.length} regra(s) de envio automático ativa(s) em config.yml.`);
   else add('envio', 'ok', 'Nenhuma regra de envio automático ativa.');
+
+  const pausado = await exists(path.join(dataRoot, 'envio.pausado'));
+  if (pausado) add('kill_switch', 'aviso', 'ATENÇÃO: envio pausado pelo kill switch (envio.pausado presente).');
+  else add('kill_switch', 'ok', 'Kill switch desligado (envio liberado).');
+
   if (settings.fontes.linkedin_guest.ativo) add('linkedin_guest', 'aviso', 'ATENÇÃO: coletor guest do LinkedIn ligado; você respondeu pelos termos de uso do site.');
   else add('linkedin_guest', 'ok', 'Coletor guest do LinkedIn desligado.');
+
+  const migracaoPath = path.join(dataRoot, 'state', 'migration.json');
+  try {
+    const migracao = JSON.parse(await readFile(migracaoPath, 'utf8'));
+    if (migracao.mode === 'ativo') {
+      add('migracao', 'ok', 'Modo ativo: migração concluída (corte realizado).');
+    } else {
+      add('migracao', 'aviso', 'Modo sombra: confira com verify e passe ao modo ativo com migrate --corte --confirmar-corte (veja docs/PRONTIDAO.md).');
+    }
+  } catch {
+    add('migracao', 'ok', 'Sem migração do legado (instalação nova): a gravação já é a definitiva.');
+  }
+
+  const perfilCvPath = path.join(dataRoot, 'cv', 'perfil.json');
+  try {
+    const perfil = JSON.parse(await readFile(perfilCvPath, 'utf8'));
+    if (perfil && (perfil.resumo || (Array.isArray(perfil.experiencias) && perfil.experiencias.length > 0))) {
+      add('cv_perfil', 'ok', 'Perfil de CV preenchido (cv/perfil.json presente).');
+    } else {
+      add('cv_perfil', 'aviso', 'cv/perfil.json presente mas sem resumo ou experiências: preencha conforme docs/CV.md.');
+    }
+  } catch {
+    add('cv_perfil', 'aviso', 'Perfil de CV ausente: crie cv/perfil.json com seus dados conforme docs/CV.md (necessário para cv gerar).');
+  }
 
   add('conector_gmail', 'ok', 'informativo: o conector Gmail só pode ser conferido dentro da sessão do Claude (spike F3.1).');
 

@@ -1,3 +1,4 @@
+import { validarRegras } from './apply/policy/schema.mjs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { noLinks, privateDestination, within } from './migration/paths.mjs';
@@ -84,16 +85,10 @@ export function validateSettings(raw) {
     if (!ENVIO_PADROES.includes(envio.padrao)) throw invalid('envio.padrao', `deve ser um de: ${ENVIO_PADROES.join(', ')}`);
     settings.envio.padrao = envio.padrao;
   }
-  if (envio.regras !== undefined) {
-    if (!Array.isArray(envio.regras)) throw invalid('envio.regras', 'deve ser lista');
-    envio.regras.forEach((regra, index) => {
-      const key = `envio.regras[${index}]`;
-      if (!isObject(regra)) throw invalid(key, 'deve ser objeto');
-      if (String(regra.acao ?? '').trim().toLowerCase() === 'enviar_automatico' && (!Number.isInteger(regra.limite_dia) || regra.limite_dia < 1)) {
-        throw invalid(`${key}.limite_dia`, 'é obrigatório (inteiro >= 1) em regra enviar_automatico');
-      }
-    });
-    settings.envio.regras = envio.regras;
+  if (envio.regras !== undefined) settings.envio.regras = validarRegras(envio.regras);
+  if (envio.limite_dia_global !== undefined) {
+    if (!Number.isInteger(envio.limite_dia_global) || envio.limite_dia_global < 1) throw invalid('envio.limite_dia_global', 'deve ser inteiro >= 1');
+    settings.envio.limite_dia_global = envio.limite_dia_global;
   }
 
   const guest = section(section(raw.fontes, 'fontes').linkedin_guest, 'fontes.linkedin_guest');
@@ -243,7 +238,7 @@ export function validateSettings(raw) {
   return settings;
 }
 
-export const activeRules = settings => settings.envio.regras.filter(regra => regra.ativo !== false);
+export const activeRules = settings => settings.envio.regras.filter(regra => regra.ativa !== false && regra.ativo !== false);
 
 export function describeDefaults(settings) {
   const rules = activeRules(settings);

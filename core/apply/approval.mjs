@@ -32,7 +32,19 @@ export async function proporLote(dataRoot, { vagas, ts = new Date().toISOString(
   if (!vagas.length) throw new Error('Lote vazio.');
   return withLock(trava(dataRoot), {}, async () => {
     const estado = await lerAprovacoes(dataRoot);
-    const lote = { frase: fraseDoLote(vagas), vagas: vagas.map(v => ({ vaga_id: v.vaga_id ?? v.id, chave: v.chave, empresa: v.empresa, cargo: v.cargo, rota: v.rota ?? null })), criado_em: ts };
+    const lote = {
+      frase: fraseDoLote(vagas),
+      vagas: vagas.map(v => ({
+        vaga_id: v.vaga_id ?? v.id,
+        chave: v.chave,
+        empresa: v.empresa,
+        cargo: v.cargo,
+        rota: v.rota ?? null,
+        hash_pdf: v.hash_pdf ?? null,
+        hash_respostas: v.hash_respostas ?? null
+      })),
+      criado_em: ts
+    };
     await atomicJson(arquivo(dataRoot), { ...estado, lote });
     return lote;
   });
@@ -49,24 +61,75 @@ export async function aprovarPorMensagem(dataRoot, { mensagem, ts = new Date().t
     // "enviar estas 2: ... cancele tudo" não aprovam.
     if (vencido || normalizar(mensagem) !== normalizar(lote.frase)) return [];
     const expira = new Date(Date.parse(ts) + VALIDADE_APROVACAO_MIN * 60000).toISOString();
-    const novas = lote.vagas.map(v => ({ id: randomBytes(12).toString('hex'), vaga_id: v.vaga_id, chave: v.chave, rota: v.rota ?? null, emitida_em: ts, expira_em: expira, usada_em: null }));
+    const novas = lote.vagas.map(v => ({
+      id: randomBytes(12).toString('hex'),
+      vaga_id: v.vaga_id,
+      chave: v.chave,
+      rota: v.rota ?? null,
+      origem: 'humano',
+      hash_pdf: v.hash_pdf ?? null,
+      hash_respostas: v.hash_respostas ?? null,
+      emitida_em: ts,
+      expira_em: expira,
+      usada_em: null
+    }));
     await atomicJson(arquivo(dataRoot), { ...estado, lote: null, aprovacoes: [...estado.aprovacoes.filter(a => Date.parse(a.expira_em) > Date.parse(ts) && !a.usada_em), ...novas] });
     return novas.map(a => a.vaga_id);
   });
 }
 
-export const aprovacaoValida = (estado, vagaId, ts) => estado.aprovacoes.find(a => a.vaga_id === vagaId && !a.usada_em && Date.parse(a.expira_em) > Date.parse(ts)) ?? null;
+// Emite aprovação pela decisão da política do driver (F7.9, F7.2). Só pode ser consumida pelo processo do driver.
+export async function emitirAprovacaoPolitica(dataRoot, { vagaId, chave = null, hashPdf = null, hashRespostas = null, ts = new Date().toISOString(), validadeMin = 30 }) {
+  return withLock(trava(dataRoot), {}, async () => {
+    const estado = await lerAprovacoes(dataRoot);
+    const expira = new Date(Date.parse(ts) + validadeMin * 60000).toISOString();
+    const nova = {
+      id: randomBytes(12).toString('hex'),
+      vaga_id: vagaId,
+      chave,
+      rota: 'driver',
+      origem: 'politica',
+      hash_pdf: hashPdf ?? null,
+      hash_respostas: hashRespostas ?? null,
+      emitida_em: ts,
+      expira_em: expira,
+      usada_em: null
+    };
+    await atomicJson(arquivo(dataRoot), {
+      ...estado,
+      aprovacoes: [...estado.aprovacoes.filter(a => Date.parse(a.expira_em) > Date.parse(ts) && !a.usada_em), nova]
+    });
+    return nova;
+  });
+}
+
+export const aprovacaoValida = (estado, vagaId, ts, origem = null) => estado.aprovacoes.find(a => a.vaga_id === vagaId && !a.usada_em && Date.parse(a.expira_em) > Date.parse(ts) && (origem === null || a.origem === origem)) ?? null;
 
 // Envios da Gupy consumidos no dia civil de São Paulo (trava de segurança gupy.max_por_dia). Conta o consumo da aprovação,
 // não o desfecho: tentativa incerta ou com falha também ocupa a vaga do dia (conservador, nunca devolve automaticamente).
 export const consumosGupyNoDia = (estado, ts) => (estado.consumos ?? []).filter(c => c.rota === 'gupy' && c.dia === localDay(ts)).length;
 
 // Consome a aprovação da vaga (uso único), sob o mesmo lock da emissão. Devolve { ok, motivo }.
-export async function consumirAprovacao(dataRoot, { vagaId, ts = new Date().toISOString(), limiteGupy = 5, aceiteGupy = false }) {
+export async function consumirAprovacao(dataRoot, { vagaId, ts = new Date().toISOString(), limiteGupy = 5, aceiteGupy = false, contexto = 'humano', hashPdf = null, hashRespostas = null }) {
   return withLock(trava(dataRoot), {}, async () => {
     const estado = await lerAprovacoes(dataRoot);
-    const valida = aprovacaoValida(estado, vagaId, ts);
+    // Prefere a aprovação da origem certa para o contexto: uma da política pendente não bloqueia a humana (nem o inverso).
+    const valida = aprovacaoValida(estado, vagaId, ts, contexto === 'driver' ? 'politica' : 'humano') ?? aprovacaoValida(estado, vagaId, ts);
     if (!valida) return { ok: false, motivo: 'aprovação já usada ou vencida' };
+    if (valida.origem === 'politica' && contexto !== 'driver') {
+      return { ok: false, motivo: 'aprovação emitida pela política só vale para o processo do driver' };
+    }
+    if (valida.origem === 'humano' && contexto === 'driver') {
+      return { ok: false, motivo: 'aprovação emitida por humano não pode ser consumida pelo driver automático' };
+    }
+    // Aprovação da política é estrita: hash ausente na chamada nega. A humana segue tolerante (o hook não tem o hash).
+    const estrito = valida.origem === 'politica';
+    if (valida.hash_pdf && (estrito || hashPdf) && valida.hash_pdf !== hashPdf) {
+      return { ok: false, motivo: 'hash do PDF divergente da aprovação' };
+    }
+    if (valida.hash_respostas && (estrito || hashRespostas) && valida.hash_respostas !== hashRespostas) {
+      return { ok: false, motivo: 'hash das respostas divergente da aprovação' };
+    }
     // Aprovação sem rota (emitida antes da trava da Gupy) não é contável: refaça o lote.
     if (valida.rota === undefined) return { ok: false, motivo: 'aprovação antiga sem rota: monte o lote de novo' };
     if (valida.rota === 'gupy' && !aceiteGupy) return { ok: false, motivo: 'rota Gupy desligada (gupy.aceite_termos): envio negado' };
@@ -74,6 +137,6 @@ export async function consumirAprovacao(dataRoot, { vagaId, ts = new Date().toIS
     const semana = Date.parse(ts) - 7 * 24 * 3600000;
     const consumos = [...(estado.consumos ?? []).filter(c => Date.parse(c.ts) > semana), { vaga_id: vagaId, rota: valida.rota ?? null, dia: localDay(ts), ts }];
     await atomicJson(arquivo(dataRoot), { ...estado, consumos, aprovacoes: estado.aprovacoes.map(a => (a.id === valida.id ? { ...a, usada_em: ts } : a)) });
-    return { ok: true, motivo: null };
+    return { ok: true, motivo: null, aprovacao: valida };
   });
 }
