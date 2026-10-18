@@ -170,3 +170,125 @@ Token ausente, inválido ou cabeçalho Host não local.
   "erro": "Acesso inválido."
 }
 ```
+
+---
+
+### 3. Listagem de Processos Seletivos (`/api/processos`)
+
+Retorna a projeção agregada dos processos seletivos em andamento e encerrados, com dados de etapas, situações, alertas de inatividade e histórico cronológico de interações. Toda resposta tem mascaramento recursivo de PII.
+
+- **Método:** `GET`
+- **Caminho:** `/api/processos`
+- **Cabeçalhos:**
+  - `x-painel-token: <token>`
+- **Query Parameters (opcionais):**
+  - `situacao`: Filtra por situação (`ativo`, `aguardando_retorno`, `aguardando_voce`, `encerrado`).
+  - `alerta`: Filtra por nível de inatividade (`normal`, `atencao`, `lembrar`).
+
+#### Respostas
+
+##### `200 OK`
+```json
+{
+  "processos": [
+    {
+      "vaga_id": "vaga-ficticia-101",
+      "empresa": "Empresa Alfa",
+      "cargo": "Arquiteto de Software",
+      "etapa_atual": "entrevista_rh",
+      "situacao": "aguardando_retorno",
+      "desfecho": null,
+      "alerta": "atencao",
+      "quem_falou_por_ultimo": "candidato",
+      "ultima_interacao_data": "2026-10-13",
+      "dias_inatividade": 5,
+      "eventos": [
+        {
+          "tipo": "candidatura.marcada",
+          "data": "2026-10-10",
+          "ts": "2026-10-10T14:30:00.000Z",
+          "detalhe": "Candidatura registrada"
+        },
+        {
+          "tipo": "processo.etapa",
+          "data": "2026-10-13",
+          "ts": "2026-10-13T16:00:00.000Z",
+          "etapa": "entrevista_rh",
+          "detalhe": "Entrevista inicial realizada com recruiter (contato: r***@empresa.test)"
+        }
+      ]
+    }
+  ],
+  "totais": {
+    "total": 1,
+    "ativos": 1,
+    "aguardando_retorno": 1,
+    "aguardando_voce": 0,
+    "encerrados": 0,
+    "atencao": 1,
+    "lembrar": 0
+  },
+  "total": 1
+}
+```
+
+##### `403 Forbidden`
+Token ausente, inválido ou cabeçalho Host não local.
+
+---
+
+### 4. Lembretes e Acompanhamento Pendente (`/api/acompanhamento`)
+
+Retorna exclusivamente os processos seletivos não-encerrados que estão em estado de alerta (`atencao` ou `lembrar`), ordenados por maior inatividade para priorização no acompanhamento.
+
+- **Método:** `GET`
+- **Caminho:** `/api/acompanhamento`
+- **Cabeçalhos:**
+  - `x-painel-token: <token>`
+
+#### Respostas
+
+##### `200 OK`
+```json
+{
+  "pendentes": [
+    {
+      "vaga_id": "vaga-ficticia-202",
+      "empresa": "Empresa Beta",
+      "cargo": "Tech Lead",
+      "etapa_atual": "teste",
+      "situacao": "aguardando_voce",
+      "desfecho": null,
+      "alerta": "lembrar",
+      "quem_falou_por_ultimo": "empresa",
+      "ultima_interacao_data": "2026-10-10",
+      "dias_inatividade": 8,
+      "eventos": [
+        {
+          "tipo": "contato.registrado",
+          "data": "2026-10-10",
+          "ts": "2026-10-10T10:00:00.000Z",
+          "canal": "email",
+          "direcao": "recebido",
+          "resumo": "Envio do desafio prático. Dúvidas via (11) 9****-**42",
+          "detalhe": "Envio do desafio prático. Dúvidas via (11) 9****-**42"
+        }
+      ]
+    }
+  ],
+  "totais": {
+    "total": 1,
+    "ativos": 1,
+    "aguardando_retorno": 0,
+    "aguardando_voce": 1,
+    "encerrados": 0,
+    "atencao": 0,
+    "lembrar": 1
+  },
+  "total": 1
+}
+```
+
+##### `403 Forbidden`
+Token ausente, inválido ou cabeçalho Host não local.
+
