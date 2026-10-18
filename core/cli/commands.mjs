@@ -43,7 +43,7 @@ import { demoCommands } from './demo.mjs';
 import { contatoCommands } from './contato.mjs';
 
 // Relógio simulado só com --teste: sem a flag, --now é recusado para não gravar marcador, rodada ou orçamento num dia que não é o real.
-function relogio(values) {
+export function relogio(values) {
   if (!values['--now']) return new Date();
   if (!values['--teste']) throw new Error('--now só é aceito junto com --teste (relógio simulado, para testes).');
   const now = new Date(values['--now']);

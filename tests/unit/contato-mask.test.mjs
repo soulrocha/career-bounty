@@ -26,7 +26,37 @@ test('mascararTelefone mascara telefones em múltiplos formatos', () => {
   assert.equal(mascararTelefone(tel3), '(11) 9****-**21');
   assert.equal(mascararTelefone(tel4), '9****-**21');
   assert.equal(mascararTelefone(tel5), '(21) 9****-**78');
+
+  // Casos auditados: formatos brasileiros adicionais
+  const br1 = `(31) 9${'9876'}-${'5432'}`;
+  const br2 = `31 9${'98765432'}`;
+  const br3 = `+55319${'98765432'}`;
+  const br4 = `31${'33445566'}`;
+  const br5 = `31.9${'9876'}.5432`;
+  assert.equal(mascararTelefone(br1), '(31) 9****-**32');
+  assert.equal(mascararTelefone(br2), '(31) 9****-**32');
+  assert.equal(mascararTelefone(br3), '(31) 9****-**32');
+  assert.equal(mascararTelefone(br4), '(31) 9****-**66');
+  assert.equal(mascararTelefone(br5), '(31) 9****-**32');
+
   assert.equal(mascararTelefone(null), null);
+});
+
+test('mascararTelefone mascara telefones internacionais com código do país', () => {
+  assert.equal(mascararTelefone('+1 415 555 0132'), '+1 ****-**32');
+  assert.equal(mascararTelefone('+351 912 345 678'), '+351 ****-**78');
+  assert.equal(mascararTelefone('+44 20 7946 0958'), '+44 ****-**58');
+  assert.equal(mascararTelefone('+1 (415) 555-0132'), '+1 ****-**32');
+  assert.equal(mascararTelefone('+351-912-345-678'), '+351 ****-**78');
+});
+
+test('mascararTexto e mascararTelefone não mascaram números que não são telefones', () => {
+  assert.equal(mascararTexto('Requisição 12345678 aberta'), 'Requisição 12345678 aberta');
+  assert.equal(mascararTexto('Prazo 20261021'), 'Prazo 20261021');
+  assert.equal(mascararTexto('vaga 7654321'), 'vaga 7654321');
+  assert.equal(mascararTelefone('Requisição 12345678 aberta'), 'Requisição 12345678 aberta');
+  assert.equal(mascararTelefone('Prazo 20261021'), 'Prazo 20261021');
+  assert.equal(mascararTelefone('vaga 7654321'), 'vaga 7654321');
 });
 
 test('mascararTexto mascara telefones e emails dentro de resumos e perguntas', () => {

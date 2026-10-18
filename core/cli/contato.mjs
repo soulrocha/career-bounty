@@ -18,14 +18,6 @@ import { runnerDasOpcoes } from './llm.mjs';
 
 const NL = String.fromCharCode(10);
 
-function relogio(values) {
-  if (!values['--now']) return new Date();
-  if (!values['--teste']) throw new Error('--now só é aceito junto com --teste (relógio simulado, para testes).');
-  const now = new Date(values['--now']);
-  if (Number.isNaN(now.getTime())) throw new Error('Opção inválida: --now deve ser uma data ISO.');
-  return now;
-}
-
 async function buscarVaga(dataRoot, vagaId) {
   const { eventos } = await readEvents(dataRoot);
   let vagas = projectEvents(eventos).vagas ?? [];
@@ -40,6 +32,7 @@ async function buscarVaga(dataRoot, vagaId) {
 
 export const contatoCommands = {
   async contato(rest, options = {}) {
+    const { relogio } = await import('./commands.mjs');
     const { parseFlags } = options;
     const [sub, ...flags] = rest;
     const settings = await loadSettings(options.dataRoot ? { dataRoot: options.dataRoot } : undefined);

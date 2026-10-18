@@ -3,7 +3,18 @@
 // Garante que telefones e e-mails nunca vazem sem mascaramento na API e resumos.
 
 const EMAIL_REGEX = /([A-Za-z0-9_%+.-])[A-Za-z0-9_%+.-]*(@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)/g;
-const TELEFONE_COMPLETO_REGEX = /(?:\+55\s*)?(?:\(?([1-9][1-9])\)?\s*)?(?:9\s*)?(\d{4,5})[-.\s]?(\d{2})(\d{2})/g;
+
+const DDDS_VALIDOS = new Set([
+  '11', '12', '13', '14', '15', '16', '17', '18', '19',
+  '21', '22', '24', '27', '28',
+  '31', '32', '33', '34', '35', '37', '38',
+  '41', '42', '43', '44', '45', '46', '47', '48', '49',
+  '51', '53', '54', '55',
+  '61', '62', '63', '64', '65', '66', '67', '68', '69',
+  '71', '73', '74', '75', '77', '79',
+  '81', '82', '83', '84', '85', '86', '87', '88', '89',
+  '91', '92', '93', '94', '95', '96', '97', '98', '99',
+]);
 
 export function mascararEmail(email) {
   if (typeof email !== 'string') return email;
@@ -12,11 +23,43 @@ export function mascararEmail(email) {
 
 export function mascararTelefone(telefone) {
   if (typeof telefone !== 'string') return telefone;
-  // Transforma qualquer telefone celular brasileiro em (DD) 9****-**XX ou similar
-  return telefone.replace(TELEFONE_COMPLETO_REGEX, (match, ddd, miolo, penult, ult) => {
-    const d = ddd ? `(${ddd}) ` : '';
-    return `${d}9****-**${ult}`;
+
+  // 1. Telefones internacionais e +55 que começam com "+"
+  let res = telefone.replace(/(?<![\w+])\+(\d{1,4})((?:[\s\-./()]*\d)+[\s\-./()]*)(?![\w])/g, (match, d1) => {
+    const allDigits = match.replace(/\D/g, '');
+    if (allDigits.length < 8) return match;
+    // Se for +55 seguido de DDD brasileiro válido e 8-9 dígitos, trata como brasileiro
+    if (allDigits.startsWith('55') && (allDigits.length === 12 || allDigits.length === 13)) {
+      const restDigits = allDigits.slice(2);
+      const ddd = restDigits.slice(0, 2);
+      if (DDDS_VALIDOS.has(ddd)) {
+        const ult = restDigits.slice(-2);
+        return `(${ddd}) 9****-**${ult}`;
+      }
+    }
+    // Internacional genérico: +<código do país> ****-**<últimos 2>
+    const ult2 = allDigits.slice(-2);
+    return `+${d1} ****-**${ult2}`;
   });
+
+  // 2. Telefones brasileiros com DDD em parênteses: (DD) ...
+  res = res.replace(/(?<!\d)\(([1-9][1-9])\)\s*(?:9\s*)?(\d{4,5})[-.\s]?(\d{2})(\d{2})(?!\d)/g, (match, ddd, miolo, penult, ult) => {
+    return `(${ddd}) 9****-**${ult}`;
+  });
+
+  // 3. Telefones brasileiros com DDD + separador (espaço, ponto) ou 10-11 dígitos contínuos com DDD válido
+  res = res.replace(/(?<!\d)([1-9][1-9])(?:[\s.-]+(?:9[\s.-]*)?(\d{4,5})[-.\s]?(\d{2})(\d{2})|(\d{6,7})(\d{2}))(?!\d)/g, (match, ddd, m1, p1, u1, m2, u2) => {
+    if (!DDDS_VALIDOS.has(ddd)) return match;
+    const ult = u1 ?? u2;
+    return `(${ddd}) 9****-**${ult}`;
+  });
+
+  // 4. Telefone sem DDD, mas com separador de blocos: 8 ou 9 dígitos separados
+  res = res.replace(/(?<!\d)(?:9\s*)?(\d{4,5})[-.](\d{2})(\d{2})(?!\d)/g, (match, miolo, penult, ult) => {
+    return `9****-**${ult}`;
+  });
+
+  return res;
 }
 
 export function mascararTexto(texto) {
