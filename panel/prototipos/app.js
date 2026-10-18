@@ -37,6 +37,7 @@
     x: '<path d="M18 6 6 18M6 6l12 12"/>',
     ok: '<path d="M20 6 9 17l-5-5"/>',
     seta: '<path d="m9 18 6-6-6-6"/>',
+    relogio: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     volta: '<path d="m15 18-6-6 6-6"/>',
     alerta: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
     cadeado: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
@@ -163,11 +164,11 @@
     if (!v) return '<div class="vazio"><strong>Nenhuma vaga escolhida.</strong>Escolha uma estação na lista.</div>';
     const av = v.empresa_avaliacao, cond = v.condicoes && v.condicoes.situacao !== 'ok' ? v.condicoes : null, feita = aplicada(v);
     return `<article class="det" aria-label="${esc(v.cargo)}">
-      <div class="det-topo">${plaqueta(v.aderencia)}<strong>${esc(v.empresa)}</strong>${nota(av)}</div>
+      <div class="det-topo">${plaqueta(v.aderencia)}<strong>${esc(v.empresa)}</strong><span class="vista" title="Vista pelo radar em ${dia(v.consultado_em)}">${ic('relogio')}vista há ${esc(v.vista_ha)}</span><a class="btn prim peq abrir-topo" href="#" data-acao="aviso" data-v="No painel real abre o anúncio no portal para você se candidatar.">Abrir vaga ${ic('abrir')}</a></div>
       <h2>${esc(v.cargo)}</h2>
       ${cond ? `<div class="alerta ${v.aderencia === 'incompativel' ? 'perigo' : ''}">${ic('alerta')}<div><strong>${v.aderencia === 'incompativel' ? 'Não bate com uma condição obrigatória.' : 'Confira as condições.'}</strong> ${esc(cond.motivos.join('; '))}.</div></div>` : ''}
       <dl class="fatos"><div><dt>Modalidade</dt><dd>${esc(v.modalidade)}</dd></div><div><dt>Local</dt><dd>${esc(v.local)}</dd></div><div><dt>Regime</dt><dd>${esc(v.regime || 'Não informado')}</dd></div>
-        <div><dt>Salário</dt><dd>${salario(v)}</dd></div><div><dt>Candidatura via</dt><dd>${esc(PORTAL[v.portal_candidatura] || v.portal_candidatura)}</dd></div><div><dt>Vista</dt><dd>${dia(v.consultado_em)}, há ${esc(v.vista_ha)}</dd></div></dl>
+        <div><dt>Salário</dt><dd>${salario(v)}</dd></div><div><dt>Candidatura via</dt><dd>${esc(PORTAL[v.portal_candidatura] || v.portal_candidatura)}</dd></div><div><dt>Empresa no ${esc(av?.plataforma || 'Glassdoor')}</dt><dd>${av ? `<span class="nota">${ic('estrela')}${virgula(av.nota)}</span> <span class="meta">de 5 · ${av.quantidade.toLocaleString('pt-BR')} avaliações</span>` : '<span class="meta">Sem nota coletada</span>'}</dd></div></dl>
       <section><p>${esc(v.descricao)}</p></section>
       ${v.motivos?.length ? `<section><h3>Por que considerar</h3><ul class="marcadores">${v.motivos.map(m => `<li>${ic('ok')}${esc(m)}</li>`).join('')}</ul></section>` : ''}
       ${(v.lacunas?.length || v.pendencias?.length) ? `<section><h3>Lacunas e pendências</h3><ul class="marcadores lacunas">${[...(v.lacunas || []), ...(v.pendencias || [])].map(m => `<li>${ic('alerta')}${esc(m)}</li>`).join('')}</ul></section>` : ''}
@@ -188,7 +189,7 @@
       return `<section class="ramal" data-a="${a}" aria-label="${ADER[a]}"><header>${plaqueta(a)}<span class="n">${vs.length}</span>${compacto ? '' : `<span class="desc">${DESC[a]}</span>`}</header>
         ${vs.map((v, i) => `<button class="estacao ${i === 0 ? 'ini' : ''} ${i === vs.length - 1 ? 'fim' : ''} ${aplicada(v) ? 'feita' : ''} ${descartada(v) ? 'descartada' : ''}" data-a="${a}" aria-current="${v.id === S.sel}" data-acao="sel" data-v="${v.id}">
           ${bola(a)}<span class="t"><span class="cargo">${esc(v.cargo)}</span><span class="sub">${esc(v.empresa)}${compacto ? '' : ` · ${esc(v.modalidade)} · ${esc(PORTAL[v.portal_candidatura])}`}</span></span>
-          ${compacto ? '' : `<span class="lado">${nota(v.empresa_avaliacao)}<span>${aplicada(v) ? `<span class="selo">${ic('ok')}candidatada</span>` : `há ${esc(v.vista_ha)}`}</span></span>`}</button>`).join('')}</section>`;
+          ${compacto ? '' : `<span class="lado"><span>${aplicada(v) ? `<span class="selo">${ic('ok')}candidatada</span>` : `há ${esc(v.vista_ha)}`}</span></span>`}</button>`).join('')}</section>`;
     }).join('');
   }
 

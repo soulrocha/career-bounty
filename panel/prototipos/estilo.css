@@ -516,3 +516,8 @@ textarea.campo{height:auto;padding:9px 10px;line-height:1.5;width:100%;resize:ve
 .logo{display:block;border-radius:7px;box-shadow:0 0 0 1px var(--placa-linha)}
 @media (max-width:900px){.placa .pet{display:none}}
 .nota .fonte-nota{font-weight:500;color:var(--tx3);font-size:11px;margin-left:3px}
+/* Topo do detalhe: quando foi vista (relógio) e o botão de abrir a vaga, à direita. */
+.det-topo .vista{display:inline-flex;align-items:center;gap:5px;margin-left:auto;font-size:var(--t-xs);color:var(--tx3);font-variant-numeric:tabular-nums}
+.det-topo .vista .ic{width:14px;height:14px}
+.det-topo .abrir-topo{margin-left:4px}
+.fatos .nota{font-size:var(--t-sm)}

@@ -65,11 +65,13 @@ Forma: raios de 4, 6 e 10 px. Sombra só em sobreposições (menu e balão).
   - Busca, modalidade, regime, portal, candidatura, descartadas, "Limpar filtros" e o total.
 - **Lista em ramais:**
   - Um ramal por aderência: plaqueta, contador e uma frase do que significa.
-  - Cada vaga é uma estação (anel na cor da raridade, cheio quando selecionada ou já candidatada) com cargo em até duas linhas, empresa, modalidade, portal, nota "★ 4,4 Glassdoor" e "há 2 h" ou "✓ candidatada".
+  - Cada vaga é uma estação (anel na cor da raridade, cheio quando selecionada ou já candidatada) com cargo em até duas linhas, empresa, modalidade, portal e "há 2 h" ou "✓ candidatada".
+  - A lista **não mostra a nota da empresa**: ao lado da vaga, ela parecia uma nota da vaga ou da empresa sobre a pessoa. A nota fica só no detalhe.
   - Descartada: riscada e com estação cinza.
 - **Detalhe da vaga:**
-  - Plaqueta, empresa e nota do Glassdoor; cargo; alerta de condições quando não batem.
-  - Fatos em grade: modalidade, local, regime, salário, portal e quando foi vista.
+  - Topo: plaqueta e empresa à esquerda; à direita, o relógio com "vista há 2 h" e o botão "Abrir vaga" (ouro), que leva ao portal para a candidatura.
+  - Cargo; alerta de condições quando não batem.
+  - Fatos em grade: modalidade, local, regime, salário, portal e "Empresa no Glassdoor" (★ 4,4, de 5, quantidade de avaliações).
   - Descrição, por que considerar, lacunas e pendências, e requisitos (atende, em parte, não atende).
   - Currículos desta vaga:
     - CV visual e CV para ATS lado a lado;
