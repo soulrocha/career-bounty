@@ -29,7 +29,7 @@ export function contarRodadasSemAltas(historico, projecao) {
   return total;
 }
 
-export function buildDigest({ rodada, projecao, historico = [], processos = [], acompanhamento = [] }) {
+export function buildDigest({ rodada, projecao, historico = [], processos = [], acompanhamento = [], avaliacoes = [] }) {
   const dia = localDay(rodada.ts);
   const ids = idsDaRodada(rodada);
   const destaque = projecao.filter(vaga => ids.has(vaga.id) && ['alta', 'media'].includes(vaga.aderencia));
@@ -67,6 +67,22 @@ export function buildDigest({ rodada, projecao, historico = [], processos = [], 
         const carg = p.cargo ?? p.vaga_id;
         const tag = p.alerta === 'lembrar' ? '🚨 LEMBRAR' : '⚠️ ATENÇÃO';
         return `- ${tag} (${p.dias_inatividade}d sem contato): ${emp}${carg} - Etapa: ${p.etapa_atual ?? 'em andamento'}`;
+      })
+    );
+  }
+
+  const listaAvaliacoes = [
+    ...(avaliacoes ?? []),
+    ...(rodada.avaliacoes ?? []),
+    ...(rodada.avaliacoes_empresas ?? []),
+  ].filter(Boolean);
+
+  if (listaAvaliacoes.length) {
+    secoes.push(
+      `## Avaliações de empresas da rodada (${listaAvaliacoes.length})`,
+      ...listaAvaliacoes.map(av => {
+        const qtd = av.quantidade != null ? `, ${av.quantidade} avaliações` : '';
+        return `- ${av.empresa}: ${av.nota} (${av.plataforma}${qtd})`;
       })
     );
   }

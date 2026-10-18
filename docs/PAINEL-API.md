@@ -390,4 +390,37 @@ Retorna o histórico completo e a linha do tempo cronológica agregada por vaga,
 ##### `403 Forbidden`
 Token ausente, inválido ou cabeçalho Host não local.
 
+---
+
+### 6. Avaliação da Empresa nas Vagas (`/api/vagas` e painel)
+
+A rota `GET /api/vagas` (e as listagens de vagas no painel local) expõe o campo `empresa_avaliacao` enriquecido dinamicamente pela projeção pura a partir de eventos `empresa.avaliada`.
+
+#### Regras de Vigência e Exibição:
+1. **Validade Temporal:** Avaliações possuem validade padrão de 90 dias. Se a avaliação mais recente da empresa tiver mais de 90 dias, o campo `empresa_avaliacao` é omitido ou retorna `null`.
+2. **Sem Notas Vazias ou Falsas:** Se não houver avaliação válida, o painel exibe "Sem nota coletada" ou omite a nota. Sob nenhuma hipótese é exibida nota 0, traço vazio ou estrelas vazias.
+
+#### Exemplo de Payload (`200 OK` em item de vaga):
+```json
+{
+  "id": "vaga-corp-tech-01",
+  "empresa": "Empresa Alfa",
+  "cargo": "Tech Lead",
+  "aderencia": "alta",
+  "empresa_avaliacao": {
+    "nota": 4.2,
+    "quantidade": 150,
+    "plataforma": "Glassdoor",
+    "data": "2026-10-18",
+    "fontes": [
+      {
+        "url": "https://example.com/avaliacoes/empresa-alfa",
+        "plataforma": "Glassdoor"
+      }
+    ],
+    "resumo": "Boa cultura técnica, liderança acessível e ambiente colaborativo."
+  }
+}
+```
+
 

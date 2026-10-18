@@ -29,6 +29,8 @@ import { compararRadar } from '../radar/compare.mjs';
 import { buildDigest } from '../score/digest.mjs';
 import { readEvents } from '../store/events.mjs';
 import { projectEvents } from '../store/project.mjs';
+import { projectAvaliacoes } from '../store/projections/avaliacoes.mjs';
+import { selecionarEmpresasParaAvaliar, executarAvaliacoesDaily } from '../company/daily.mjs';
 import { mail } from './mail.mjs';
 import { report } from './report.mjs';
 import { avisoEmailNaoConferido, sincronizarEmail } from '../mail/sync.mjs';
@@ -43,6 +45,7 @@ import { demoCommands } from './demo.mjs';
 import { contatoCommands } from './contato.mjs';
 import { processoCommands } from './processo.mjs';
 import { acompanhamentoCommands } from './acompanhamento.mjs';
+import { empresaCommands } from './empresa.mjs';
 import { relogio } from './relogio.mjs';
 export { relogio } from './relogio.mjs';
 
@@ -81,6 +84,7 @@ export const commands = {
   ...contatoCommands,
   ...processoCommands,
   ...acompanhamentoCommands,
+  ...empresaCommands,
   async doctor(rest, { parseFlags }) {
     parseFlags(rest, { allowed: [] });
     const report = await runDoctor();
@@ -145,12 +149,31 @@ export const commands = {
         const runner = createRunner({ modo: 'live', dataRoot: settings.dataRoot, identity: await loadIdentityValues(), env: { ...process.env, CAREER_BOUNTY_LIVE: '1' } });
         return runStage2({ dataRoot: settings.dataRoot, runner, afirmacoes: await createMarkdownFolder(kbRoot).claims(), brief: await loadBrief(kbRoot), now });
       } });
+    if (values['--dry-run']) {
+      try {
+        const { eventos } = await readEvents(settings.dataRoot);
+        const doc = projectEvents(eventos, { now });
+        const projAvaliacoes = projectAvaliacoes(eventos, { now });
+        const candidatas = selecionarEmpresasParaAvaliar({ vagas: doc.vagas ?? [], projAvaliacoes, settings });
+        result.empresas_para_avaliar = candidatas.map(c => c.empresa);
+      } catch {}
+    }
     // E-mail depois do radar: falha aqui nunca derruba a rodada; vira "e-mail não conferido hoje" no digest.
     if (!values['--dry-run'] && result.executou && !result.falha && settings.mail.ativo) {
       try {
         const runner = createRunner({ modo: 'live', dataRoot: settings.dataRoot, identity: await loadIdentityValues(), env: { ...process.env, CAREER_BOUNTY_LIVE: '1' }, timeoutMs: 300000, now: () => now });
         result.email = await sincronizarEmail({ dataRoot: settings.dataRoot, settings, runner, now });
       } catch (error) { result.email = { ok: false, falha: { etapa: 'inicio', erro: String(error.message ?? error).slice(0, 200) } }; }
+    }
+    // Avaliação de empresas depois do radar e do e-mail:
+    if (!values['--dry-run'] && result.executou && !result.falha) {
+      try {
+        const runner = createRunner({ modo: 'live', dataRoot: settings.dataRoot, identity: await loadIdentityValues(), env: { ...process.env, CAREER_BOUNTY_LIVE: '1' }, timeoutMs: 180000, now: () => now });
+        const resAv = await executarAvaliacoesDaily({ dataRoot: settings.dataRoot, settings, runner, now });
+        if (resAv.avaliadas.length > 0) {
+          result.avaliacoes_empresas = resAv.avaliadas;
+        }
+      } catch {}
     }
     return { result, text: result.dry_run ? `executaria: ${result.executaria} (${result.motivo})` : (result.executou ? 'rodada concluída' : `não rodou: ${result.motivo}`), exitCode: result.falha ? 1 : 0 };
   },
