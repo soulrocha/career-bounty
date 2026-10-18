@@ -50,7 +50,7 @@ export async function runDoctor({
   let installed = null;
   try { installed = JSON.parse(await readFile(path.join(engine, 'package.json'), 'utf8')).version ?? null; } catch { /* ausente */ }
   if (installed === null) {
-    add('career_ops', 'aviso', `career-ops ausente: clone a tag fixada com git clone --branch ${CAREER_OPS_TAG} <repositório do career-ops> "${engine}".`);
+    add('career_ops', 'ok', `career-ops não instalado (opcional: só a fonte-ponte usa). Para usar, clone a tag ${CAREER_OPS_TAG} em "${engine}" com git clone --branch.`);
   } else if (`v${installed}` !== CAREER_OPS_TAG) {
     add('career_ops', 'aviso', `career-ops v${installed} instalado; a versão fixada é ${CAREER_OPS_TAG}.`);
   } else add('career_ops', 'ok', `career-ops ${CAREER_OPS_TAG}`);

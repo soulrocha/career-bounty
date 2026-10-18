@@ -38,6 +38,7 @@ import { cvCommands } from './cv.mjs';
 import { mentorCommands } from './mentor.mjs';
 import { vaultCommands } from './vault.mjs';
 import { envioCommands } from './envio.mjs';
+import { demoCommands } from './demo.mjs';
 
 // Relógio simulado só com --teste: sem a flag, --now é recusado para não gravar marcador, rodada ou orçamento num dia que não é o real.
 function relogio(values) {
@@ -78,6 +79,7 @@ export const commands = {
   ...mentorCommands,
   ...vaultCommands,
   ...envioCommands,
+  ...demoCommands,
   async doctor(rest, { parseFlags }) {
     parseFlags(rest, { allowed: [] });
     const report = await runDoctor();

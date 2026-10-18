@@ -1,81 +1,57 @@
-# Guia de Prontidão e Primeira Execução (Modo Ativo)
+# Primeira execução e migração
 
-Este documento estabelece o roteiro determinístico para transicionar o CareerBounty do modo sombra para o **modo ativo**, configurando os artefatos necessários para o uso pessoal real.
+Este guia leva uma pasta recém-criada ao uso real. Há dois caminhos, conforme você tenha ou não um pipeline de vagas
+antigo para trazer.
 
----
+## Diagnóstico
 
-## 1. Pré-requisitos e Diagnóstico
+Em qualquer ponto, `node bin/career-bounty.mjs doctor` diz o que falta, sem alterar nada. Linhas que importam:
 
-Antes de qualquer ação, execute o diagnóstico completo do ambiente:
+- `data_root`: a pasta privada existe.
+- `identidade`: `identity.yml` preenchido, para o pre-commit proteger os seus dados.
+- `migracao`: estado da gravação (`ativo` é o normal; `shadow` aguarda o corte).
+- `cv_perfil`: `cv/perfil.json` preenchido (necessário para `cv gerar`).
+- `envio`, `kill_switch`: envio automático desligado e kill switch fora do ar, a menos que você tenha mudado isso.
 
-```bash
-node bin/career-bounty.mjs doctor
-```
+## Caminho A: instalação nova
 
-Critério de prontidão técnica:
-- `node`: Node 20 ou superior;
-- `data_root`: Diretório `DATA_ROOT` inicializado;
-- `identidade`: `identity.yml` preenchido;
-- `hooks`: `core.hooksPath` apontando para `.githooks`;
-- `migracao`: Estado da migração identificado (`sombra` ou `ativo`);
-- `cv_perfil`: Perfil base de currículo validado.
+1. `node bin/career-bounty.mjs setup` cria `DATA_ROOT` já em modo ativo, com projeção vazia.
+2. Preencha `identity.yml` e `config.yml` (veja o [README](../README.md#primeiros-passos)).
+3. Alimente `kb/` e rode `kb sync`.
+4. Crie `cv/perfil.json` (e a foto, `cv/foto.jpg` ou `.png`, se quiser) conforme [CV.md](CV.md).
+5. `collect --dry-run` para ver o que a coleta traria; depois `collect`, e abra o `panel`.
+6. `cv gerar --vaga <id>` para uma vaga de alta aderência, e confira o PDF visual e o ATS no painel.
 
----
+Não há nada a migrar nem corte a fazer.
 
-## 2. Passo a Passo para o Uso Real
+## Caminho B: trazer um pipeline antigo
 
-### Passo 1 (B1): Perfil de CV e Foto Pessoal
-1. Crie o arquivo `DATA_ROOT/cv/perfil.json` conforme as especificações em [CV.md](CV.md).
-2. Adicione sua foto em `DATA_ROOT/cv/foto.jpg` (ou `.png`).
-3. Verifique com `node bin/career-bounty.mjs doctor`:
-   - A linha `cv_perfil` deve exibir `[ok] Perfil de CV preenchido`.
+Use este caminho se você já tinha um `pipeline-vagas.json` de uma ferramenta anterior.
 
-### Passo 2 (B2): Validação de Geração de CVs
-Gere e valide currículos para pelo menos 5 vagas de alta aderência:
-```bash
-node bin/career-bounty.mjs cv gerar --vaga <vaga-id>
-```
-1. Verifique se o gate de aprovação está verde:
-   ```bash
-   node bin/career-bounty.mjs cv gate --vaga <vaga-id>
-   ```
-2. Abra o painel e inspecione visualmente o PDF renderizado e a versão ATS:
-   ```bash
-   node bin/career-bounty.mjs panel --port 8880
-   ```
+1. `node bin/career-bounty.mjs setup --com-legado` cria a pasta sem iniciar o estado, e você aponta `legado_path`,
+   `legacy_assets` e `legacy_materials` no `config.yml` (veja [SETUP.md](SETUP.md)).
+2. `migrate --dry-run --diff` inventaria sem escrever; `migrate` importa em **modo sombra** (o legado continua o dono
+   dos dados e o painel só consulta).
+3. Use por alguns dias e confira: `verify --json` precisa dar `equal: true`.
+4. Quando estiver seguro, `migrate --corte --confirmar-corte` passa para o modo ativo. O corte só acontece se a
+   projeção bate com o log **e** o legado em disco ainda é exatamente o que foi importado (se mudou, rode
+   `migrate --shadow` de novo). Depois do corte, o CareerBounty é o escritor oficial.
+5. Confirme com `doctor`: `migracao` deve mostrar `Modo ativo`.
 
-### Passo 3 (B3): Verificação de Paridade e Corte Seguro
-1. Execute a verificação estrita de paridade contra a origem legada:
-   ```bash
-   node bin/career-bounty.mjs verify --json
-   ```
-   *Exigência bloqueante:* O resultado deve apontar `equal: true` (zero diffs entre projeção e log).
-2. Efetue a transição definitiva para o modo ativo:
-   ```bash
-   node bin/career-bounty.mjs migrate --corte --confirmar-corte
-   ```
-3. Valide o novo estado no diagnóstico:
-   ```bash
-   node bin/career-bounty.mjs doctor
-   ```
-   - A linha `migracao` deve exibir `[ok] Modo ativo: migração concluída (corte realizado)`.
+Atenção: depois do corte, reimportar o legado apagaria marcações feitas no painel, então o programa recusa; o caminho
+de volta é `migrate --rollback`.
 
-### Passo 4 (B4): Radar Diário e Agendamento
-1. Execute uma rodada manual do radar em modo de teste:
-   ```bash
-   node bin/career-bounty.mjs daily-run --dry-run
-   ```
-2. Configure a tarefa agendada no Agendador de Tarefas do Windows (Task Scheduler) ou cron, apontando para o script diário.
+## Operação
 
----
+- **Radar diário:** `daily-run --dry-run` mostra se rodaria agora; `schedule` gera a tarefa agendada do Windows.
+- **Candidatura assistida:** comandos `apply`, protegidos pelos hooks. Nada é enviado sem a frase do lote.
+- **Gupy:** exige `"gupy": { "aceite_termos": true }` no `config.yml` e opera por `gupy perfil` e a skill
+  `gupy-candidatar`.
+- **Envio automático (ATS públicos):** desligado por padrão (`envio.regras: []`). Quando houver um comando que o
+  dispare, ele só atua dentro dos limites das regras que você escrever. O kill switch vale desde já:
 
-## 3. Operação de Candidaturas
-
-- **Candidatura Assistida:** Realizada via comandos `apply` e protegida pelos hooks de segurança.
-- **Fluxo Gupy:** Requer aceitação explícita dos termos (`gupy.aceite_termos: true` em `config.yml`) e opera via `gupy perfil` e `gupy candidatar`.
-- **Envio Automático (ATS Públicos):** Desligado por padrão (`regras: []`). Caso ativado, é estritamente monitorado por limites diários e protegido pelo kill switch:
-  ```bash
-  node bin/career-bounty.mjs envio pausar --motivo "Pausa de segurança"
+  ```sh
+  node bin/career-bounty.mjs envio pausar --motivo "pausa de segurança"
   node bin/career-bounty.mjs envio retomar
-  node bin/career-bounty.mjs envio audit --dia YYYY-MM-DD
+  node bin/career-bounty.mjs envio audit --dia 2026-10-18
   ```
