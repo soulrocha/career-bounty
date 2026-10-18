@@ -119,5 +119,18 @@ Estado operacional corrente do processo seletivo: `ativo` (em andamento geral), 
 
 Indicador de inatividade baseado na quantidade de dias transcorridos desde a última interação com a oportunidade: `normal` (< 5 dias de inatividade), `atencao` (>= 5 dias sem contato) e `lembrar` (>= 7 dias sem contato). Processos encerrados permanecem em `normal` e não disparam alertas.
 
+## Histórico da vaga
+
+Visão temporal completa e unificada de todos os acontecimentos que envolveram uma vaga canônica desde sua primeira aparição. Agrega eventos de descoberta pelo radar, marcação de candidatura, trocas de mensagens e contatos com recrutadores, avanço de etapas de entrevista, desfechos e eventuais descartes, permitindo reconstruir com precisão a cronologia de interações.
+
+## Item de histórico
+
+Unidade elementar que compõe a linha do tempo de uma vaga (`linha_do_tempo`). Representa um marco factual (`tipo: descoberta`, `candidatura`, `contato`, `etapa`, `desfecho` ou `descarte`), contendo data, instante ISO, rótulo descritivo e detalhes contextuais, com mascaramento estrito de informações de contato de terceiros.
+
+## Origem no histórico
+
+Identificação do subsistema ou canal responsável pela geração de um item na linha do tempo: `radar` (varredura automatizada), `painel` (interação realizada pela interface local do usuário), `cli` (comando de terminal), `recrutador` (mensagem recebida externamente) ou `email` (notificação de e-mail identificada pelo pipeline).
+
+
 
 
