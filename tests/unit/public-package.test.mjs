@@ -115,7 +115,9 @@ test('PRIVACY lista o que nunca entra no repositório e onde ficam os dados', as
 
 test('CI roda gitleaks com o .gitleaks.toml e o scan de privacidade em todos os arquivos', async () => {
   const ci = await readFile(path.join(repoRoot, '.github/workflows/ci.yml'), 'utf8');
-  assert.match(ci, /gitleaks\/gitleaks-action@v2/);
+  // Action fixada por SHA de commit (tag é mutável), com a major anotada ao lado.
+  assert.match(ci, /gitleaks\/gitleaks-action@[0-9a-f]{40} # v2/);
+  assert.doesNotMatch(ci, /uses: [^\s#]+@v\d/);
   assert.match(ci, /GITHUB_TOKEN:\s*\$\{\{\s*secrets\.GITHUB_TOKEN\s*\}\}/);
   assert.match(ci, /GITLEAKS_CONFIG:\s*\.gitleaks\.toml/);
   assert.match(ci, /fetch-depth:\s*0/);

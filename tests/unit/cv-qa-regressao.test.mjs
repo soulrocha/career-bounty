@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
+import { localDay } from '../../core/store/schema.mjs';
 import { run, tempDir } from '../helpers/cli.mjs';
 import { baseCv, dataRootComBase, fixturesCv, perfilCvBruto, runnerFake, vagaAlta } from '../helpers/cv.mjs';
 import { makeLegado } from '../fixtures/make-legado.mjs';
@@ -178,7 +179,8 @@ test('QA 8 e 9: marcar candidatura no painel congela o CV aprovado; PDF listado 
   t.after(panel.close);
   const page = await (await fetch(panel.url)).text();
   const token = JSON.parse(page.match(/window\.PAINEL_API=(\{[^;]+\});/)[1]).token;
-  const hoje = new Date().toISOString().slice(0, 10);
+  // Dia civil de São Paulo, o mesmo que o servidor usa para recusar data futura (UTC adianta o dia após 21h).
+  const hoje = localDay(Date.now());
   const r = await fetch(`${panel.url}/api/candidaturas`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: panel.url, 'X-Painel-Token': token }, body: JSON.stringify({ id: vaga, aplicada: true, data: hoje }) });
   assert.equal(r.status, 200, await r.text());
   assert.equal((await lerManifesto(dataRoot, vaga)).enviado.hash, H1);
