@@ -1179,6 +1179,321 @@ footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0;
   padding-left: 18px;
 }
 
+/* =====================================================================
+   Aba Currículo e Provas (F10.4)
+   ===================================================================== */
+.painel-curriculo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.painel-curriculo[hidden] {
+  display: none !important;
+}
+
+.curriculo-pagina {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 24px 60px;
+  width: 100%;
+}
+
+.curriculo-cabecalho {
+  margin-bottom: 24px;
+}
+.curriculo-cabecalho h1 {
+  margin: 0 0 6px;
+  font-size: var(--t-2xl);
+  font-weight: 700;
+  color: var(--tx);
+}
+.curriculo-cabecalho .sub {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--tx2);
+  max-width: 75ch;
+  line-height: 1.5;
+}
+
+/* Matriz 2x2 */
+.matriz-container {
+  margin-bottom: 24px;
+}
+.matriz {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.matriz .eixo-vazio {
+  width: 90px;
+}
+
+.matriz .eixo {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--tx2);
+  display: flex;
+  align-items: center;
+}
+.matriz .eixo-h {
+  justify-content: center;
+  padding: 4px 8px;
+}
+.matriz .eixo-v {
+  justify-content: flex-end;
+  padding-right: 12px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Células da Matriz */
+.celula {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 14px;
+  align-items: start;
+  min-height: 116px;
+  padding: 16px 18px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-lg);
+  background: var(--sup);
+  text-align: left;
+  cursor: pointer;
+  color: var(--tx);
+  position: relative;
+  transition: border-color var(--dur) var(--saida), box-shadow var(--dur) var(--saida), background var(--dur) var(--saida);
+}
+.celula:hover {
+  border-color: var(--borda2);
+  background: var(--sup2);
+}
+
+/* Situações e Cores Dedicadas */
+.celula[data-q="confere"] {
+  --cor: var(--ok);
+  --tc: var(--ok);
+}
+.celula[data-q="sem_prova"] {
+  --cor: var(--atencao);
+  --tc: var(--atencao);
+}
+.celula[data-q="fora_do_cv"] {
+  --cor: var(--info);
+  --tc: var(--info);
+}
+.celula[data-q="lacunas"] {
+  --cor: var(--perigo);
+  --tc: var(--perigo);
+}
+
+.celula[aria-pressed="true"] {
+  border-color: var(--cor);
+  box-shadow: inset 0 0 0 1.5px var(--cor);
+  background: var(--sup2);
+}
+
+.celula .q-n {
+  grid-row: span 3;
+  font-family: var(--pixel);
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: -.02em;
+  color: var(--tc);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+.celula .q-t {
+  font-weight: 700;
+  font-size: var(--t-lg);
+  color: var(--tx);
+}
+.celula .q-d {
+  font-size: var(--t-xs);
+  color: var(--tx2);
+  line-height: 1.35;
+}
+.celula .q-acao {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--tc);
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Feedback Visual Interativo ("pisca uma vez") */
+.celula.chegou {
+  animation: piscar-celula 700ms var(--saida);
+}
+@keyframes piscar-celula {
+  0% {
+    box-shadow: inset 0 0 0 3px var(--cor);
+  }
+  100% {
+    box-shadow: inset 0 0 0 0 transparent;
+  }
+}
+
+/* Seção de Itens da Situação */
+.itens-q {
+  border: 1px solid var(--borda);
+  border-radius: var(--r-lg);
+  background: var(--sup);
+  overflow: hidden;
+}
+.cab-q {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--borda);
+  background: var(--sup2);
+}
+.cab-q .bola-situacao {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+.cab-q[data-q="confere"] .bola-situacao { background: var(--ok); }
+.cab-q[data-q="sem_prova"] .bola-situacao { background: var(--atencao); }
+.cab-q[data-q="fora_do_cv"] .bola-situacao { background: var(--info); }
+.cab-q[data-q="lacunas"] .bola-situacao { background: var(--perigo); }
+
+.cab-q strong {
+  font-size: var(--t-lg);
+  color: var(--tx);
+}
+.cab-q .meta {
+  color: var(--tx2);
+  font-size: var(--t-sm);
+}
+.cab-q .contador-q {
+  margin-left: auto;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--tx3);
+  font-variant-numeric: tabular-nums;
+}
+
+.ferramentas-q {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--borda);
+  background: var(--sup);
+}
+.busca-q {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tx3);
+}
+.busca-q .campo {
+  flex: 1;
+  max-width: 360px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r);
+  background: var(--sup);
+  color: var(--tx);
+  font-size: var(--t-sm);
+}
+
+/* Lista e Cards de Itens */
+.lista-itens {
+  display: flex;
+  flex-direction: column;
+}
+
+.it {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--borda);
+  background: var(--sup);
+  transition: background var(--dur) var(--saida);
+}
+.it:last-child {
+  border-bottom: 0;
+}
+.it:hover {
+  background: var(--sup2);
+}
+
+.it-texto {
+  margin: 0;
+  font-size: var(--t-md);
+  color: var(--tx);
+  line-height: 1.45;
+  max-width: 80ch;
+}
+
+/* Badges e Rastreabilidade */
+.ids {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.id {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: var(--r-sm);
+  background: var(--sup3);
+  color: var(--tx2);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  border: 1px solid var(--borda);
+}
+.id.af {
+  border-color: var(--borda2);
+}
+.id.nivel-verificado {
+  background: #00754E18;
+  color: var(--ok);
+  border-color: var(--ok);
+}
+.id.nivel-entregue {
+  background: #145DB818;
+  color: var(--info);
+  border-color: var(--info);
+}
+.id.nivel-relato {
+  background: #7A580018;
+  color: var(--atencao);
+  border-color: var(--atencao);
+}
+.id.peso {
+  background: #B3261E18;
+  color: var(--perigo);
+  border-color: var(--perigo);
+  font-variant-numeric: tabular-nums;
+}
+
+.it-motivo {
+  margin: 0;
+  font-size: var(--t-xs);
+  color: var(--tx3);
+  font-style: italic;
+}
+
+/* Barra de Ações do Item */
+.acoes-i {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 4px;
+}
+
 /* Responsividade móvel (375px a 900px) */
 @media (max-width: 900px) {
   .placa { padding: 0 12px; gap: 10px; }
@@ -1209,6 +1524,19 @@ footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0;
   .form-reg-contato { grid-template-columns: 1fr; }
   .prep-grid { grid-template-columns: 1fr; }
   .trilho .seg .nome { font-size: 10px; }
+  .matriz { grid-template-columns: 1fr 1fr; }
+  .matriz .eixo-vazio, .matriz .eixo { display: none; }
+}
+
+@media (max-width: 600px) {
+  .curriculo-pagina { padding: 12px 12px 60px; }
+  .matriz { grid-template-columns: 1fr; gap: 10px; }
+  .celula { min-height: 96px; padding: 12px 14px; }
+  .celula .q-n { font-size: 32px; }
+  .it { padding: 14px 14px; }
+  .acoes-i { width: 100%; justify-content: flex-start; }
+  .acoes-i .btn { flex: 1 1 auto; }
+  .busca-q .campo { max-width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1467,6 +1795,85 @@ footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0;
           <div class="vazio">Selecione um processo na lista ao lado para ver contatos, histórico e próximos passos.</div>
         </div>
       </div>
+    </div>
+  </main>
+
+  <!-- Painel Currículo e provas (F10.4) -->
+  <main class="A-tela painel-curriculo" id="painel-curriculo" hidden>
+    <div class="pagina curriculo-pagina">
+      <header class="curriculo-cabecalho">
+        <h1>Currículo e provas</h1>
+        <p class="sub">
+          Compara o que está no seu currículo com o que a sua base consegue provar. Ajuste os itens aqui; a mudança vale para os próximos CVs.
+        </p>
+      </header>
+
+      <!-- Matriz 2x2 CV x Dado -->
+      <section class="matriz-container" aria-label="Matriz de alinhamento entre currículo e dados comprobatórios">
+        <div class="matriz" id="matriz-curriculo">
+          <!-- Linha 0 (Eixos horizontais superiores) -->
+          <span class="eixo-vazio" aria-hidden="true"></span>
+          <span class="eixo eixo-h">Tem dado que prova</span>
+          <span class="eixo eixo-h">Não tem dado</span>
+
+          <!-- Linha 1: Está no CV -->
+          <span class="eixo eixo-v">Está no CV</span>
+          <button type="button" class="celula" data-q="confere" id="cel-confere" aria-pressed="true">
+            <span class="q-n" id="n-confere">0</span>
+            <span class="q-t">Confere</span>
+            <span class="q-d">No CV e com dado que prova</span>
+            <span class="q-acao" id="acao-confere">Em dia</span>
+          </button>
+          <button type="button" class="celula" data-q="sem_prova" id="cel-sem_prova" aria-pressed="false">
+            <span class="q-n" id="n-sem_prova">0</span>
+            <span class="q-t">Sem prova</span>
+            <span class="q-d">No CV, mas falta dado ou número</span>
+            <span class="q-acao" id="acao-sem_prova">Revisar</span>
+          </button>
+
+          <!-- Linha 2: Fora do CV -->
+          <span class="eixo eixo-v">Fora do CV</span>
+          <button type="button" class="celula" data-q="fora_do_cv" id="cel-fora_do_cv" aria-pressed="false">
+            <span class="q-n" id="n-fora_do_cv">0</span>
+            <span class="q-t">Fora do CV</span>
+            <span class="q-d">Tem dado, mas não está no CV</span>
+            <span class="q-acao" id="acao-fora_do_cv">Incluir</span>
+          </button>
+          <button type="button" class="celula" data-q="lacunas" id="cel-lacunas" aria-pressed="false">
+            <span class="q-n" id="n-lacunas">0</span>
+            <span class="q-t">Lacunas</span>
+            <span class="q-d">Pedido pelas vagas, sem dado na base</span>
+            <span class="q-acao" id="acao-lacunas">Responder</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Bloco Detalhado de Itens da Situação Ativa -->
+      <section class="painel itens-q" id="bloco-itens-curriculo" aria-labelledby="cab-quadrante-ativo">
+        <header class="cab-q" id="cab-quadrante-ativo" data-q="confere">
+          <span class="bola-situacao cheia" aria-hidden="true"></span>
+          <strong id="tit-quadrante-ativo">Confere</strong>
+          <span class="meta" id="desc-quadrante-ativo">No CV e com dado que prova</span>
+          <span class="contador-q" id="cont-quadrante-ativo">(0 itens)</span>
+        </header>
+
+        <!-- Barra de ferramentas e busca rápida da situação -->
+        <div class="ferramentas-q">
+          <label class="busca-q">
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <span class="sr">Filtrar itens desta situação</span>
+            <input class="campo" id="filtro-busca-curriculo" placeholder="Buscar por termo ou código..." aria-label="Filtrar itens desta situação">
+          </label>
+        </div>
+
+        <!-- Feed dinâmico de cards -->
+        <div class="lista-itens" id="lista-itens-curriculo" role="region" aria-live="polite">
+          <div class="vazio" id="curriculo-estado">
+            <strong>Carregando análise do currículo...</strong>
+            Confrontando itens do CV com a base de dados.
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -3209,12 +3616,537 @@ if (elFiltroEtapas) {
   });
 }
 
+// ==========================================================================
+// Aba Currículo e Provas (F10.4)
+// ==========================================================================
+const SITUACOES_CURRICULO = ['confere', 'sem_prova', 'fora_do_cv', 'lacunas'];
+const METADADOS_SITUACAO_CURRICULO = {
+  confere: {
+    nome: 'Confere',
+    descricao: 'No CV e com dado que prova',
+    acaoPadrao: 'Em dia',
+    corClasse: 'ok',
+    eixoVertical: 'Está no CV',
+    eixoHorizontal: 'Tem dado que prova',
+  },
+  sem_prova: {
+    nome: 'Sem prova',
+    descricao: 'No CV, mas falta dado ou número',
+    acaoPadrao: 'Revisar',
+    corClasse: 'atencao',
+    eixoVertical: 'Está no CV',
+    eixoHorizontal: 'Não tem dado',
+  },
+  fora_do_cv: {
+    nome: 'Fora do CV',
+    descricao: 'Tem dado, mas não está no CV',
+    acaoPadrao: 'Incluir',
+    corClasse: 'info',
+    eixoVertical: 'Fora do CV',
+    eixoHorizontal: 'Tem dado que prova',
+  },
+  lacunas: {
+    nome: 'Lacunas',
+    descricao: 'Pedido pelas vagas, sem dado na base',
+    acaoPadrao: 'Responder',
+    corClasse: 'perigo',
+    eixoVertical: 'Fora do CV',
+    eixoHorizontal: 'Não tem dado',
+  },
+};
+const FORCA_PROVA_CURRICULO = {
+  verificado: 3,
+  entregue: 2,
+  proposto: 1,
+  relato: 0,
+};
+
+let cacheCurriculo = null;
+let situacaoCurriculoAtiva = 'confere';
+const curriculoIgnorados = new Set();
+let filtroBuscaCurriculo = '';
+let carregandoCurriculo = false;
+const mascararDadoSensivel = mascararDadoSensivelProc;
+
+function normalizarItemCurriculo(item = {}, situacao = 'confere') {
+  if (!item || typeof item !== 'object') {
+    return {
+      id: Math.random().toString(36).slice(2),
+      texto: '',
+      afirmacoes: [],
+      evidencias: [],
+      nivel_prova: null,
+      peso: null,
+      motivo: null,
+      pergunta: null,
+      situacao,
+    };
+  }
+
+  const id = String(item.id || item.codigo || item.alvo || Math.random().toString(36).slice(2));
+  const texto = String(item.texto || item.descricao || item.motivo || '');
+  const afirmacoes = Array.isArray(item.afirmacoes)
+    ? item.afirmacoes.map(a => (typeof a === 'object' && a !== null ? String(a.id || '') : String(a)))
+    : Array.isArray(item.claim_ids)
+    ? item.claim_ids.map(String)
+    : [];
+  const evidencias = Array.isArray(item.evidencias) ? item.evidencias.map(String) : [];
+  const nivel_prova = item.nivel_prova || (item.afirmacoes?.[0]?.nivel_prova ?? null);
+  const peso = typeof item.peso === 'number' ? item.peso : null;
+  const motivo = item.motivo || null;
+  const pergunta = item.pergunta || item.pergunta_sugerida || null;
+
+  return {
+    id,
+    texto,
+    afirmacoes,
+    evidencias,
+    nivel_prova,
+    peso,
+    motivo,
+    pergunta,
+    situacao,
+  };
+}
+
+function normalizarRespostaAnalise(dadosApi = {}) {
+  if (!dadosApi || typeof dadosApi !== 'object' || Array.isArray(dadosApi)) {
+    return {
+      confere: [],
+      sem_prova: [],
+      fora_do_cv: [],
+      lacunas: [],
+      contagem: { confere: 0, sem_prova: 0, fora_do_cv: 0, lacunas: 0 },
+      avisos: [],
+    };
+  }
+
+  const fonte = (dadosApi.grupos && typeof dadosApi.grupos === 'object') ? dadosApi.grupos : dadosApi;
+
+  if (
+    Array.isArray(fonte.confere) ||
+    Array.isArray(fonte.sem_prova) ||
+    Array.isArray(fonte.fora_do_cv) ||
+    Array.isArray(fonte.lacunas) ||
+    Array.isArray(fonte.lacuna)
+  ) {
+    const confere = (fonte.confere || []).map(i => normalizarItemCurriculo(i, 'confere'));
+    const sem_prova = (fonte.sem_prova || []).map(i => normalizarItemCurriculo(i, 'sem_prova'));
+    const fora_do_cv = (fonte.fora_do_cv || []).map(i => normalizarItemCurriculo(i, 'fora_do_cv'));
+    const listaLacunas = fonte.lacunas || fonte.lacuna || [];
+    const lacunas = listaLacunas.map(i => normalizarItemCurriculo(i, 'lacunas'));
+
+    return {
+      confere,
+      sem_prova,
+      fora_do_cv,
+      lacunas,
+      contagem: {
+        confere: confere.length,
+        sem_prova: sem_prova.length,
+        fora_do_cv: fora_do_cv.length,
+        lacunas: lacunas.length,
+      },
+      avisos: Array.isArray(dadosApi.avisos) ? dadosApi.avisos : [],
+    };
+  }
+
+  const confere = (fonte.a || []).map(i => normalizarItemCurriculo(i, 'confere'));
+  const fora_do_cv = (fonte.b || []).map(i => normalizarItemCurriculo(i, 'fora_do_cv'));
+  const sem_prova = (fonte.c || []).map(i => normalizarItemCurriculo(i, 'sem_prova'));
+  const lacunas = (fonte.d || []).map(i => normalizarItemCurriculo(i, 'lacunas'));
+
+  return {
+    confere,
+    sem_prova,
+    fora_do_cv,
+    lacunas,
+    contagem: {
+      confere: confere.length,
+      sem_prova: sem_prova.length,
+      fora_do_cv: fora_do_cv.length,
+      lacunas: lacunas.length,
+    },
+    avisos: Array.isArray(dadosApi.avisos) ? dadosApi.avisos : [],
+  };
+}
+
+function categorizarItensCurriculo(analise = {}, ignorados = new Set()) {
+  const norm = normalizarRespostaAnalise(analise);
+  const ign = ignorados instanceof Set ? ignorados : new Set(ignorados || []);
+
+  return {
+    confere: norm.confere.filter(i => !ign.has(i.id)),
+    sem_prova: norm.sem_prova.filter(i => !ign.has(i.id)),
+    fora_do_cv: norm.fora_do_cv.filter(i => !ign.has(i.id)),
+    lacunas: norm.lacunas.filter(i => !ign.has(i.id)),
+  };
+}
+
+function calcularTotaisCurriculo(analise = {}, ignorados = new Set()) {
+  const cat = categorizarItensCurriculo(analise, ignorados);
+  const confere = cat.confere.length;
+  const sem_prova = cat.sem_prova.length;
+  const fora_do_cv = cat.fora_do_cv.length;
+  const lacunas = cat.lacunas.length;
+  const badgeCurriculo = sem_prova + lacunas;
+
+  return {
+    confere,
+    sem_prova,
+    fora_do_cv,
+    lacunas,
+    badgeCurriculo,
+    temAtencao: badgeCurriculo > 0,
+  };
+}
+
+function filtrarItensCurriculo(itens = [], { busca = '' } = {}) {
+  let resultado = [...itens];
+
+  if (busca && typeof busca === 'string') {
+    const q = busca.toLowerCase().trim();
+    resultado = resultado.filter(i =>
+      (i.texto || '').toLowerCase().includes(q) ||
+      (i.id || '').toLowerCase().includes(q) ||
+      (i.afirmacoes || []).some(a => String(a).toLowerCase().includes(q)) ||
+      (i.motivo && String(i.motivo).toLowerCase().includes(q)) ||
+      (i.pergunta && String(i.pergunta).toLowerCase().includes(q))
+    );
+  }
+
+  return resultado;
+}
+
+function ordenarItensCurriculo(itens = [], situacao = 'confere') {
+  const copia = [...itens];
+
+  if (situacao === 'lacunas') {
+    return copia.sort((a, b) =>
+      (b.peso || 0) - (a.peso || 0) ||
+      a.id.localeCompare(b.id, 'pt-BR', { numeric: true }) ||
+      (a.texto || '').localeCompare(b.texto || '', 'pt-BR')
+    );
+  }
+
+  if (situacao === 'fora_do_cv') {
+    return copia.sort((a, b) => {
+      const forcaA = FORCA_PROVA_CURRICULO[a.nivel_prova] ?? -1;
+      const forcaB = FORCA_PROVA_CURRICULO[b.nivel_prova] ?? -1;
+      return (forcaB - forcaA) || a.id.localeCompare(b.id, 'pt-BR', { numeric: true });
+    });
+  }
+
+  if (situacao === 'sem_prova') {
+    return copia.sort((a, b) => {
+      const temMotivoA = Boolean(a.motivo);
+      const temMotivoB = Boolean(b.motivo);
+      if (temMotivoA !== temMotivoB) return temMotivoA ? -1 : 1;
+      return a.id.localeCompare(b.id, 'pt-BR', { numeric: true });
+    });
+  }
+
+  return copia.sort((a, b) => a.id.localeCompare(b.id, 'pt-BR', { numeric: true }));
+}
+
+function acionarFeedbackDestino(chaveDestino) {
+  const celulaDestino = document.querySelector(`.celula[data-q="${chaveDestino}"]`);
+  if (!celulaDestino) return;
+  celulaDestino.classList.remove('chegou');
+  void celulaDestino.offsetWidth;
+  celulaDestino.classList.add('chegou');
+}
+
+async function carregarCurriculo() {
+  const container = document.getElementById('lista-itens-curriculo');
+  if (carregandoCurriculo) return;
+  carregandoCurriculo = true;
+
+  if (container && !cacheCurriculo) {
+    container.innerHTML = '<div class="vazio" id="curriculo-estado"><strong>Carregando análise do currículo...</strong>Confrontando itens do CV com a base de dados.</div>';
+  }
+
+  const token = (window.PAINEL_API || {}).token || (api || {}).token || '';
+
+  try {
+    let res = await fetch('/api/analise-curriculo', {
+      headers: { 'X-Painel-Token': token },
+      cache: 'no-store',
+    });
+
+    if (res.status === 404) {
+      res = await fetch('/api/quadrantes', {
+        headers: { 'X-Painel-Token': token },
+        cache: 'no-store',
+      });
+    }
+
+    if (res.status === 403) {
+      if (container) {
+        container.innerHTML = '<div class="vazio" id="curriculo-estado"><strong>Sem permissão.</strong> Token inválido ou expirado. Recarregue a página.</div>';
+      }
+      return;
+    }
+
+    if (!res.ok) {
+      if (container) {
+        container.innerHTML = '<div class="vazio" id="curriculo-estado"><strong>Erro ao carregar análise.</strong> Não foi possível obter os dados do currículo.</div>';
+      }
+      return;
+    }
+
+    const dados = await res.json();
+    cacheCurriculo = normalizarRespostaAnalise(dados);
+    renderizarCurriculo();
+  } catch (err) {
+    if (container) {
+      container.innerHTML = '<div class="vazio" id="curriculo-estado"><strong>Painel desconectado.</strong> Verifique se o servidor local está ativo.</div>';
+    }
+  } finally {
+    carregandoCurriculo = false;
+  }
+}
+
+function renderizarCurriculo() {
+  if (!cacheCurriculo) return;
+
+  const totais = calcularTotaisCurriculo(cacheCurriculo, curriculoIgnorados);
+
+  const nConfere = document.getElementById('n-confere');
+  const nSemProva = document.getElementById('n-sem_prova');
+  const nForaDoCv = document.getElementById('n-fora_do_cv');
+  const nLacunas = document.getElementById('n-lacunas');
+
+  if (nConfere) nConfere.textContent = totais.confere;
+  if (nSemProva) nSemProva.textContent = totais.sem_prova;
+  if (nForaDoCv) nForaDoCv.textContent = totais.fora_do_cv;
+  if (nLacunas) nLacunas.textContent = totais.lacunas;
+
+  const badge = document.getElementById('badge-curriculo');
+  if (badge) {
+    badge.textContent = totais.badgeCurriculo;
+    if (totais.temAtencao) {
+      badge.classList.add('atencao');
+    } else {
+      badge.classList.remove('atencao');
+    }
+  }
+
+  document.querySelectorAll('.celula[data-q]').forEach(btn => {
+    const q = btn.dataset.q;
+    const ativo = (q === situacaoCurriculoAtiva);
+    btn.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+  });
+
+  const cab = document.getElementById('cab-quadrante-ativo');
+  const tit = document.getElementById('tit-quadrante-ativo');
+  const desc = document.getElementById('desc-quadrante-ativo');
+  const cont = document.getElementById('cont-quadrante-ativo');
+  const meta = METADADOS_SITUACAO_CURRICULO[situacaoCurriculoAtiva] || METADADOS_SITUACAO_CURRICULO.confere;
+
+  if (cab) cab.setAttribute('data-q', situacaoCurriculoAtiva);
+  if (tit) tit.textContent = meta.nome;
+  if (desc) desc.textContent = meta.descricao;
+
+  const categorias = categorizarItensCurriculo(cacheCurriculo, curriculoIgnorados);
+  const itensSituacao = categorias[situacaoCurriculoAtiva] || [];
+  const filtrados = filtrarItensCurriculo(itensSituacao, { busca: filtroBuscaCurriculo });
+  const ordenados = ordenarItensCurriculo(filtrados, situacaoCurriculoAtiva);
+
+  if (cont) {
+    cont.textContent = `(${ordenados.length} ${ordenados.length === 1 ? 'item' : 'itens'})`;
+  }
+
+  const lista = document.getElementById('lista-itens-curriculo');
+  if (!lista) return;
+
+  if (ordenados.length === 0) {
+    lista.innerHTML = `
+      <div class="vazio" id="curriculo-estado">
+        <strong>Nenhum item nesta situação.</strong>
+        ${filtroBuscaCurriculo ? 'Nenhum resultado corresponde à busca atual.' : 'Tudo em ordem neste grupo.'}
+      </div>
+    `;
+    return;
+  }
+
+  lista.innerHTML = ordenados.map(item => {
+    const afirmacoesHtml = (item.afirmacoes || []).map(a =>
+      `<span class="id af">${esc(a)}</span>`
+    ).join('');
+
+    const evidenciasHtml = (item.evidencias || []).map(e =>
+      `<span class="id ev">${esc(e)}</span>`
+    ).join('');
+
+    const nivelHtml = item.nivel_prova ?
+      `<span class="id nivel-${esc(item.nivel_prova)}">${esc(item.nivel_prova)}</span>` : '';
+
+    const pesoHtml = typeof item.peso === 'number' ?
+      `<span class="id peso">peso ${esc(item.peso)}</span>` : '';
+
+    const badges = [nivelHtml, pesoHtml, afirmacoesHtml, evidenciasHtml].filter(Boolean).join('');
+    const textoMascarado = mascararDadoSensivel(item.texto);
+    const motivoMascarado = item.motivo ? mascararDadoSensivel(item.motivo) : '';
+    const perguntaMascarada = item.pergunta ? mascararDadoSensivel(item.pergunta) : '';
+
+    const motivoHtml = motivoMascarado ?
+      `<p class="it-motivo">${esc(motivoMascarado)}</p>` : '';
+
+    const perguntaHtml = perguntaMascarada ?
+      `<div class="meta" style="margin-top: 4px; color: var(--tx2);"><strong>Pergunta sugerida:</strong> ${esc(perguntaMascarada)}</div>` : '';
+
+    let acoesHtml = '';
+    if (situacaoCurriculoAtiva === 'fora_do_cv') {
+      const afId = item.afirmacoes && item.afirmacoes[0] ? item.afirmacoes[0] : '';
+      acoesHtml = `
+        <div class="acoes-i">
+          <button type="button" class="btn peq principal" data-acao-curriculo="incluir" data-item-id="${esc(item.id)}" data-af-id="${esc(afId)}">
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Incluir no CV
+          </button>
+        </div>
+      `;
+    } else if (situacaoCurriculoAtiva === 'sem_prova') {
+      acoesHtml = `
+        <div class="acoes-i">
+          <button type="button" class="btn peq" data-acao-curriculo="marcar" data-subacao="revisar" data-item-id="${esc(item.id)}">
+            Revisar
+          </button>
+          <button type="button" class="btn peq discreto" data-acao-curriculo="marcar" data-subacao="ignorar" data-item-id="${esc(item.id)}">
+            Ignorar
+          </button>
+        </div>
+      `;
+    } else if (situacaoCurriculoAtiva === 'lacunas') {
+      acoesHtml = `
+        <div class="acoes-i">
+          <button type="button" class="btn peq" data-acao-curriculo="entrevista" data-item-id="${esc(item.id)}">
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Gerar pergunta de entrevista
+          </button>
+        </div>
+      `;
+    }
+
+    return `
+      <article class="it" data-item-id="${esc(item.id)}">
+        <p class="it-texto">${esc(textoMascarado)}</p>
+        ${badgesHtml}
+        ${motivoHtml}
+        ${perguntaHtml}
+        ${acoesHtml}
+      </article>
+    `;
+  }).join('');
+}
+
+async function executarAcaoCurriculo(tipo, itemId, params = {}) {
+  const token = (window.PAINEL_API || {}).token || (api || {}).token || '';
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Painel-Token': token,
+  };
+
+  try {
+    if (tipo === 'incluir') {
+      const payload = { item_id: itemId };
+      if (params.afirmacao_id) payload.afirmacao_id = params.afirmacao_id;
+
+      const res = await fetch('/api/analise-curriculo/incluir', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        if (cacheCurriculo && Array.isArray(cacheCurriculo.fora_do_cv)) {
+          const idx = cacheCurriculo.fora_do_cv.findIndex(i => i.id === itemId);
+          if (idx !== -1) {
+            const itemMovido = { ...cacheCurriculo.fora_do_cv[idx], situacao: 'confere' };
+            cacheCurriculo.fora_do_cv.splice(idx, 1);
+            if (!Array.isArray(cacheCurriculo.confere)) cacheCurriculo.confere = [];
+            cacheCurriculo.confere.push(itemMovido);
+          }
+        }
+        acionarFeedbackDestino('confere');
+        renderizarCurriculo();
+      }
+    } else if (tipo === 'marcar') {
+      const acao = params.subacao || 'revisar';
+      const payload = { item_id: itemId, acao };
+
+      const res = await fetch('/api/analise-curriculo/marcar', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        if (acao === 'ignorar') {
+          curriculoIgnorados.add(itemId);
+        }
+        renderizarCurriculo();
+      }
+    } else if (tipo === 'entrevista') {
+      const payload = { item_id: itemId };
+      const res = await fetch('/api/analise-curriculo/entrevista', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const d = await res.json();
+        if (d && d.pergunta && cacheCurriculo && Array.isArray(cacheCurriculo.lacunas)) {
+          const item = cacheCurriculo.lacunas.find(i => i.id === itemId);
+          if (item) {
+            item.pergunta = d.pergunta;
+          }
+        }
+        renderizarCurriculo();
+      }
+    }
+  } catch (err) {
+    console.error('Erro na ação do currículo:', err);
+  }
+}
+
+document.querySelectorAll('.celula[data-q]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    situacaoCurriculoAtiva = btn.dataset.q;
+    renderizarCurriculo();
+  });
+});
+
+const elFiltroCurriculo = document.getElementById('filtro-busca-curriculo');
+if (elFiltroCurriculo) {
+  elFiltroCurriculo.addEventListener('input', e => {
+    filtroBuscaCurriculo = e.target.value;
+    renderizarCurriculo();
+  });
+}
+
+const elListaCurriculo = document.getElementById('lista-itens-curriculo');
+if (elListaCurriculo) {
+  elListaCurriculo.addEventListener('click', e => {
+    const btn = e.target.closest('[data-acao-curriculo]');
+    if (!btn) return;
+    const acao = btn.dataset.acaoCurriculo;
+    const itemId = btn.dataset.itemId;
+    const afId = btn.dataset.afId;
+    const subacao = btn.dataset.subacao;
+    executarAcaoCurriculo(acao, itemId, { afirmacao_id: afId, subacao });
+  });
+}
+
 // Gerenciamento de abas da Placa
 const botoesAba = document.querySelectorAll('.nav .aba-btn');
 const telas = {
   vagas: document.getElementById('painel-vagas'),
   historico: document.getElementById('painel-historico'),
   processos: document.getElementById('painel-processos'),
+  curriculo: document.getElementById('painel-curriculo'),
 };
 
 function alternarAba(nomeAba) {
@@ -3235,6 +4167,9 @@ function alternarAba(nomeAba) {
   }
   if (nomeAba === 'processos') {
     carregarProcessos();
+  }
+  if (nomeAba === 'curriculo') {
+    carregarCurriculo();
   }
 }
 
