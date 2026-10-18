@@ -55,7 +55,7 @@ test('career-ops: ausente traz instruções de clone; tag diferente de v1.36.0 �
   assert.match(check(diferente, 'career_ops').mensagem, /v1\.36\.0/);
   const vazio = await tempDir(t);
   const ausente = await runDoctor({ dataRoot: vazio, ...healthyDeps });
-  assert.equal(check(ausente, 'career_ops').status, 'aviso');
+  assert.equal(check(ausente, 'career_ops').status, 'ok', 'opcional: ausente não é aviso');
   assert.match(check(ausente, 'career_ops').mensagem, /git clone/);
 });
 

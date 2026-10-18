@@ -250,10 +250,11 @@ export async function importFromFile({ dataRoot, from, now, hostId }) {
 
 // Instalação nova (quem não tem legado para migrar): grava um pipeline vazio como importação inicial e já deixa o modo ativo,
 // para o painel abrir, a projeção existir e a coleta gravar. Idempotente: se a pasta já tem estado de migração, não toca em nada.
-export async function iniciarInstalacaoNova({ dataRoot, now = new Date().toISOString(), hostId }) {
+export async function iniciarInstalacaoNova({ dataRoot, now = new Date().toISOString(), hostId, pipeline: inicial }) {
   await privateDestination(dataRoot);
   if (await readMigrationState(dataRoot)) return { iniciada: false };
-  const pipeline = { schema_version: 1, atualizado: now.slice(0, 10), vagas: [], eventos_email_sem_requisicao: [] };
+  const pipeline = inicial ?? { schema_version: 1, atualizado: now.slice(0, 10), vagas: [], eventos_email_sem_requisicao: [] };
+  validatePipeline(pipeline);
   await mkdir(dataRoot, { recursive: true });
   await importPipeline({ dataRoot, pipeline, ts: now, host: hostId ?? defaultHost() });
   await projectLegacy({ dataRoot });

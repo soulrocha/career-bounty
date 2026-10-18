@@ -1,25 +1,66 @@
 # CareerBounty <!-- sec:titulo -->
 
-Plugin para Claude Code que conduz a busca de emprego de ponta a ponta: encontra vagas, avalia o encaixe, gera
+[![CI](https://github.com/soulrocha/career-bounty/actions/workflows/ci.yml/badge.svg)](https://github.com/soulrocha/career-bounty/actions/workflows/ci.yml)
+[![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue.svg)](LICENSE)
+[![Node >= 20](https://img.shields.io/badge/node-%3E%3D20-339933.svg)](https://nodejs.org)
+[![Sem dependências npm](https://img.shields.io/badge/depend%C3%AAncias%20npm-0-brightgreen.svg)](package.json)
+
+**Seu agente de busca de emprego dentro do Claude Code.** Encontra vagas, avalia o encaixe com a sua história, gera
 currículos sob medida, prepara candidaturas e acompanha o processo seletivo pelo e-mail, sempre com você aprovando
 o que sai em seu nome.
 
 Leia antes o [aviso legal](LEGAL_DISCLAIMER.md): você responde pelos termos de uso de cada site, e o envio
 automático vem desligado. English: [README.en.md](README.en.md).
 
+![Painel do CareerBounty com a persona fictícia de demonstração](docs/img/painel.png)
+
 ## O que é <!-- sec:o-que-e -->
 
 O CareerBounty junta três peças:
 
-- **Uma CLI em Node** (`bin/career-bounty.mjs`), com toda a lógica determinística: coleta, deduplicação, notas,
-  currículos, política de envio e trilha de auditoria. Funciona e é testada sem rede e sem modelo.
+- **Uma CLI em Node** (`bin/career-bounty.mjs`) com toda a lógica determinística: coleta, deduplicação, notas,
+  currículos, política de envio e trilha de auditoria. Funciona, e é testada, sem rede e sem modelo.
 - **Comandos, skills e subagentes do Claude Code**, que fazem o trabalho de linguagem (triagem, redação de
   respostas, classificação de e-mail) e chamam a CLI para tudo o que precisa ser exato.
 - **Um painel local** no navegador, para ver vagas, a fila de candidaturas, as perguntas pendentes e os quadrantes
   de carreira.
 
-Seus dados ficam numa pasta privada fora do repositório (`DATA_ROOT`). O repositório traz só código, documentação e
-uma persona fictícia de exemplo.
+Seus dados ficam numa pasta privada fora do repositório. O repositório traz só código, documentação e uma persona
+fictícia de exemplo.
+
+## Destaques <!-- sec:destaques -->
+
+- **Nada de fato inventado.** O modelo escolhe entre afirmações que você cadastrou, cada uma com nível de prova.
+  Currículo com número sem evidência é bloqueado antes de chegar a você.
+- **Você aprova, o hook garante.** O envio só acontece depois que você digita a frase exata do lote, e quem barra o
+  resto é um hook do Claude Code, não a boa vontade do modelo.
+- **Dois PDFs por vaga.** Um visual e um para ATS (coluna única), gerados do seu navegador, sem dependência de rede.
+- **Auditável.** Tudo vira evento num log de acréscimo; painel e relatórios são projeções dele e podem ser reconstruídos.
+- **Privado por construção.** Dados pessoais vivem em `DATA_ROOT`, fora do git, com varredura de privacidade no commit e
+  na CI.
+- **Seguro por padrão.** Envio automático desligado, LinkedIn guest desligado, limite diário, kill switch e trava para
+  tentativa de resultado incerto.
+- **Sem dependências npm.** Só Node 20+ e o Chrome ou Edge que você já tem.
+
+## Demonstração <!-- sec:demo -->
+
+Em dois comandos, sem tocar nos seus dados, você abre o painel com uma persona fictícia (Ana Exemplo) e seis vagas de
+exemplo:
+
+```sh
+node bin/career-bounty.mjs demo
+```
+
+```text
+Demonstração pronta em /tmp/career-bounty-demo (6 vagas de exemplo, persona fictícia).
+Experimente:
+  DATA_ROOT="/tmp/career-bounty-demo" node bin/career-bounty.mjs panel
+  DATA_ROOT="/tmp/career-bounty-demo" node bin/career-bounty.mjs doctor
+```
+
+Rode o primeiro comando impresso (no PowerShell, a linha já vem com `$env:DATA_ROOT`) e abra o endereço que ele mostrar,
+por padrão `http://127.0.0.1:8880`. A demo vive numa pasta temporária própria e recusa usar a sua `DATA_ROOT`. Apague a
+pasta quando terminar.
 
 ## Como funciona <!-- sec:como-funciona -->
 
@@ -61,29 +102,71 @@ qualquer estado pode ser reconstruído e auditado.
 ## Instalação <!-- sec:instalacao -->
 
 ```sh
-git clone <endereço deste repositório>
+git clone https://github.com/soulrocha/career-bounty.git
 cd career-bounty
 npm test
 ```
 
-No Claude Code, instale o plugin pelo marketplace:
+`npm test` roda a suíte inteira, sem rede e sem modelo, e deve terminar sem falhas. Para chamar a CLI de qualquer pasta,
+rode `npm link` (cria o comando `career-bounty`); sem isso, use `node bin/career-bounty.mjs` dentro do repositório.
+
+Para usar os comandos, skills e hooks dentro do Claude Code, instale o plugin pelo marketplace do próprio repositório:
 
 ```text
-/plugin install career-bounty --marketplace soulrocha/career-bounty
+/plugin marketplace add soulrocha/career-bounty
+/plugin install career-bounty@career-bounty
 ```
 
 ## Primeiros passos <!-- sec:primeiros-passos -->
 
-1. **Crie a pasta privada.** `node bin/career-bounty.mjs setup` monta o esqueleto de `DATA_ROOT`
-   (padrão `~/.career-bounty`).
-2. **Configure.** Copie `config.example.yml` para `DATA_ROOT/config.yml` e ajuste. O arquivo é JSON válido
-   (subconjunto de YAML).
-3. **Alimente a base de carreira.** Coloque suas notas em `DATA_ROOT/kb` ou aponte outras fontes em
-   `DATA_ROOT/fontes.yml`, e rode `kb sync`. Lacunas viram perguntas com `/entrevista`. Detalhes em
-   [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md).
-4. **Monte o perfil de currículo.** Crie `DATA_ROOT/cv/perfil.json` (contato, cabeçalho, foto opcional e ordem das
-   seções). O formato está em [docs/CV.md](docs/CV.md).
-5. **Confira.** `node bin/career-bounty.mjs doctor` lista o que falta, sem alterar nada.
+Cerca de 30 minutos, em ordem:
+
+1. **Crie a pasta privada.** `node bin/career-bounty.mjs setup` monta o esqueleto de `DATA_ROOT` (padrão
+   `~/.career-bounty`) e deixa o painel e a coleta prontos. Use `setup --com-legado` só se for migrar um pipeline
+   antigo (veja [docs/PRONTIDAO.md](docs/PRONTIDAO.md)).
+2. **Diga quem você é (para a privacidade).** Preencha `DATA_ROOT/identity.yml` com nome, e-mail, telefone e CPF. Eles
+   nunca saem do seu computador: servem para o pre-commit e a varredura recusarem qualquer vazamento deles no git.
+3. **Configure o radar.** Crie `DATA_ROOT/config.yml` (JSON válido) com o que você procura. Exemplo mínimo:
+
+   ```json
+   {
+     "perfil": { "nome": "Seu Nome", "especialidade": "Produto e operações", "regiao": "Brasil" },
+     "radar": {
+       "termos": ["gerente de produto", "líder de produto"],
+       "criterios": { "titulos_alvo": ["gerente", "líder"], "palavras_negativas": ["estágio", "júnior"] }
+     },
+     "fontes": { "gupy": {} }
+   }
+   ```
+
+   Cada fonte listada em `fontes` entra na coleta. Todas as chaves estão em [Configuração](#configuração).
+4. **Alimente a base de carreira.** Coloque suas realizações em `DATA_ROOT/kb` (uma afirmação por arquivo, com nível de
+   prova) e rode `node bin/career-bounty.mjs kb sync`. Use `examples/persona-ficticia/` como molde. Lacunas viram
+   perguntas com `/entrevista`. Detalhes em [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md).
+5. **Monte o perfil de currículo.** Crie `DATA_ROOT/cv/perfil.json` (contato, cabeçalho, foto opcional, cartões e
+   experiências, cada um ligado às suas afirmações). O formato está em [docs/CV.md](docs/CV.md).
+6. **Confira.** `node bin/career-bounty.mjs doctor` lista o que falta, sem alterar nada. Os avisos são o seu roteiro.
+7. **Rode o primeiro radar.** `node bin/career-bounty.mjs collect --dry-run` mostra o que há de novo sem gravar. Se o
+   resultado fizer sentido, rode `collect` e abra o painel (`panel`).
+
+## Seus dados ficam separados <!-- sec:dados -->
+
+O repositório é só código. Tudo que é seu mora em `DATA_ROOT`, uma pasta própria que **nunca** entra no git:
+
+| Pasta ou arquivo | O que guarda |
+|---|---|
+| `config.yml` | Sua configuração (o que procurar, limites, aceites) |
+| `identity.yml` | Nome, e-mail, telefone e CPF, usados só para barrar vazamento |
+| `kb/` | Suas afirmações, evidências, histórias e perfil de carreira |
+| `cv/` | `perfil.json`, foto e a proposta de perfil de portal |
+| `events/`, `projections/`, `state/` | O log de eventos e o que é derivado dele |
+| `artifacts/` | PDFs e comprovantes gerados |
+| `secrets/` | Tokens, só para você |
+| `outbox/` | Propostas que esperam a sua revisão |
+
+Essa separação é proposital: o código evolui sem risco de levar dado pessoal junto, você pode versionar, publicar e
+atualizar o programa à vontade, e consertar um comportamento nunca mexe nos seus dados. Troque de máquina copiando só a
+pasta `DATA_ROOT`. Um pre-commit e a CI bloqueiam CPF, telefone, caminho de usuário e os valores do seu `identity.yml`.
 
 ## Uso no dia a dia <!-- sec:uso -->
 
@@ -167,12 +250,13 @@ Subcomandos da CLI (`node bin/career-bounty.mjs <comando> [--json]`):
 
 | Grupo | Subcomandos |
 |---|---|
-| Ambiente | `setup`, `doctor`, `help`, `plugin validate`, `privacy scan` |
+| Ambiente | `setup`, `demo`, `doctor`, `help`, `plugin validate`, `privacy scan` |
 | Vagas | `collect`, `digest`, `daily-run`, `schedule`, `destinos`, `compare-radar` |
-| Base de carreira | `kb`, `quadrantes`, `entrevista`, `mentor`, `report` |
+| Base de carreira | `kb`, `quadrantes`, `entrevista`, `mentor`, `report`, `vault plan` |
 | Currículos | `cv gerar`, `cv gate`, `cv perfil-portal` |
 | Candidaturas | `apply plan`, `apply preparar`, `apply lote`, `apply envio`, `apply comprovante`, `apply desfecho` |
 | Gupy | `gupy perfil iniciar`, `propor`, `confirmar`, `encerrar` |
+| Envio automático | `envio pausar`, `envio retomar`, `envio audit [--dia AAAA-MM-DD]` |
 | E-mail | `mail` |
 | Dados | `migrate`, `project`, `verify`, `panel`, `eval` |
 
@@ -180,16 +264,23 @@ Com `--json`, a saída, inclusive erro, sai como JSON no stdout. Erro de uso ter
 
 ## Configuração <!-- sec:configuracao -->
 
-A configuração pessoal vive só em `DATA_ROOT/config.yml`. Veja `config.example.yml`. Os padrões são seguros:
+A configuração pessoal vive só em `DATA_ROOT/config.yml` (JSON válido). Veja `config.example.yml`. Os padrões são
+seguros:
 
 | Chave | Padrão | Efeito |
 |---|---|---|
+| `perfil.nome`, `.especialidade`, `.regiao` | vazio | Identificação mostrada no painel |
+| `radar.termos` | `[]` | Termos de busca nas fontes |
+| `radar.criterios` | `{}` | `titulos_alvo`, `palavras_chave`, `palavras_negativas`, `regiao_presencial`, `corte_prescore` e faixas de salário (`clt`, `pj`) |
+| `radar.janela_dias` | `7` | Quantos dias para trás cada coleta olha |
+| `fontes.<id>` | nenhuma | Cada fonte com bloco entra na coleta: `gupy`, `freehire`, `inhire`, `solides`, `jobspy`, `careerops`, `linkedin_alertas` |
 | `envio.padrao` | `parar_antes_de_enviar` | Toda candidatura para antes do clique final |
-| `envio.regras` | `[]` | Regras de envio automático por portal (em desenvolvimento) |
+| `envio.regras` | `[]` | Regras de envio automático por portal (veja [Estado do projeto](#estado-do-projeto)) |
 | `gupy.aceite_termos` | `false` | Sem aceite, a rota Gupy recusa |
 | `gupy.max_por_dia` | `5` | Teto diário de envios na Gupy |
 | `cv_skip_portals` | `["gupy"]` | Portais que não recebem PDF anexado |
-| `fontes.linkedin_guest.ativo` | `false` | Coletor guest do LinkedIn desligado |
+| `fontes.linkedin_guest.ativo` | `false` | Coletor guest do LinkedIn desligado; ligar exige `aceite_termos: true` |
+| `mail.ativo` | `false` | Acompanhamento por e-mail |
 | `panel.port` | `8880` | Porta do painel local |
 
 ## Arquitetura <!-- sec:arquitetura -->
@@ -231,11 +322,17 @@ Decisões de desenho estão em [docs/adr/](docs/adr/), e o detalhe das camadas e
 
 ## Segurança e limites <!-- sec:seguranca -->
 
-- O envio nunca acontece sem a frase do lote digitada por você. A aprovação vale para uma vaga, por 2 horas, uma vez.
-- Tentativa com resultado incerto não é repetida: fica pendente até o e-mail ou você confirmar.
+- O envio assistido nunca acontece sem a frase do lote digitada por você. A aprovação vale para uma vaga, por 2 horas,
+  uma vez.
+- Tentativa com resultado incerto não é repetida: fica pendente até o e-mail ou você confirmar, e consome o limite do dia.
+- O envio automático, quando ligado, só atua em formulários públicos de Greenhouse, Lever e Ashby, em navegador sem
+  login nem cookies, nas origens `https` desses portais, com limite diário, kill switch conferido de novo antes do clique
+  e aprovação amarrada ao hash do PDF e das respostas. `envio pausar` o interrompe na hora.
 - Testes, vídeos e agendamentos ficam sempre com você.
 - O painel só escuta em loopback, com CSP restritiva e token efêmero.
 - O modelo nunca roda em `npm test`; os testes usam saídas fabricadas e gravações reproduzíveis.
+
+Para reportar uma falha de segurança, veja [SECURITY.md](SECURITY.md).
 
 ## Privacidade <!-- sec:privacidade -->
 
@@ -244,21 +341,24 @@ empresas da sua denylist, e `privacy scan --all` varre o repositório inteiro. V
 
 ## Estado do projeto <!-- sec:estado -->
 
+Versão **0.2.0**, a primeira para uso real. Veja o [CHANGELOG](CHANGELOG.md).
+
 | Parte | Estado |
 |---|---|
-| Fundação, migração em modo sombra, radar, base de carreira e e-mail | Implementados |
-| Currículos com gates | Implementados |
-| Candidatura assistida, perguntas no painel e perfil e candidatura na Gupy | Implementados |
-| Envio automático por política (formulários de ATS) | Em desenvolvimento |
-| Corte da migração (o CareerBounty passa a ser o escritor oficial) | Pendente |
+| Fundação, painel, radar, base de carreira e e-mail | Pronto |
+| Currículos com gates | Pronto |
+| Candidatura assistida, perguntas no painel e perfil e candidatura na Gupy | Pronto |
+| Envio automático por política (Greenhouse, Lever, Ashby) | Motor, drivers e kill switch prontos e testados; ainda sem comando que o dispare, e desligado por padrão |
+| Instalação nova e demonstração | Pronto |
+| Migração de um pipeline antigo (modo sombra e corte) | Pronto, para quem já usava uma ferramenta anterior |
 
-Enquanto a migração está em modo sombra, a coleta real e a rotina diária só rodam com `--dry-run`, e o painel recusa
-gravações.
+A promoção para 1.0 depende de um ciclo de uso real. Se algo não bate com o que você vê, abra uma issue.
 
 ## Desenvolvimento <!-- sec:desenvolvimento -->
 
-`npm test` roda a suíte com `node --test`. Cada fatia começa pelo teste que prova o critério de aceite. Veja
-[CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) e [docs/SETUP.md](docs/SETUP.md).
+`npm test` roda a suíte com `node --test`. Cada fatia começa pelo teste que prova o critério de aceite. A CI roda em
+Ubuntu e Windows, com varredura de privacidade e de segredos. Veja [CONTRIBUTING.md](CONTRIBUTING.md),
+[SECURITY.md](SECURITY.md) e [docs/SETUP.md](docs/SETUP.md).
 
 ## Licença <!-- sec:licenca -->
 

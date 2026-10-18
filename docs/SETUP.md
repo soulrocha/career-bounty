@@ -11,16 +11,15 @@ do processamento/renderização, conectores, envio de candidaturas e publicaçã
 
 ## Estado desta preparação
 
-As fatias F0 a F7 estão integralmente implementadas: fundação e pacote público, migração em modo sombra
-com ferramenta segura de corte (`migrate --corte`), radar e fontes, leitura de e-mail, base de carreira,
-currículos com gates, candidatura assistida (inclusive perfil e candidatura na Gupy) e envio automático
-por política com drivers (Greenhouse, Lever, Ashby), kill switch e auditoria de decisões.
+As fatias F0 a F7 estão implementadas: fundação e pacote público, instalação nova e demonstração, migração em modo sombra
+com ferramenta segura de corte (`migrate --corte`), radar e fontes, leitura de e-mail, base de carreira, currículos com
+gates, candidatura assistida (inclusive perfil e candidatura na Gupy) e o motor de envio automático por política com
+drivers (Greenhouse, Lever, Ashby), kill switch e auditoria de decisões. O motor ainda não tem comando que o dispare.
 
 Execute `npm test` com Node >=20 para verificar a base. A CI roda Node 20 em Windows e Ubuntu.
 
-Para sair do modo sombra com segurança, utilize `node bin/career-bounty.mjs migrate --corte --confirmar-corte`
-após verificar que `verify` acusa diff zero. O roteiro completo de prontidão operacional e primeira
-execução está documentado em [PRONTIDAO.md](PRONTIDAO.md).
+O roteiro de primeira execução, para instalação nova ou para quem traz um pipeline antigo, está em
+[PRONTIDAO.md](PRONTIDAO.md).
 
 ## Configuração e uso
 
@@ -87,8 +86,6 @@ Diagnóstico completo: `node bin/career-bounty.mjs doctor`.
 - A sincronização da pasta privada entre máquinas não está configurada por este setup.
 - O corte definitivo exige cinco dias úteis reais com diff zero, teste de escrita
   em dados sintéticos e decisão explícita de congelar o escritor anterior.
-- A publicação (F0.9) é manual e continua pendente: F0.2 a F0.8, F0.10 e F0.11 estão implementadas
-  na branch `feat/F0-fundacao`; falta a auditoria do histórico, a revisão dos textos que citam
-  ferramentas pessoais (este arquivo e `CLAUDE.md`) e a decisão de tornar o repositório público.
+- A publicação do repositório e a primeira versão (0.2.0) são manuais e ficam a cargo de quem mantém o projeto.
 - O setup global de skills não foi executado; o comando citado nas regras não
   está disponível no catálogo desta sessão.
