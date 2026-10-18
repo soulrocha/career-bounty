@@ -3,6 +3,19 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Versionamento semântico; antes da 1.0,
 mudanças de comportamento podem acontecer entre versões menores.
 
+## [Unreleased]
+
+### Adicionado
+
+- **F9.1 — Contatos com Recrutadores:**
+  - Registro de interações e contatos avulsos (`contato registrar`).
+  - Projeção pura com ordenação cronológica e agrupamento por vaga e pessoa (`projectContatos`).
+  - Associação de contatos avulsos a vagas (`contato vincular`).
+  - Listagem com filtros por vaga e por contatos ativos (`contato listar`).
+  - Sugestão de respostas seguras via LLM gravando rascunho em outbox sem envio automático (`contato sugerir`).
+  - Motor de mascaramento estrito de PII para telefones e e-mails (`core/privacy/mask.mjs`).
+  - Endpoint HTTP local autenticado: `GET /api/contatos` com mascaramento anti-vazamento.
+
 ## [0.2.0] - 2026-10-18
 
 Primeira versão para uso real.

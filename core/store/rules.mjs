@@ -81,3 +81,61 @@ export const aplicadaDe = job => Boolean(job.candidatura_usuario?.aplicada) || C
   || Boolean(job.candidatura_portal?.aplicada) || Boolean(job.candidatura_herdada?.aplicada) || Boolean(job.historico) || temComprovante(job);
 
 export const descartadaDe = job => Boolean(job.descarte_usuario?.descartada);
+
+export const CANAIS_CONTATO = new Set(['email', 'whatsapp', 'linkedin', 'telefone', 'outro']);
+export const DIRECOES_CONTATO = new Set(['recebido', 'enviado']);
+
+export function validarContatoRegistrado(dados, nowTs) {
+  if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
+    return 'Dados do contato inválidos.';
+  }
+  if (!CANAIS_CONTATO.has(dados.canal)) {
+    return `Canal inválido; use um dos seguintes: ${[...CANAIS_CONTATO].join(', ')}.`;
+  }
+  if (!DIRECOES_CONTATO.has(dados.direcao)) {
+    return 'Direção inválida; use "recebido" ou "enviado".';
+  }
+  if (typeof dados.resumo !== 'string' || !dados.resumo.trim()) {
+    return 'Resumo obrigatório do contato não informado.';
+  }
+  if (dados.resumo.length > 500) {
+    return 'Resumo excede o limite de 500 caracteres.';
+  }
+  if (!isoDate(dados.data)) {
+    return 'Data do contato inválida; use AAAA-MM-DD.';
+  }
+  if (dados.data > localDay(nowTs)) {
+    return 'O contato não pode ter data futura.';
+  }
+  if (dados.pessoa !== undefined && dados.pessoa !== null) {
+    if (typeof dados.pessoa !== 'object' || Array.isArray(dados.pessoa)) {
+      return 'Campo pessoa deve ser um objeto.';
+    }
+  }
+  if (dados.proxima_etapa !== undefined && dados.proxima_etapa !== null) {
+    if (typeof dados.proxima_etapa !== 'object' || Array.isArray(dados.proxima_etapa)) {
+      return 'Próxima etapa deve ser um objeto.';
+    }
+    if (typeof dados.proxima_etapa.texto !== 'string' || !dados.proxima_etapa.texto.trim()) {
+      return 'Texto da próxima etapa é obrigatório quando o campo for informado.';
+    }
+    if (dados.proxima_etapa.data && !isoDate(dados.proxima_etapa.data)) {
+      return 'Data da próxima etapa inválida; use AAAA-MM-DD.';
+    }
+  }
+  return null;
+}
+
+export function validarContatoVinculado(dados) {
+  if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
+    return 'Dados de vinculação inválidos.';
+  }
+  if (typeof dados.contato_id !== 'string' || !dados.contato_id.trim()) {
+    return 'ID do contato obrigatório.';
+  }
+  if (typeof dados.vaga_id !== 'string' || !dados.vaga_id.trim()) {
+    return 'ID da vaga obrigatório.';
+  }
+  return null;
+}
+
