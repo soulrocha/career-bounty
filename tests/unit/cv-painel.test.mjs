@@ -22,7 +22,7 @@ async function domDe(html) {
   try {
     const arquivo = path.join(dir, 'painel.html');
     await writeFile(arquivo, html, 'utf8');
-    const args = ['--headless=new', '--disable-gpu', '--no-first-run', '--disable-extensions', `--user-data-dir=${path.join(dir, 'perfil')}`, '--dump-dom', pathToFileURL(arquivo).href];
+    const args = ['--headless=new', '--edge-skip-compat-layer-relaunch', '--disable-gpu', '--no-first-run', '--disable-extensions', `--user-data-dir=${path.join(dir, 'perfil')}`, '--dump-dom', pathToFileURL(arquivo).href];
     if (process.platform === 'linux') args.unshift('--no-sandbox');
     return spawnSync(navegador, args, { encoding: 'utf8', timeout: 60000, windowsHide: true }).stdout;
   } finally { await rm(dir, { recursive: true, force: true, maxRetries: 3 }).catch(() => {}); }

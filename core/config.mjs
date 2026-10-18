@@ -12,6 +12,8 @@ export function defaultSettings() {
     portais_extras: {},
     // Portais que não recebem CV por vaga (o perfil do portal é o documento): rótulos de portalCandidatura.
     cv_skip_portals: ['gupy'],
+    // Candidatura assistida na Gupy (F6.14): desligada até a pessoa aceitar o risco no config pessoal; trava diária.
+    gupy: { aceite_termos: false, max_por_dia: 5 },
     manifesto_kb: null,
     identidade: null,
     ai_memory: { url: null },
@@ -65,6 +67,13 @@ export function validateSettings(raw) {
   if (raw.cv_skip_portals !== undefined) {
     if (!Array.isArray(raw.cv_skip_portals) || raw.cv_skip_portals.some(p => typeof p !== 'string' || !p.trim())) throw invalid('cv_skip_portals', 'deve ser lista de rótulos de portal (ex.: ["gupy"])');
     settings.cv_skip_portals = raw.cv_skip_portals;
+  }
+  if (raw.gupy !== undefined) {
+    const gupy = section(raw.gupy, 'gupy');
+    if (Object.keys(gupy).some(k => !['aceite_termos', 'max_por_dia'].includes(k))) throw invalid('gupy', 'aceita só aceite_termos e max_por_dia');
+    if (gupy.aceite_termos !== undefined && typeof gupy.aceite_termos !== 'boolean') throw invalid('gupy.aceite_termos', 'deve ser true ou false');
+    if (gupy.max_por_dia !== undefined && (!Number.isInteger(gupy.max_por_dia) || gupy.max_por_dia < 1 || gupy.max_por_dia > 20)) throw invalid('gupy.max_por_dia', 'deve ser inteiro de 1 a 20');
+    settings.gupy = { ...settings.gupy, ...gupy };
   }
   settings.manifesto_kb = optionalString(raw.manifesto_kb, 'manifesto_kb', { absolute: true });
   settings.identidade = optionalString(raw.identidade, 'identidade', { absolute: true });

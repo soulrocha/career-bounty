@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Job Application for Product Manager at Empresa 01</title></head>
+<body>
+<main id="application">
+  <h1>Product Manager</h1>
+  <form id="application_form" action="#confirmacao" method="post">
+    <div class="field"><label for="first_name">First Name *</label><input id="first_name" name="job_application[first_name]" required value="Valor pre-existente"></div>
+    <div class="field"><label for="last_name">Last Name *</label><input id="last_name" name="job_application[last_name]" required></div>
+    <div class="field"><label for="email">Email *</label><input id="email" type="email" name="job_application[email]" required></div>
+    <div class="field"><label for="phone">Phone</label><input id="phone" type="tel" name="job_application[phone]"></div>
+    <div class="field"><label for="resume">Resume/CV *</label><input id="resume" type="file" name="job_application[resume]" required style="display:none"><button type="button">Attach</button></div>
+    <div class="field"><label for="linkedin">LinkedIn Profile</label><input id="linkedin" name="job_application[answers][0][text_value]"></div>
+    <div class="field"><label for="salary">What are your salary expectations? *</label><input id="salary" name="job_application[answers][1][text_value]" required></div>
+    <div class="field"><label for="auth">Are you legally authorized to work in Brazil? *</label>
+      <select id="auth" name="job_application[answers][2][boolean_value]" required><option value="">--</option><option value="1">Yes</option><option value="0">No</option></select></div>
+    <fieldset><legend>Gender (voluntary)</legend>
+      <label><input type="radio" name="gender" value="f"> Female</label>
+      <label><input type="radio" name="gender" value="m"> Male</label>
+      <label><input type="radio" name="gender" value="x"> Decline to self-identify</label>
+    </fieldset>
+    <input type="hidden" name="token" value="segredo">
+    <input name="website_hp" id="website_hp" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px">
+    <div style="display:none"><label for="oculto">Campo oculto</label><input id="oculto" name="oculto"></div>
+    <button type="submit" id="submit_app">Submit Application</button>
+  </form>
+</main>
+</body></html>

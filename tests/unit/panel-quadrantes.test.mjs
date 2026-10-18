@@ -95,9 +95,9 @@ test('a aba Quadrantes renderiza no HTML gerado, com estados e sem recurso exter
     const a = await ambiente(t, { modo });
     const pagina = a.pagina;
     const abas = [...pagina.matchAll(/<button[^>]*role="tab"[^>]*>([^<]*)<\/button>/g)].map(m => m[1]);
-    assert.deepEqual(abas, ['Vagas', 'Quadrantes'], modo);
+    assert.deepEqual(abas, ['Vagas', 'Quadrantes', 'Perguntas', 'Fila'], modo);
     assert.match(pagina, /<nav id="abas-painel" aria-label="Abas do painel">/);
-    assert.match(pagina, /<section id="quadrantes-painel" role="tabpanel" aria-labelledby="aba-quadrantes" hidden>/);
+    assert.match(pagina, /<section id="quadrantes-painel" role="tabpanel" aria-labelledby="aba-quadrantes" data-aba-painel="quadrantes" hidden>/);
     assert.match(pagina, /fetch\('\/api\/quadrantes'/);
     for (const texto of ['Carregando quadrantes', 'Não foi possível carregar', 'Nada para mostrar ainda', 'Sem permissão', 'Tentar de novo']) assert.ok(pagina.includes(texto), texto);
     const injetado = pagina.slice(pagina.indexOf('<nav id="abas-painel"'), pagina.indexOf('</nav>') + 6) + pagina.slice(pagina.indexOf('<section id="quadrantes-painel"'), pagina.indexOf('</section>', pagina.indexOf('<section id="quadrantes-painel"')) + 10);

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Empresa 02 - Engineering Manager</title></head>
+<body>
+<form class="application-form" action="#confirmacao" method="post">
+  <ul>
+    <li class="application-question"><div class="application-label">Resume/CV<span class="required">✱</span></div><input type="file" name="resume" required></li>
+    <li class="application-question"><div class="application-label">Full name<span class="required">✱</span></div><input type="text" name="name" required></li>
+    <li class="application-question"><div class="application-label">Email<span class="required">✱</span></div><input type="email" name="email" required></li>
+    <li class="application-question"><div class="application-label">Current company</div><input type="text" name="org"></li>
+    <li class="application-question"><div class="application-label">LinkedIn URL</div><input type="text" name="urls[LinkedIn]"></li>
+    <li class="application-question"><div class="application-label">How did you hear about this job?</div>
+      <select name="source"><option value="">Select...</option><option>LinkedIn</option><option>Company website</option><option>Referral</option></select></li>
+    <li class="application-question"><div class="application-label">Additional information</div><textarea name="comments" placeholder="Add a cover letter or anything else you want to share."></textarea></li>
+    <li><label><input type="checkbox" name="consent" required> I agree to the privacy notice</label></li>
+  </ul>
+  <button type="submit" class="postings-btn template-btn-submit">Submit application</button>
+</form>
+</body></html>

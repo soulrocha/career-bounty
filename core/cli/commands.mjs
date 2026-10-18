@@ -17,7 +17,8 @@ import { dailyRun } from '../schedule/dailyRun.mjs';
 import { buildTaskXml } from '../schedule/taskXml.mjs';
 import { runDoctor } from '../doctor/index.mjs';
 import { validatePlugin } from '../plugin/validate.mjs';
-import { planApply } from '../apply/plan.mjs';
+import { aplicarCommands } from './aplicar.mjs';
+import { gupyCommands } from './gupy.mjs';
 import { ensureSkeleton, resolveDataRoot } from '../store/dataRoot.mjs';
 import { formatFindings, scanMessageFile, scanStaged, scanTracked } from '../privacy/scan.mjs';
 import { buildDenylist, loadPrivacyContext } from '../privacy/context.mjs';
@@ -69,6 +70,8 @@ export const commandNames = () => [...legacyCommandNames, ...Object.keys(command
 export const commands = {
   ...kbCommands,
   ...cvCommands,
+  ...aplicarCommands,
+  ...gupyCommands,
   ...entrevistaCommands,
   ...mentorCommands,
   ...vaultCommands,
@@ -232,10 +235,5 @@ export const commands = {
   },
   async help() {
     return { result: { commands: commandNames() } };
-  },
-  async apply(rest, { parseFlags }) {
-    if (rest[0] !== 'plan') throw new Error(`Subcomando apply desconhecido: ${rest[0] ?? ''}`.trim());
-    parseFlags(rest.slice(1), { allowed: [] });
-    return { result: planApply(await loadSettings()) };
   },
 };

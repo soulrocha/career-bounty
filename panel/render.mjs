@@ -3,7 +3,7 @@
 import { roleKey } from '../core/dedup/keys.mjs';
 import { urlsplit } from '../core/dedup/pyurl.mjs';
 import { resolveTemplate } from './template.mjs';
-import { cvDoPainel, lerManifesto } from '../core/cv/artifacts.mjs';
+import { cvsDoPainel } from '../core/cv/artifacts.mjs';
 
 const escapeHtml = text => String(text ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -24,16 +24,7 @@ export function montarDados(projecao, { perfil = {}, cobertura = [], fila = 0, c
   return { vagas, historico: vagas.filter(emHistorico), coverage: cobertura, queue: fila, perfil, cvs };
 }
 
-// CV de cada vaga para o painel (F5.8): o aprovado mais novo, o enviado e o motivo do bloqueio, lidos dos manifestos.
-export async function cvsDoPainel(projecao, dataRoot) {
-  const cvs = {};
-  for (const vaga of projecao.vagas ?? []) {
-    let manifesto = null;
-    try { manifesto = await lerManifesto(dataRoot, vaga.id); } catch { manifesto = null; }
-    if (manifesto) cvs[vaga.id] = cvDoPainel(manifesto);
-  }
-  return cvs;
-}
+export { cvsDoPainel };
 
 export function renderPainel(projecao, { template, perfil = {}, cobertura = [], fila = 0, cvs = {}, hoje } = {}) {
   if (typeof template !== 'string' || !template.includes('__DATA__')) throw new Error('Template do painel inválido: falta o marcador __DATA__.');
