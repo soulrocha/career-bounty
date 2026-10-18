@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { noLinks, privateDestination, within } from './migration/paths.mjs';
 import { resolveDataRoot } from './store/dataRoot.mjs';
+import { MODALIDADES, modalidadeDe } from './score/constraints.mjs';
 
 const ENVIO_PADROES = ['parar_antes_de_enviar', 'confirmar_lote'];
 
@@ -151,6 +152,20 @@ export function validateSettings(raw) {
       if (c[key] === undefined) continue;
       if (!Array.isArray(c[key]) || c[key].some(item => typeof item !== 'string')) throw invalid(`radar.criterios.${key}`, 'deve ser lista de textos');
       out[key] = [...c[key]];
+    }
+    if (c.modalidades !== undefined) {
+      const lista = Array.isArray(c.modalidades) ? c.modalidades.map(m => (typeof m === 'string' ? modalidadeDe(m) : null)) : null;
+      if (!lista?.length || lista.includes(null)) {
+        throw invalid('radar.criterios.modalidades', `deve ser lista não vazia com ${MODALIDADES.join(', ')}`);
+      }
+      out.modalidades = [...new Set(lista)];
+    }
+    if (c.modalidade_preferida !== undefined) {
+      const preferida = typeof c.modalidade_preferida === 'string' ? modalidadeDe(c.modalidade_preferida) : null;
+      if (!preferida || (out.modalidades && !out.modalidades.includes(preferida))) {
+        throw invalid('radar.criterios.modalidade_preferida', 'deve ser uma das modalidades aceitas');
+      }
+      out.modalidade_preferida = preferida;
     }
     if (c.corte_prescore !== undefined) {
       if (typeof c.corte_prescore !== 'number' || c.corte_prescore < 0 || c.corte_prescore > 1) throw invalid('radar.criterios.corte_prescore', 'deve ser número entre 0 e 1');

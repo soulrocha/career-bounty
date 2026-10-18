@@ -7,7 +7,7 @@ import { runDoctor } from '../../core/doctor/index.mjs';
 
 const healthyDeps = { nodeVersion: '22.1.0', platform: 'linux', hooksPath: () => '.githooks', stat: async () => ({ mode: 0o40700 }) };
 
-async function ready(t, config = {}) {
+async function ready(t, config = { radar: { criterios: { modalidades: ['remoto'], modalidade_preferida: 'remoto' } } }) {
   const dataRoot = await tempDir(t);
   await writeFile(path.join(dataRoot, 'config.yml'), JSON.stringify(config));
   await mkdir(path.join(dataRoot, 'secrets'));
@@ -167,4 +167,13 @@ test('doctor recusa flag desconhecida', async t => {
   const result = run(['doctor', '--nao-existe', '--json'], { dataRoot: await ready(t) });
   assert.equal(result.status, 2);
   assert.match(result.json.error, /--nao-existe/);
+});
+
+test('sem preferência de modalidade definida, o doctor avisa para rodar o /setup', async t => {
+  const dataRoot = await ready(t, {});
+  const report = await runDoctor({ dataRoot, ...healthyDeps });
+  assert.equal(check(report, 'preferencias').status, 'aviso');
+  assert.match(check(report, 'preferencias').mensagem, /preferencias|\/setup/);
+  const ok = await runDoctor({ dataRoot: await ready(t), ...healthyDeps });
+  assert.equal(check(ok, 'preferencias').status, 'ok');
 });

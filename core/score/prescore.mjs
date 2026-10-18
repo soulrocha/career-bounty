@@ -3,6 +3,7 @@
 // só é marcado como não comprovado: o pré-score nunca o dá como atendido.
 import { fold } from '../dedup/keys.mjs';
 import { hardFilter } from './hard.mjs';
+import { modalidadeDe } from './constraints.mjs';
 
 export const CORTE_PADRAO = 0.35;
 
@@ -28,7 +29,10 @@ export function preScore(vaga, criterios = {}) {
     if (cargo.includes(fold(negativa))) { score -= 0.5; motivos.push(`Palavra negativa no cargo: ${negativa}`); }
     else if (texto.includes(fold(negativa))) { score -= 0.2; motivos.push(`Palavra negativa na descrição: ${negativa}`); }
   }
-  if (['remoto', 'hibrido'].includes(fold(vaga.modalidade))) score += 0.1;
+  // A modalidade preferida da pessoa vale mais que as outras aceitas; sem preferência, remoto e híbrido valem igual.
+  const modalidade = modalidadeDe(vaga.modalidade);
+  if (criterios.modalidade_preferida && modalidade === criterios.modalidade_preferida) { score += 0.2; motivos.push(`Modalidade preferida: ${modalidade}`); }
+  else if (['remoto', 'hibrido'].includes(modalidade)) score += 0.1;
   const criticos = CRITICOS.filter(([, ...padroes]) => padroes.some(padrao => padrao.test(texto))).map(([tipo]) => ({ tipo, status: 'nao_comprovado' }));
   return { pre_score: Math.round(Math.min(1, Math.max(0, score)) * 100) / 100, motivos, criticos };
 }

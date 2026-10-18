@@ -5,6 +5,25 @@ import { fold, pyText } from '../dedup/keys.mjs';
 export const MOTIVO_FORA_DA_REGIAO = 'Presença fora da região presencial configurada';
 const UNKNOWN_MODES = ['desconhecida', 'nao informado', 'a confirmar', 'pendente'];
 
+export const MODALIDADES = ['remoto', 'hibrido', 'presencial'];
+
+// Modalidade normalizada ('remoto' | 'hibrido' | 'presencial') ou null quando o texto não diz.
+export function modalidadeDe(texto) {
+  const mode = fold(texto);
+  if (mode.includes('remot') || mode.includes('remote')) return 'remoto';
+  if (mode.includes('hibrid') || mode.includes('hybrid')) return 'hibrido';
+  if (mode.includes('presencial') || mode.includes('onsite') || mode.includes('on-site')) return 'presencial';
+  return null;
+}
+
+// Cidade da região citada no título como palavra inteira ("... | RJ, SP ou BH"): a vaga aceita essa cidade
+// mesmo quando o campo local traz outra. Palavra inteira para a sigla não casar dentro de outra palavra.
+const escapar = texto => texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const regiaoNoTitulo = (cargo, metro) => {
+  const titulo = fold(cargo);
+  return metro.some(place => place && new RegExp(`(^|[^\\p{L}\\p{N}])${escapar(place)}([^\\p{L}\\p{N}]|$)`, 'u').test(titulo));
+};
+
 // Salário "numérico" como no legado: int ou float (booleano do Python também conta, mas não ocorre no pipeline).
 const isNumber = value => typeof value === 'number';
 
@@ -17,7 +36,7 @@ export function constraints(job, config) {
   const regime = fold(j.regime);
   const result = { situacao: 'pendente', motivos: [], salario: j.salario ?? null, piso: null };
   const onsite = mode.includes('presencial') || mode.includes('onsite');
-  if ((mode.includes('hibrid') || mode.includes('hybrid') || onsite) && loc && !metro.some(place => loc.includes(place))) {
+  if ((mode.includes('hibrid') || mode.includes('hybrid') || onsite) && loc && !metro.some(place => loc.includes(place)) && !regiaoNoTitulo(j.cargo, metro)) {
     result.situacao = 'incompativel';
     result.motivos.push(MOTIVO_FORA_DA_REGIAO);
     return result;
