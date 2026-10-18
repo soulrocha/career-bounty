@@ -27,7 +27,7 @@ test('migrate --corte: recusa corte se faltar confirmação e exige diff zero', 
 
   // 1. Sem migração prévia: falha
   await assert.rejects(
-    () => cutoverMigration({ dataRoot: f.dataRoot }),
+    () => cutoverMigration({ careerRoot: f.careerRoot, dataRoot: f.dataRoot }),
     /execute a migração em sombra primeiro/
   );
 
@@ -36,7 +36,7 @@ test('migrate --corte: recusa corte se faltar confirmação e exige diff zero', 
 
   // 3. Sem flag de confirmação: recusa
   await assert.rejects(
-    () => cutoverMigration({ dataRoot: f.dataRoot, confirmo: false }),
+    () => cutoverMigration({ careerRoot: f.careerRoot, dataRoot: f.dataRoot, confirmo: false }),
     /--confirmar-corte/
   );
 
@@ -44,14 +44,14 @@ test('migrate --corte: recusa corte se faltar confirmação e exige diff zero', 
   const projPath = path.join(f.dataRoot, 'projections', 'pipeline-vagas.json');
   await writeFile(projPath, JSON.stringify({ ...f.pipeline, versao: 999 }));
   await assert.rejects(
-    () => cutoverMigration({ dataRoot: f.dataRoot, confirmo: true }),
+    () => cutoverMigration({ careerRoot: f.careerRoot, dataRoot: f.dataRoot, confirmo: true }),
     /diferenças entre a projeção sombra e o legado/
   );
 
   // 5. Restaurando paridade estrita e confirmando: corte é realizado
   await writeFile(projPath, JSON.stringify(f.pipeline));
   const ts = '2026-10-18T10:00:00.000Z';
-  const resultado = await cutoverMigration({ dataRoot: f.dataRoot, confirmo: true, now: ts });
+  const resultado = await cutoverMigration({ careerRoot: f.careerRoot, dataRoot: f.dataRoot, confirmo: true, now: ts });
   assert.equal(resultado.ok, true);
   assert.equal(resultado.mode, 'ativo');
 
@@ -61,7 +61,26 @@ test('migrate --corte: recusa corte se faltar confirmação e exige diff zero', 
   assert.equal(estadoFinal.cortadoEm, ts);
 
   // 6. Chamada subsequente é idempotente
-  const reCorte = await cutoverMigration({ dataRoot: f.dataRoot, confirmo: true });
+  const reCorte = await cutoverMigration({ careerRoot: f.careerRoot, dataRoot: f.dataRoot, confirmo: true });
   assert.equal(reCorte.ok, true);
   assert.equal(reCorte.mode, 'ativo');
+});
+
+test('migrate --corte recusa quando o legado mudou depois da importação em sombra', async t => {
+  const f = await fixture(t);
+  await migrateLegacy(f);
+  const arquivo = path.join(f.careerRoot, 'pipeline-vagas.json');
+  const novo = { ...f.pipeline, vagas: [...f.pipeline.vagas, { id: 'vaga-nova', status: 'curada', extra: null }] };
+  await writeFile(arquivo, JSON.stringify(novo));
+  await assert.rejects(() => cutoverMigration({ careerRoot: f.careerRoot, dataRoot: f.dataRoot, confirmo: true }), /legado mudou depois da última importação/);
+  assert.equal(JSON.parse(await readFile(path.join(f.dataRoot, 'state', 'migration.json'), 'utf8')).mode, 'shadow', 'o estado não mudou');
+  await assert.rejects(() => cutoverMigration({ dataRoot: f.dataRoot, confirmo: true }), /pasta do legado/);
+});
+
+test('migrate --corte só parte do modo sombra', async t => {
+  const f = await fixture(t);
+  await migrateLegacy(f);
+  const estado = path.join(f.dataRoot, 'state', 'migration.json');
+  await writeFile(estado, JSON.stringify({ ...JSON.parse(await readFile(estado, 'utf8')), mode: 'qualquer' }));
+  await assert.rejects(() => cutoverMigration({ careerRoot: f.careerRoot, dataRoot: f.dataRoot, confirmo: true }), /Modo de migração inesperado/);
 });

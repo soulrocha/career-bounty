@@ -78,6 +78,30 @@ export async function runDoctor({
   if (settings.fontes.linkedin_guest.ativo) add('linkedin_guest', 'aviso', 'ATENÇÃO: coletor guest do LinkedIn ligado; você respondeu pelos termos de uso do site.');
   else add('linkedin_guest', 'ok', 'Coletor guest do LinkedIn desligado.');
 
+  const migracaoPath = path.join(dataRoot, 'state', 'migration.json');
+  try {
+    const migracao = JSON.parse(await readFile(migracaoPath, 'utf8'));
+    if (migracao.mode === 'ativo') {
+      add('migracao', 'ok', 'Modo ativo: migração concluída (corte realizado).');
+    } else {
+      add('migracao', 'aviso', 'Modo sombra ativo: use migrate --verify para conferir paridade e migrate --corte para ativar.');
+    }
+  } catch {
+    add('migracao', 'ok', 'Sem migração do legado (instalação nova): a gravação já é a definitiva.');
+  }
+
+  const perfilCvPath = path.join(dataRoot, 'cv', 'perfil.json');
+  try {
+    const perfil = JSON.parse(await readFile(perfilCvPath, 'utf8'));
+    if (perfil && (perfil.resumo || (Array.isArray(perfil.experiencias) && perfil.experiencias.length > 0))) {
+      add('cv_perfil', 'ok', 'Perfil de CV preenchido (cv/perfil.json presente).');
+    } else {
+      add('cv_perfil', 'aviso', 'cv/perfil.json presente mas sem resumo ou experiências: preencha conforme docs/CV.md.');
+    }
+  } catch {
+    add('cv_perfil', 'aviso', 'Perfil de CV ausente: crie cv/perfil.json com seus dados conforme docs/CV.md (necessário para cv gerar).');
+  }
+
   add('conector_gmail', 'ok', 'informativo: o conector Gmail só pode ser conferido dentro da sessão do Claude (spike F3.1).');
 
   return { ok: checks.every(c => c.status !== 'falha'), dataRoot, checks, padroes: describeDefaults(settings) };

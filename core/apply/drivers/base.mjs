@@ -14,21 +14,37 @@ export const TEMPO_MAX_MS = 120_000;
 const espera = ms => new Promise(r => setTimeout(r, ms));
 const bloqueado = (motivo, extra = {}) => ({ estado: 'blocked', motivo, ...extra });
 
-// portal: { nome, sucesso: RegExp, erro: RegExp }. cv: { caminho, sha256 }. antesDoClique: async () => void (grava "incerta").
-export async function executarDriver({ portal, url, respostas, empresa = null, hoje, cv, dryRun = true, timeoutMs = TEMPO_MAX_MS, navegador, antesDoClique = async () => {}, abrir = abrirNavegador }) {
-  if (!/^https?:\/\//.test(String(url))) return bloqueado('url_invalida');
-  if (cv) {
-    const sha = createHash('sha256').update(await readFile(cv.caminho)).digest('hex');
-    if (sha !== cv.sha256) return bloqueado('pdf_diferente', { detalhe: 'o PDF no disco não é o aprovado (hash diferente)' });
-  }
+// Origem (https://host) permitida para o portal; URL com usuário/senha, outro host ou outro esquema não passa.
+export function origemPermitida(portal, url) {
+  let u;
+  try { u = new URL(String(url)); } catch { return false; }
+  if (u.username || u.password) return false;
+  return Array.isArray(portal?.origens) && portal.origens.includes(u.origin);
+}
+
+const ordenar = v => (Array.isArray(v) ? v.map(ordenar) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map(k => [k, ordenar(v[k])])) : v);
+// Hash estável (chaves em ordem) das respostas que o driver vai usar: é o que a aprovação da política amarra.
+export const hashRespostas = respostas => createHash('sha256').update(JSON.stringify(ordenar(respostas ?? null))).digest('hex');
+const hashArquivo = async caminho => createHash('sha256').update(await readFile(caminho)).digest('hex');
+
+// portal: { nome, origens, sucesso: RegExp, erro: RegExp }. cv: { caminho, sha256 }.
+// antesDoClique({ hashPdf, hashRespostas }): última checagem do chamador (kill switch, consumo da aprovação); devolver { bloquear } impede o clique.
+export async function executarDriver({ portal, url, respostas, empresa = null, hoje, cv, dryRun = true, timeoutMs = TEMPO_MAX_MS, navegador, antesDoClique = async () => undefined, abrir = abrirNavegador }) {
+  if (!origemPermitida(portal, url)) return bloqueado('origem_nao_permitida', { detalhe: 'só https nas origens do portal, sem credencial na URL' });
+  if (cv && (await hashArquivo(cv.caminho)) !== cv.sha256) return bloqueado('pdf_diferente', { detalhe: 'o PDF no disco não é o aprovado (hash diferente)' });
   const browser = await abrir(navegador ? { navegador } : {});
   let clicou = false;
   const trabalho = (async () => {
     const p = await browser.novaPagina();
     await p.ir(url);
+    const origemAtual = async () => String(await p.avaliar('location.origin'));
+    if (!portal.origens.includes(await origemAtual())) return bloqueado('origem_inesperada', { detalhe: 'a página abriu fora das origens do portal' });
+    const textoDaPagina = async () => String(await p.avaliar('document.body ? document.body.innerText : ""'));
     const extracao = normalizarExtracao(await p.avaliar(SCRIPT_EXTRATOR));
     if (bloqueadaPorHumano(extracao)) return bloqueado(Object.entries(extracao.bloqueios).filter(([, v]) => v).map(([k]) => k).join(','));
     if (!extracao.campos.length) return bloqueado('dom_mudou', { detalhe: 'nenhum campo reconhecido' });
+    // Sucesso só vale se aparecer DEPOIS do clique: texto de confirmação já na página do formulário é suspeito.
+    if (portal.sucesso.test(await textoDaPagina())) return bloqueado('dom_suspeito', { detalhe: 'a página já mostra texto de sucesso antes do envio' });
     const casamento = casarCampos({ extracao, respostas, portal: portal.nome, empresa, hoje });
     if (casamento.desconhecidos.length) return bloqueado('campo_desconhecido', { campos: casamento.desconhecidos.map(c => ({ ref: c.ref, label: c.label, tipo: c.tipo, opcoes: c.opcoes })) });
     const arquivos = casamento.preenchimentos.filter(x => x.tipo === 'file');
@@ -40,7 +56,12 @@ export async function executarDriver({ portal, url, respostas, empresa = null, h
     if (dryRun) return { estado: 'dry_run', preenchidos };
     const botoes = normalizarExtracao(await p.avaliar(SCRIPT_EXTRATOR)).botoes_envio;
     if (botoes.length !== 1) return bloqueado('dom_mudou', { detalhe: `esperado 1 botão de envio, achados ${botoes.length}` });
-    await antesDoClique();
+    if (!portal.origens.includes(await origemAtual())) return bloqueado('origem_inesperada', { detalhe: 'a página saiu das origens do portal antes do clique' });
+    // Reconfere o PDF na hora do clique (o navegador lê o arquivo ao enviar) e deixa o chamador fazer a última checagem.
+    const hashPdf = cv ? await hashArquivo(cv.caminho) : null;
+    if (cv && hashPdf !== cv.sha256) return bloqueado('pdf_diferente', { detalhe: 'o PDF mudou depois de aprovado' });
+    const pre = await antesDoClique({ hashPdf, hashRespostas: hashRespostas(respostas) });
+    if (pre?.bloquear) return bloqueado(pre.bloquear, pre.detalhe ? { detalhe: pre.detalhe } : {});
     clicou = true;
     const clique = await p.avaliar(scriptDeEnvio('driver'));
     if (clique?.erro) return { estado: 'incerta', motivo: clique.erro };
@@ -48,10 +69,14 @@ export async function executarDriver({ portal, url, respostas, empresa = null, h
     for (let i = 0; i < 40; i++) {
       await espera(250);
       let texto = '';
-      try { texto = String(await p.avaliar('document.body ? document.body.innerText : ""')); } catch { continue; }
+      try { texto = await textoDaPagina(); } catch { continue; }
       if (portal.erro.test(texto)) return { estado: 'falhou', motivo: 'o portal recusou o envio', detalhe: texto.match(portal.erro)[0] };
       const m = portal.sucesso.exec(texto);
-      if (m) return { estado: 'enviada', comprovante: { texto: m[0], url: await p.avaliar('location.origin'), data: new Date().toISOString(), ...(cv ? { pdf_sha256: cv.sha256 } : {}) }, preenchidos };
+      if (m) {
+        const origem = await origemAtual();
+        if (!portal.origens.includes(origem)) return { estado: 'incerta', motivo: 'depois do clique a página foi para fora do portal; confirme pelo e-mail' };
+        return { estado: 'enviada', comprovante: { texto: m[0], url: origem, data: new Date().toISOString(), ...(cv ? { pdf_sha256: cv.sha256 } : {}) }, preenchidos };
+      }
     }
     return { estado: 'enviada_sem_comprovante', preenchidos };
   })();

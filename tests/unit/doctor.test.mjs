@@ -14,6 +14,10 @@ async function ready(t, config = {}) {
   await writeFile(path.join(dataRoot, 'identity.yml'), JSON.stringify({ nome: 'Pessoa Ficticia Teste' }));
   await mkdir(path.join(dataRoot, 'engines', 'career-ops'), { recursive: true });
   await writeFile(path.join(dataRoot, 'engines', 'career-ops', 'package.json'), JSON.stringify({ name: 'career-ops-falso', version: '1.36.0' }));
+  await mkdir(path.join(dataRoot, 'state'), { recursive: true });
+  await writeFile(path.join(dataRoot, 'state', 'migration.json'), JSON.stringify({ mode: 'ativo' }));
+  await mkdir(path.join(dataRoot, 'cv'), { recursive: true });
+  await writeFile(path.join(dataRoot, 'cv', 'perfil.json'), JSON.stringify({ resumo: 'Resumo profissional teste' }));
   return dataRoot;
 }
 const check = (report, id) => report.checks.find(c => c.id === id);
@@ -132,6 +136,31 @@ test('identity.yml ausente ou sem valores avisa e aponta o setup; preenchido fic
   assert.match(ausente.mensagem, /setup/);
   await writeFile(path.join(dataRoot, 'identity.yml'), JSON.stringify({ _instrucao: 'texto', nome: '', email: '' }));
   assert.equal(check(await runDoctor({ dataRoot, ...healthyDeps }), 'identidade').status, 'aviso');
+});
+
+test('migracao: ausente é instalação nova (ok); em sombra avisa o corte; em ativo fica ok', async t => {
+  const dataRoot = await ready(t);
+  assert.equal(check(await runDoctor({ dataRoot, ...healthyDeps }), 'migracao').status, 'ok');
+  await writeFile(path.join(dataRoot, 'state', 'migration.json'), JSON.stringify({ mode: 'shadow' }));
+  const sombra = check(await runDoctor({ dataRoot, ...healthyDeps }), 'migracao');
+  assert.equal(sombra.status, 'aviso');
+  assert.match(sombra.mensagem, /sombra/);
+  await rm(path.join(dataRoot, 'state', 'migration.json'));
+  const ausente = check(await runDoctor({ dataRoot, ...healthyDeps }), 'migracao');
+  assert.equal(ausente.status, 'ok');
+  assert.match(ausente.mensagem, /instalação nova/);
+});
+
+test('cv_perfil: ausente ou sem conteudo avisa; preenchido fica ok', async t => {
+  const dataRoot = await ready(t);
+  assert.equal(check(await runDoctor({ dataRoot, ...healthyDeps }), 'cv_perfil').status, 'ok');
+  await writeFile(path.join(dataRoot, 'cv', 'perfil.json'), JSON.stringify({}));
+  const semConteudo = check(await runDoctor({ dataRoot, ...healthyDeps }), 'cv_perfil');
+  assert.equal(semConteudo.status, 'aviso');
+  await rm(path.join(dataRoot, 'cv', 'perfil.json'));
+  const ausente = check(await runDoctor({ dataRoot, ...healthyDeps }), 'cv_perfil');
+  assert.equal(ausente.status, 'aviso');
+  assert.match(ausente.mensagem, /docs\/CV\.md/);
 });
 
 test('doctor recusa flag desconhecida', async t => {

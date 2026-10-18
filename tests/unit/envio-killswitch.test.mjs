@@ -67,6 +67,7 @@ test('F7.10: orquestrador encadeia kill switch, política, reserva e driver', as
       portal: 'greenhouse',
       aderencia: 'alta',
       rascunhos_llm: 0,
+      respostas_novas_na_rodada: 0,
       cv_gate: 'ok',
       ja_aplicada: false,
       url: 'https://boards.greenhouse.io/exemplo/jobs/123'

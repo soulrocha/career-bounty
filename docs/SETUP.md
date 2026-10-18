@@ -19,7 +19,8 @@ por política com drivers (Greenhouse, Lever, Ashby), kill switch e auditoria de
 Execute `npm test` com Node >=20 para verificar a base. A CI roda Node 20 em Windows e Ubuntu.
 
 Para sair do modo sombra com segurança, utilize `node bin/career-bounty.mjs migrate --corte --confirmar-corte`
-após verificar que `verify` acusa diff zero.
+após verificar que `verify` acusa diff zero. O roteiro completo de prontidão operacional e primeira
+execução está documentado em [PRONTIDAO.md](PRONTIDAO.md).
 
 ## Configuração e uso
 
