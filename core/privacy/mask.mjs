@@ -112,3 +112,63 @@ export function mascararProcesso(processo) {
   return copia;
 }
 
+export function mascararItemHistorico(item) {
+  if (!item || typeof item !== 'object') return item;
+  const copia = { ...item };
+  if (copia.titulo) copia.titulo = mascararTexto(copia.titulo);
+  if (copia.resumo) copia.resumo = mascararTexto(copia.resumo);
+  if (copia.detalhe) copia.detalhe = mascararTexto(copia.detalhe);
+  if (copia.assunto) copia.assunto = mascararTexto(copia.assunto);
+  if (copia.nota) copia.nota = mascararTexto(copia.nota);
+  if (copia.pergunta) copia.pergunta = mascararTexto(copia.pergunta);
+  if (copia.endereco) copia.endereco = mascararTexto(copia.endereco);
+  if (copia.motivo) copia.motivo = mascararTexto(copia.motivo);
+  if (copia.pessoa && typeof copia.pessoa === 'object') {
+    copia.pessoa = {
+      ...copia.pessoa,
+      nome: copia.pessoa.nome ? mascararTexto(copia.pessoa.nome) : null,
+      papel: copia.pessoa.papel ? mascararTexto(copia.pessoa.papel) : null,
+    };
+  }
+  if (copia.proxima_etapa) {
+    if (typeof copia.proxima_etapa === 'string') {
+      copia.proxima_etapa = mascararTexto(copia.proxima_etapa);
+    } else if (typeof copia.proxima_etapa === 'object') {
+      copia.proxima_etapa = {
+        ...copia.proxima_etapa,
+        texto: copia.proxima_etapa.texto ? mascararTexto(copia.proxima_etapa.texto) : null,
+      };
+    }
+  }
+  return copia;
+}
+
+export function mascararVagaHistorico(vaga) {
+  if (!vaga || typeof vaga !== 'object') return vaga;
+  const copia = { ...vaga };
+  if (copia.empresa) copia.empresa = mascararTexto(copia.empresa);
+  if (copia.cargo) copia.cargo = mascararTexto(copia.cargo);
+  if (Array.isArray(copia.linha_do_tempo)) {
+    copia.linha_do_tempo = copia.linha_do_tempo.map(mascararItemHistorico);
+  }
+  if (Array.isArray(copia.itens)) {
+    copia.itens = copia.itens.map(mascararItemHistorico);
+  }
+  return copia;
+}
+
+export function mascararHistorico(historicoOuEnvelope) {
+  if (!historicoOuEnvelope) return historicoOuEnvelope;
+  if (Array.isArray(historicoOuEnvelope)) {
+    return historicoOuEnvelope.map(mascararVagaHistorico);
+  }
+  if (typeof historicoOuEnvelope === 'object' && Array.isArray(historicoOuEnvelope.historico)) {
+    return {
+      ...historicoOuEnvelope,
+      historico: historicoOuEnvelope.historico.map(mascararVagaHistorico),
+    };
+  }
+  return historicoOuEnvelope;
+}
+
+

@@ -21,7 +21,8 @@ import { arquivosServiveis, congelarCvEnviado, lerManifesto } from '../core/cv/a
 import { localDay } from '../core/store/schema.mjs';
 import { projectContatos } from '../core/store/projections/contatos.mjs';
 import { projectProcessos } from '../core/store/projections/processos.mjs';
-import { mascararContato, mascararProcesso, mascararTexto } from '../core/privacy/mask.mjs';
+import { projectHistorico } from '../core/store/projections/historico.mjs';
+import { mascararContato, mascararProcesso, mascararTexto, mascararVagaHistorico, mascararHistorico } from '../core/privacy/mask.mjs';
 import { loadSettings } from '../core/config.mjs';
 
 const ABAS = [ABA_QUADRANTES, ABA_PERGUNTAS, ABA_FILA];
@@ -230,6 +231,25 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
           pendentes: pendentesMascarados,
           totais: projecao.totais,
           total: pendentesMascarados.length,
+        });
+      }
+      if (path === '/api/historico') {
+        if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
+        const { eventos } = await readEvents(dataRoot);
+        const nowTs = now?.() ?? new Date();
+        const query = new URL(req.url, 'http://127.0.0.1').searchParams;
+        const inicio = query.get('inicio') || undefined;
+        const fim = query.get('fim') || undefined;
+        const situacao = query.get('situacao') || undefined;
+        const portal = query.get('portal') || undefined;
+
+        const projecao = projectHistorico(eventos, { inicio, fim, situacao, portal, now: nowTs });
+        const historicoMascarado = projecao.historico.map(mascararVagaHistorico);
+
+        return send(200, {
+          historico: historicoMascarado,
+          totais: projecao.totais,
+          total: historicoMascarado.length,
         });
       }
       if (['/icone.svg', '/favicon.ico'].includes(path)) {
