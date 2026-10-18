@@ -1,101 +1,1308 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Radar de oportunidades</title><style>
-:root{--ink:#14253b;--muted:#5d6c7e;--blue:#155ab6;--line:#dce3e9;--cyan:#00b7e5}
-*{box-sizing:border-box}body{margin:0;font:15px/1.55 "Segoe UI",Arial,sans-serif;background:#f4f5f6;color:var(--ink)}
-header{background:#0b1c33;color:white;padding:32px max(28px,calc((100vw - 1120px)/2));border-bottom:3px solid var(--cyan)}
-.masthead{display:flex;align-items:center;gap:22px}.avatar{width:84px;height:84px;border-radius:50%;border:2px solid var(--cyan);background:#102a48;color:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;flex:none}
-.eyebrow{font-size:12px;font-weight:700;letter-spacing:2px;color:var(--cyan);margin:0 0 5px;text-transform:uppercase}h1{font-size:32px;letter-spacing:-.9px;font-weight:650;margin:0}.specialty{font-size:14px;color:#c2cedd;margin:7px 0 0}
-.edition{margin-left:auto;text-align:right;font-size:11px;color:#95a9c0;white-space:nowrap}.edition strong{font-weight:500;color:#dce7f4}
-main{max-width:1176px;padding:28px;margin:auto}.stats{display:flex;gap:0;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:0 0 22px}.stats div{padding:0 40px 0 0;color:var(--muted);font-size:12px}.stats strong{display:block;font-size:30px;line-height:1.2;color:var(--ink);font-weight:650}
-.notice{border-left:2px solid #a7b7c7;color:var(--muted);padding:0 0 0 14px;margin:22px 0;font-size:12px;max-width:1000px}
-.filters{display:flex;gap:8px;flex-wrap:wrap;padding:18px;background:white;border:1px solid var(--line);border-radius:5px;margin:16px 0 22px}
-input,select,button{font:inherit;font-size:12px;padding:9px 10px;border:1px solid #d3dce5;border-radius:4px;background:white}
-.filters input{flex-basis:100%;padding:12px;font-size:14px;background:#f7f9fb}.filters select{flex:1;min-width:145px}button{cursor:pointer;color:var(--muted)}
-#count{font-size:12px;color:var(--muted);margin:0 0 12px;font-weight:600}
-.grid{background:white;border:1px solid var(--line);border-radius:5px;overflow:hidden}.card{border-bottom:1px solid var(--line);padding:26px 30px}.card:last-child{border-bottom:0}
-.card .badges{float:right;max-width:42%;text-align:right}.company{font-size:12px;letter-spacing:.7px;font-weight:700;text-transform:uppercase;margin-bottom:5px;color:#53708c}.card h2{font-size:23px;letter-spacing:-.5px;font-weight:650;max-width:75%;line-height:1.25;margin:0 0 10px}
-.card>p{max-width:100ch;margin:7px 0;font-size:14px}.meta{font-size:12px!important;color:var(--muted)}
-.badge{border-radius:3px;font-size:10px;padding:4px 7px;font-weight:600;margin:0 0 3px 3px;background:#eef1f5;color:#63738a;display:inline-block}.badge.alta{background:#e0f1ec;color:#22614e}.badge.boa{background:#e5eef8;color:#24558c}.badge.condicional{background:#fff0d8;color:#83580a}.badge.incompativel{background:#ffe9e7;color:#922e2e}
-details{font-size:12px;padding:8px 0}summary{cursor:pointer;font-weight:500;color:#355777}details[open]{border-top:1px solid #e6ebf0;margin-top:10px}
-.links{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}.links a{display:inline-block;border:1px solid #b8c9df;border-radius:4px;padding:8px 12px;text-decoration:none;color:var(--blue);font-size:13px;font-weight:600}
-.card.applied-card{background:#f8fcfa;border-left:3px solid #408871}.card.discarded-card{opacity:.6}
-.application-control{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:18px}.application-control label{font-size:12px;display:flex;align-items:center;gap:8px}.application-control input[type=date]{width:140px}.application-feedback{font-size:11px;color:var(--muted)}
-table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left}.table-wrap{overflow:auto}
-.empty{padding:32px;text-align:center;font-size:14px}footer{margin:26px 0;color:var(--muted);font-size:11px;padding:15px 0;border-top:1px solid var(--line)}
-a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #00a4d7;outline-offset:3px}
-@media(max-width:640px){header{padding:24px 18px}.masthead{gap:12px}.avatar{width:58px;height:58px;font-size:20px}h1{font-size:24px}.edition{display:none}main{padding:18px}.card{padding:22px 18px}.card .badges{float:none;max-width:100%;text-align:left;margin-bottom:10px}.card h2{max-width:100%;font-size:21px}}
-.cv-blocked{color:#b42318;font-size:.92em}
-</style></head><body>
-<header><div class="masthead"><div class="avatar" id="avatar" aria-hidden="true"></div><div><p class="eyebrow" id="nome"></p><h1>Radar de oportunidades</h1><p class="specialty" id="especialidade"></p></div><span class="edition"><span id="regiao"></span><br><strong>Atualizado em __STAMP__</strong></span></div></header>
-<main>
-<div class="stats" id="stats"></div><div class="notice" id="notice"></div>
-<div class="filters"><input id="search" aria-label="Pesquisar vagas" placeholder="Empresa, responsabilidades ou tecnologia">
-<select id="fit" aria-label="Filtrar aderência"><option value="">Todas as aderências</option><option value="alta">Alta aderência</option><option value="boa">Boa aderência</option><option value="condicional">Condicional</option><option value="incompativel">Incompatível</option></select>
-<select id="mode" aria-label="Filtrar modalidade"><option value="">Todas as modalidades</option><option value="remot">Remoto</option><option value="hibr">Híbrido</option><option value="presencial">Presencial</option></select>
-<select id="contract" aria-label="Filtrar regime"><option value="">Todos os regimes</option><option value="CLT">CLT</option><option value="PJ">PJ</option><option value="pendente">Regime pendente</option></select>
-<select id="portal" aria-label="Filtrar portal de candidatura"><option value="">Todos os portais</option></select>
-<select id="applied" aria-label="Filtrar candidatura"><option value="">Todas as candidaturas</option><option value="sim">Já me candidatei</option><option value="nao">Ainda não me candidatei</option></select>
-<select id="discard" aria-label="Filtrar descarte"><option value="nao">Sem descartadas</option><option value="sim">Somente descartadas</option><option value="todas">Todas, incluindo descartadas</option></select>
-<select id="scope" aria-label="Filtrar histórico"><option value="novas">Novas oportunidades</option><option value="todas">Todas, incluindo histórico</option><option value="historico">Somente histórico</option></select>
-<select id="status" aria-label="Filtrar situação"><option value="ativas">Ativas e sem incompatibilidade</option><option value="pendentes">Disponibilidade pendente</option><option value="encerradas">Encerradas</option><option value="todas">Todos os anúncios avaliados</option></select>
-<button id="clear" type="button">Limpar filtros</button></div>
-<p class="meta" id="count" role="status"></p><div id="cards" class="grid"></div>
-<details style="margin-top:25px"><summary>Histórico de candidaturas preservado</summary><div class="table-wrap"><table><thead><tr><th>Empresa</th><th>Vaga</th><th>Status anterior</th><th>Link</th></tr></thead><tbody id="history"></tbody></table></div></details>
-<details style="margin-top:15px"><summary>Cobertura das fontes e falhas</summary><div class="table-wrap"><table><thead><tr><th>Fonte</th><th>Consulta</th><th>Resultados</th><th>Situação / limite</th></tr></thead><tbody id="coverage"></tbody></table></div></details>
-<footer>Aderência não é probabilidade de contratação. Salários não publicados permanecem pendentes. Notas de empresas são retratos datados. Nenhuma candidatura ou mensagem é enviada por este painel.</footer>
-</main>
+<!doctype html>
+<html lang="pt-BR" data-mundo="misto" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CareerBounty — Painel de Oportunidades</title>
+<link rel="icon" href="/icone.svg" type="image/svg+xml">
+<style>
+/* Fontes locais offline */
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fontes/schibsted-grotesk-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fontes/schibsted-grotesk-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fontes/schibsted-grotesk-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fontes/schibsted-grotesk-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pixelify Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fontes/pixelify-sans-500.woff2') format('woff2');
+}
+
+/* Tokens: Mundo Misto */
+:root {
+  --fonte: "Schibsted Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --pixel: "Pixelify Sans", "Schibsted Grotesk", monospace;
+  --ouro: #D9A441;
+  --r-sm: 4px;
+  --r: 6px;
+  --r-lg: 10px;
+  --t-xs: 12px;
+  --t-sm: 13px;
+  --t-md: 14px;
+  --t-lg: 16px;
+  --t-xl: 19px;
+  --t-2xl: 24px;
+  --t-3xl: 30px;
+  --dur: 180ms;
+  --saida: cubic-bezier(.16, 1, .3, 1);
+
+  /* Placa superior fixa */
+  --placa: #0E2240;
+  --placa-2: #152C50;
+  --placa-linha: #2A4470;
+  --placa-tx: #FFFFFF;
+  --placa-tx2: #BAC8DC;
+}
+
+[data-tema="claro"] {
+  color-scheme: light;
+  --chao: #E7EBF0;
+  --sup: #FFFFFF;
+  --sup2: #F5F7FA;
+  --sup3: #EBEFF4;
+  --borda: #D3DAE2;
+  --borda2: #B5C0CC;
+  --tx: #0E1A27;
+  --tx2: #3F4C5A;
+  --tx3: #556270;
+
+  --acao: #D9A441;
+  --acao-tx: #231804;
+  --acao-hover: #C9932F;
+  --foco: #0455A1;
+  --selecao: #CFE0F4;
+
+  --l-alta: #E07000;         --t-alta: #A34C00;
+  --l-boa: #8A3FD1;          --t-boa: #7230B3;
+  --l-condicional: #1C6FD6;  --t-condicional: #145DB8;
+  --l-baixa: #5E6873;        --t-baixa: #4A5560;
+  --l-incompativel: #87909A; --t-incompativel: #5F6873;
+
+  --sobre-cor: #FFFFFF;
+  --sobre-alta: #1A1206;
+  --sobre-incompativel: #1A1206;
+
+  --ok: #00754E;
+  --atencao: #7A5800;
+  --atencao-fundo: #FFF4D1;
+  --perigo: #B3261E;
+  --perigo-fundo: #FDE8E6;
+  --info: #145DB8;
+  --fundo-alfa: .55;
+}
+
+[data-tema="escuro"] {
+  color-scheme: dark;
+  --chao: #0A111C;
+  --sup: #111C2C;
+  --sup2: #152236;
+  --sup3: #1B2B42;
+  --borda: #24354F;
+  --borda2: #34496A;
+  --tx: #E9EEF5;
+  --tx2: #AEBBCC;
+  --tx3: #93A2B6;
+
+  --acao: #D9A441;
+  --acao-tx: #231804;
+  --acao-hover: #E8B758;
+  --foco: #6AA6FF;
+  --selecao: #1F3E66;
+
+  --l-alta: #FF8A1F;         --t-alta: #FF9D45;
+  --l-boa: #B26BF5;          --t-boa: #C493F8;
+  --l-condicional: #3D9BFF;  --t-condicional: #72B5FF;
+  --l-baixa: #D3D9E1;        --t-baixa: #D3D9E1;
+  --l-incompativel: #66727F; --t-incompativel: #A3AEBD;
+
+  --sobre-cor: #0E1320;
+  --sobre-alta: #0E1320;
+  --sobre-incompativel: #FFFFFF;
+
+  --ok: #4FD3A0;
+  --atencao: #F5C518;
+  --atencao-fundo: #2A2410;
+  --perigo: #FF8A7F;
+  --perigo-fundo: #2E1716;
+  --info: #72B5FF;
+  --fundo-alfa: .7;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; min-height: 100vh; }
+body {
+  background: var(--chao);
+  color: var(--tx);
+  font: 400 var(--t-md)/1.5 var(--fonte);
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: anywhere;
+}
+::selection { background: var(--selecao); color: var(--tx); }
+* { scrollbar-width: thin; scrollbar-color: var(--borda2) transparent; }
+
+input[type=checkbox] { accent-color: var(--acao); width: 16px; height: 16px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--t-condicional); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; border-radius: 2px; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ic { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+#fundo { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: var(--fundo-alfa); }
+.app-casca { position: relative; z-index: 1; }
+
+/* Placa */
+.placa {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 20px;
+  height: 56px; padding: 0 20px;
+  background: var(--placa); color: var(--placa-tx);
+}
+.marca { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: var(--t-lg); letter-spacing: -.01em; white-space: nowrap; }
+.logo { display: block; border-radius: 7px; box-shadow: 0 0 0 1px var(--placa-linha); }
+.nav { display: flex; height: 100%; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.nav button {
+  position: relative; display: flex; align-items: center; gap: 8px;
+  height: 100%; padding: 0 14px; border: 0; background: none;
+  color: var(--placa-tx2); font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+.nav button:hover { color: var(--placa-tx); }
+.nav button[aria-current=page] { color: var(--placa-tx); font-weight: 600; }
+.nav button[aria-current=page]::after {
+  content: ""; position: absolute; left: 14px; right: 14px; bottom: 0;
+  height: 3px; border-radius: 2px 2px 0 0; background: var(--ouro);
+}
+.cont {
+  min-width: 20px; height: 20px; padding: 0 6px;
+  border-radius: 10px; background: var(--placa-2); color: var(--placa-tx);
+  font-size: var(--t-xs); font-weight: 600; display: inline-grid; place-items: center;
+}
+.cont.atencao { background: var(--ouro); color: #231804; }
+
+.placa-dir { margin-left: auto; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.placa-dir .estado { font-size: var(--t-sm); color: var(--placa-tx2); margin-right: 8px; }
+
+/* Coruja mascote */
+.pet {
+  position: relative; width: 34px; height: 34px; padding: 0;
+  display: inline-grid; place-items: center;
+  border: 1px solid var(--placa-linha); border-radius: var(--r);
+  background: transparent; color: var(--placa-tx2); cursor: pointer;
+}
+.pet:hover { color: var(--placa-tx); background: var(--placa-2); }
+.pet svg { width: 22px; height: 22px; }
+.pet .pip {
+  position: absolute; top: 3px; right: 3px; width: 8px; height: 8px;
+  background: var(--ouro); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+.pet .balao {
+  position: absolute; right: 0; top: 48px; width: 280px; padding: 10px 12px;
+  background: var(--sup); color: var(--tx); border: 1px solid var(--borda);
+  border-radius: var(--r); box-shadow: 0 10px 25px rgba(0,0,0,.2);
+  font-size: var(--t-xs); line-height: 1.4; text-align: left; white-space: normal; z-index: 50;
+}
+.pet .balao::after {
+  content: ""; position: absolute; right: 14px; top: -8px;
+  width: 10px; height: 8px; clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: var(--sup); border-bottom: 1px solid var(--borda);
+}
+
+.menu { position: relative; }
+.menu .lista {
+  position: absolute; right: 0; top: 42px; min-width: 260px; padding: 6px;
+  background: var(--sup); color: var(--tx); border: 1px solid var(--borda);
+  border-radius: var(--r-lg); box-shadow: 0 12px 32px rgba(5,15,30,.25); z-index: 50;
+}
+.menu .lista button {
+  display: block; width: 100%; text-align: left; padding: 9px 10px;
+  border: 0; background: none; border-radius: var(--r); cursor: pointer; color: var(--tx);
+}
+.menu .lista button:hover { background: var(--sup3); }
+.menu .lista small { display: block; color: var(--tx3); font-size: var(--t-xs); margin-top: 2px; }
+
+/* Controles gerais */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: 34px; padding: 0 13px; border-radius: var(--r);
+  border: 1px solid var(--borda); background: var(--sup); color: var(--tx);
+  font-weight: 500; font-size: var(--t-sm); cursor: pointer; text-decoration: none;
+  white-space: nowrap; transition: background var(--dur) var(--saida), border-color var(--dur) var(--saida);
+}
+.btn:hover { border-color: var(--borda2); background: var(--sup2); }
+.btn:active { background: var(--sup3); }
+.btn.prim { background: var(--acao); border-color: var(--acao); color: var(--acao-tx); font-weight: 600; }
+.btn.prim:hover { background: var(--acao-hover); border-color: var(--acao-hover); }
+.btn.discreto { border-color: transparent; background: none; color: var(--tx2); }
+.btn.discreto:hover { background: var(--sup3); color: var(--tx); }
+.btn.peq { height: 30px; padding: 0 10px; font-size: var(--t-xs); }
+.btn-ic {
+  width: 34px; height: 34px; display: inline-grid; place-items: center;
+  border: 1px solid var(--placa-linha); border-radius: var(--r);
+  background: transparent; color: var(--placa-tx2); cursor: pointer;
+}
+.btn-ic:hover { color: var(--placa-tx); background: var(--placa-2); border-color: var(--placa-tx); }
+
+.campo {
+  height: 34px; padding: 0 10px; border: 1px solid var(--borda);
+  border-radius: var(--r); background: var(--sup); color: var(--tx); font-size: var(--t-sm);
+}
+.campo:hover { border-color: var(--borda2); }
+
+.busca { position: relative; flex: 1 1 220px; min-width: 180px; }
+.busca input { width: 100%; padding-left: 32px; }
+.busca .ic { position: absolute; left: 10px; top: 9px; color: var(--tx3); }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 32px; padding: 0 11px 0 9px; border: 1px solid var(--borda);
+  border-radius: 16px; background: var(--sup); color: var(--tx2);
+  cursor: pointer; font-size: var(--t-sm); font-weight: 500; white-space: nowrap;
+}
+.chip:hover { border-color: var(--borda2); color: var(--tx); }
+.chip[aria-pressed=true] { border-color: var(--tx); color: var(--tx); font-weight: 600; }
+.chip[aria-pressed=false] .bola { opacity: .35; }
+.chip .n { color: var(--tx3); font-weight: 600; font-variant-numeric: tabular-nums; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.bola { width: 12px; height: 12px; border-radius: 50%; border: 3px solid var(--cor); background: var(--sup); flex: none; }
+.plaqueta {
+  display: inline-flex; align-items: center; height: 22px; padding: 0 8px;
+  border-radius: var(--r-sm); background: var(--cor); color: var(--sobre-cor);
+  font-size: var(--t-xs); font-weight: 700; letter-spacing: .01em; white-space: nowrap;
+}
+.plaqueta[data-a=alta] { color: var(--sobre-alta); }
+.plaqueta[data-a=incompativel] { color: var(--sobre-incompativel); }
+
+[data-a=alta] { --cor: var(--l-alta); --tc: var(--t-alta); }
+[data-a=boa] { --cor: var(--l-boa); --tc: var(--t-boa); }
+[data-a=condicional] { --cor: var(--l-condicional); --tc: var(--t-condicional); }
+[data-a=baixa] { --cor: var(--l-baixa); --tc: var(--t-baixa); }
+[data-a=incompativel] { --cor: var(--l-incompativel); --tc: var(--t-incompativel); }
+
+/* Organização A: Plataforma */
+.A-tela { display: flex; flex-direction: column; min-height: calc(100vh - 56px); }
+.ferramentas { display: flex; flex-wrap: wrap; gap: 10px 8px; align-items: center; padding: 14px 20px; }
+.ferramentas .total { margin-left: auto; font-size: var(--t-sm); color: var(--tx2); font-variant-numeric: tabular-nums; }
+
+.A-mesa {
+  flex: 1; min-height: 0; display: grid;
+  grid-template-columns: minmax(380px, 44%) 1fr;
+  gap: 14px; padding: 0 20px 20px;
+}
+.A-lista, .A-det {
+  background: var(--sup); border: 1px solid var(--borda);
+  border-radius: var(--r-lg); overflow: auto; overscroll-behavior: contain;
+}
+.A-lista { padding-bottom: 8px; }
+.A-voltar { display: none; }
+
+/* Ramais e estações */
+.ramal > header { display: flex; align-items: center; gap: 10px; padding: 18px 16px 8px; }
+.ramal > header .n { color: var(--tx3); font-size: var(--t-sm); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ramal > header .desc { color: var(--tx3); font-size: var(--t-xs); margin-left: auto; text-align: right; }
+
+.estacao {
+  position: relative; display: grid; grid-template-columns: 40px 1fr auto;
+  gap: 0 10px; align-items: center; width: 100%; min-height: 58px;
+  padding: 8px 16px 8px 0; border: 0; background: none; text-align: left;
+  cursor: pointer; color: var(--tx); transition: background var(--dur) var(--saida);
+}
+.estacao::before { content: ""; position: absolute; left: 18px; top: 0; bottom: 0; width: 4px; background: var(--cor); }
+.estacao.ini::before { top: 50%; }
+.estacao.fim::before { bottom: 50%; }
+.estacao.ini.fim::before { display: none; }
+
+.estacao .bola { position: relative; justify-self: center; width: 16px; height: 16px; border-width: 4px; z-index: 1; }
+.estacao:hover { background: var(--sup2); }
+.estacao[aria-current=true] { background: var(--sup3); }
+.estacao[aria-current=true] .bola { width: 20px; height: 20px; border-width: 5px; background: var(--cor); }
+.estacao .cargo { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600; line-height: 1.3; }
+.estacao .sub { display: block; margin-top: 2px; font-size: var(--t-xs); color: var(--tx2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.estacao .lado { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-size: var(--t-xs); color: var(--tx3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.estacao.feita .bola { background: var(--cor); }
+.estacao.descartada { color: var(--tx3); }
+.estacao.descartada .cargo { text-decoration: line-through; text-decoration-color: var(--borda2); }
+.estacao.descartada .bola { border-color: var(--borda2); }
+
+.selo { display: inline-flex; align-items: center; gap: 4px; font-size: var(--t-xs); font-weight: 600; color: var(--ok); }
+.selo .ic { width: 13px; height: 13px; }
+
+/* Detalhe da vaga */
+.det { padding: 24px 28px 32px; }
+.det-topo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: var(--t-sm); color: var(--tx2); }
+.det-topo strong { color: var(--tx); font-weight: 600; }
+.det-topo .vista { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; font-size: var(--t-xs); color: var(--tx3); font-variant-numeric: tabular-nums; }
+.det-topo .vista .ic { width: 14px; height: 14px; }
+.det-topo .abrir-topo { margin-left: 4px; }
+
+.det h2 { font-size: var(--t-2xl); line-height: 1.25; font-weight: 700; letter-spacing: -.015em; margin: 12px 0 16px; text-wrap: balance; }
+
+.fatos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 0 22px; border-top: 1px solid var(--borda); border-bottom: 1px solid var(--borda); }
+.fatos div { padding: 10px 12px 10px 0; }
+.fatos dt { font-size: var(--t-xs); color: var(--tx3); margin: 0 0 2px; }
+.fatos dd { margin: 0; font-size: var(--t-sm); font-weight: 500; }
+
+.det section { margin: 0 0 24px; }
+.det h3 { font-size: var(--t-md); font-weight: 700; margin: 0 0 8px; }
+.det p { margin: 0 0 8px; max-width: 70ch; text-wrap: pretty; }
+
+.marcadores { margin: 0; padding: 0; list-style: none; }
+.marcadores li { display: flex; gap: 9px; padding: 4px 0; font-size: var(--t-sm); }
+.marcadores li .ic { margin-top: 3px; color: var(--ok); }
+.marcadores.lacunas li .ic { color: var(--atencao); }
+
+.reqs { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
+.reqs td { padding: 8px 0; border-bottom: 1px solid var(--borda); vertical-align: top; }
+.reqs td:last-child { text-align: right; white-space: nowrap; padding-left: 12px; font-weight: 600; }
+.reqs .atende { color: var(--ok); }
+.reqs .parcial { color: var(--atencao); }
+.reqs .nao_atende { color: var(--perigo); }
+
+.alerta { display: flex; gap: 10px; align-items: flex-start; padding: 11px 13px; border-radius: var(--r); background: var(--atencao-fundo); color: var(--tx); font-size: var(--t-sm); margin: 0 0 16px; }
+.alerta .ic { color: var(--atencao); margin-top: 2px; }
+.alerta.perigo { background: var(--perigo-fundo); }
+.alerta.perigo .ic { color: var(--perigo); }
+
+.cvs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cv { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--borda); border-radius: var(--r); background: var(--sup); text-decoration: none; color: var(--tx); transition: border-color var(--dur) var(--saida); }
+.cv:hover { border-color: var(--acao); }
+.cv .ic { width: 20px; height: 20px; color: var(--t-condicional); margin-top: 1px; }
+.cv strong { display: block; font-size: var(--t-sm); }
+.cv span { display: block; font-size: var(--t-xs); color: var(--tx3); }
+
+.gupy { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px dashed var(--borda2); border-radius: var(--r); font-size: var(--t-sm); }
+.gupy .ic { width: 20px; height: 20px; color: var(--tx2); margin-top: 1px; }
+
+.empresa-avaliacao { display: flex; gap: 14px; align-items: flex-start; }
+.empresa-avaliacao .grande { font-family: var(--pixel); font-size: var(--t-3xl); line-height: 1; font-weight: 500; letter-spacing: 0; }
+
+.acoes { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding-top: 18px; border-top: 1px solid var(--borda); }
+.acoes label { display: inline-flex; align-items: center; gap: 8px; font-size: var(--t-sm); font-weight: 500; cursor: pointer; }
+.aplicacao-feedback { font-size: var(--t-xs); color: var(--tx3); margin-left: 8px; }
+
+.vazio { padding: 48px 20px; text-align: center; color: var(--tx2); font-size: var(--t-sm); }
+.vazio strong { display: block; color: var(--tx); font-size: var(--t-lg); margin-bottom: 4px; }
+
+footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0; border-top: 1px solid var(--borda); text-align: center; }
+
+/* Responsividade móvel (375px a 900px) */
+@media (max-width: 900px) {
+  .placa { padding: 0 12px; gap: 10px; }
+  .placa .nome, .placa .pet, .placa .estado { display: none; }
+  .A-tela { height: auto; min-height: 0; }
+  .A-mesa { display: block; padding: 0 12px 60px; }
+  .A-det { display: none; margin-top: 12px; }
+  .A-mesa.abre-det .A-lista { display: none; }
+  .A-mesa.abre-det .A-det { display: block; }
+  .A-voltar { display: inline-flex; margin: 12px 16px 0; }
+  .ferramentas { padding: 12px; }
+  .ferramentas select { flex: 1 1 45%; }
+  .cvs { grid-template-columns: 1fr; }
+  .fatos { grid-template-columns: 1fr 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<canvas id="fundo" aria-hidden="true"></canvas>
+
+<div class="app-casca">
+  <header class="placa">
+    <div class="marca">
+      <svg class="logo" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true">
+        <rect width="64" height="64" rx="14" fill="#0E2240"/>
+        <circle cx="32" cy="33" r="23" fill="#B8862A"/>
+        <circle cx="32" cy="32" r="23" fill="#D9A441"/>
+        <circle cx="32" cy="32" r="19.5" fill="none" stroke="#F2CC7A" stroke-width="1.5" opacity=".7"/>
+        <g transform="translate(14 19.5) scale(3)" shape-rendering="crispEdges">
+          <path fill="#2A2140" d="M2 0h1v1H2zM9 0h1v1H9zM1 1h1v1H1zM3 1h1v1H3zM8 1h1v1H8zM10 1h1v1h-1zM1 2h1v1H1zM10 2h1v1h-1zM0 3h1v4H0zM11 3h1v4h-1zM1 7h1v1H1zM10 7h1v1h-1zM2 8h8v1H2z"/>
+          <path fill="#7C6BC4" d="M2 1h1v1H2zM9 1h1v1H9zM2 2h8v1H2zM1 3h1v4H1zM10 3h1v4h-1zM5 3h2v2H5zM2 6h3v1H2zM7 6h3v1H7zM2 7h8v1H2z"/>
+          <path fill="#FFFFFF" d="M2 3h3v3H2zM7 3h3v3H7z"/>
+          <path fill="#1B1530" d="M3 4h1v1H3zM8 4h1v1H8z"/>
+          <path fill="#E07000" d="M5 5h2v2H5z"/>
+        </g>
+        <path fill="#FFF3D1" shape-rendering="crispEdges" d="M47 12h2v2h-2zM45 14h2v2h-2zM49 14h2v2h-2zM47 16h2v2h-2z"/>
+      </svg>
+      <span class="nome">CareerBounty</span>
+    </div>
+
+    <nav class="nav" aria-label="Seções do painel">
+      <button type="button" class="aba-btn" data-aba="vagas" aria-current="page">
+        Vagas <span class="cont" id="badge-vagas">0</span>
+      </button>
+      <button type="button" class="aba-btn" data-aba="historico">
+        Histórico <span class="cont" id="badge-historico">0</span>
+      </button>
+      <button type="button" class="aba-btn" data-aba="processos">
+        Processos <span class="cont" id="badge-processos">0</span>
+      </button>
+      <button type="button" class="aba-btn" data-aba="curriculo">
+        Currículo e provas <span class="cont" id="badge-curriculo">0</span>
+      </button>
+    </nav>
+
+    <div class="placa-dir">
+      <button type="button" class="pet" id="btn-coruja" aria-label="Recado da coruja batedora" aria-expanded="false">
+        <svg viewBox="0 0 12 12" aria-hidden="true">
+          <g fill="#2A2140"><rect x="2" y="0" width="1" height="1"/><rect x="9" y="0" width="1" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="3" y="1" width="1" height="1"/><rect x="8" y="1" width="1" height="1"/><rect x="10" y="1" width="1" height="1"/><rect x="1" y="2" width="1" height="1"/><rect x="10" y="2" width="1" height="1"/><rect x="0" y="3" width="1" height="4"/><rect x="11" y="3" width="1" height="4"/><rect x="1" y="7" width="1" height="1"/><rect x="10" y="7" width="1" height="1"/><rect x="2" y="8" width="8" height="1"/></g>
+          <g fill="#7C6BC4"><rect x="2" y="1" width="1" height="1"/><rect x="9" y="1" width="1" height="1"/><rect x="2" y="2" width="8" height="1"/><rect x="1" y="3" width="1" height="4"/><rect x="10" y="3" width="1" height="4"/><rect x="5" y="3" width="2" height="2"/><rect x="2" y="6" width="3" height="1"/><rect x="7" y="6" width="3" height="1"/><rect x="2" y="7" width="8" height="1"/></g>
+          <g fill="#FFFFFF"><rect x="2" y="3" width="3" height="3"/><rect x="7" y="3" width="3" height="3"/></g>
+          <g fill="#1B1530"><rect x="3" y="4" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/></g>
+          <g fill="#E07000"><rect x="5" y="5" width="2" height="2"/></g>
+        </svg>
+        <span class="pip" aria-hidden="true"></span>
+        <span class="balao" id="coruja-balao" role="status" hidden></span>
+      </button>
+
+      <span class="estado" id="radar-estado">Radar de hoje · <span class="edition">Atualizado em __STAMP__</span> · <span id="radar-fila">0 anúncios na fila</span></span>
+
+      <button type="button" class="btn-ic" id="btn-tema" aria-label="Alternar tema claro/escuro" title="Alternar tema">
+        <svg class="ic" id="ic-tema" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+        </svg>
+      </button>
+
+      <div class="menu">
+        <button type="button" class="btn-ic" id="btn-menu" aria-label="Mais opções" aria-expanded="false">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+        </button>
+        <div class="lista" id="menu-dropdown" role="menu" hidden>
+          <button type="button" role="menuitem" id="opt-fundo">
+            <span id="rotulo-fundo">Parar a animação do fundo</span>
+            <small>Pausa o céu em pixel se preferir tela estática</small>
+          </button>
+          <button type="button" role="menuitem" id="opt-limpar">
+            <span>Redefinir visual</span>
+            <small>Restaura tema e preferências padrão</small>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Painel principal: Vagas (Organização A) -->
+  <main class="A-tela" id="painel-vagas">
+    <div class="ferramentas">
+      <div class="chips" role="group" aria-label="Filtrar aderência">
+        <select id="fit" aria-label="Filtrar aderência" hidden>
+          <option value="">Todas</option>
+          <option value="alta">Alta</option>
+          <option value="boa">Boa</option>
+          <option value="condicional">Condicional</option>
+          <option value="baixa">Baixa</option>
+          <option value="incompativel">Incompatível</option>
+        </select>
+        <button type="button" class="chip" data-ader="alta" aria-pressed="true">
+          <span class="bola" data-a="alta" aria-hidden="true"></span>Alta <span class="n" id="n-alta">0</span>
+        </button>
+        <button type="button" class="chip" data-ader="boa" aria-pressed="true">
+          <span class="bola" data-a="boa" aria-hidden="true"></span>Boa <span class="n" id="n-boa">0</span>
+        </button>
+        <button type="button" class="chip" data-ader="condicional" aria-pressed="true">
+          <span class="bola" data-a="condicional" aria-hidden="true"></span>Condicional <span class="n" id="n-condicional">0</span>
+        </button>
+        <button type="button" class="chip" data-ader="baixa" aria-pressed="true">
+          <span class="bola" data-a="baixa" aria-hidden="true"></span>Baixa <span class="n" id="n-baixa">0</span>
+        </button>
+        <button type="button" class="chip" data-ader="incompativel" aria-pressed="false">
+          <span class="bola" data-a="incompativel" aria-hidden="true"></span>Incompatível <span class="n" id="n-incompativel">0</span>
+        </button>
+      </div>
+
+      <label class="busca">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span class="sr">Pesquisar vagas</span>
+        <input class="campo" id="search" aria-label="Pesquisar vagas" placeholder="Empresa, cargo, tecnologia...">
+      </label>
+
+      <select id="mode" class="campo" aria-label="Filtrar modalidade">
+        <option value="">Toda modalidade</option>
+        <option value="remot">Remoto</option>
+        <option value="hibr">Híbrido</option>
+        <option value="presencial">Presencial</option>
+      </select>
+
+      <select id="contract" class="campo" aria-label="Filtrar regime">
+        <option value="">Todo regime</option>
+        <option value="CLT">CLT</option>
+        <option value="PJ">PJ</option>
+        <option value="pendente">Regime pendente</option>
+      </select>
+
+      <select id="portal" class="campo" aria-label="Filtrar portal de candidatura">
+        <option value="">Todo portal</option>
+      </select>
+
+      <select id="applied" class="campo" aria-label="Filtrar candidatura">
+        <option value="">Com e sem candidatura</option>
+        <option value="nao">Ainda não me candidatei</option>
+        <option value="sim">Já me candidatei</option>
+      </select>
+
+      <select id="discard" class="campo" aria-label="Filtrar descarte">
+        <option value="nao">Sem descartadas</option>
+        <option value="sim">Só descartadas</option>
+        <option value="todas">Com descartadas</option>
+      </select>
+
+      <button type="button" class="btn discreto peq" id="btn-limpar-filtros">Limpar filtros</button>
+      <span class="total" id="total-vagas" role="status">0 vagas</span>
+    </div>
+
+    <div class="A-mesa" id="a-mesa">
+      <div class="A-lista" id="a-lista" role="region" aria-label="Lista de vagas por ramal"></div>
+      <div class="A-det" id="a-det" role="region" aria-label="Detalhe da vaga selecionada">
+        <button type="button" class="btn peq A-voltar" id="btn-voltar">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          Voltar à lista
+        </button>
+        <div id="detalhe-conteudo"></div>
+      </div>
+    </div>
+  </main>
+
+  <details style="margin: 20px 20px 0; font-size: 12px;" id="det-historico">
+    <summary style="cursor: pointer; color: var(--tx2); font-weight: 600;">Histórico de candidaturas preservado</summary>
+    <div style="overflow-x: auto; margin-top: 8px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <thead><tr><th style="text-align: left; padding: 6px; border-bottom: 1px solid var(--borda);">Empresa</th><th style="text-align: left; padding: 6px; border-bottom: 1px solid var(--borda);">Vaga</th><th style="text-align: left; padding: 6px; border-bottom: 1px solid var(--borda);">Status</th><th style="text-align: left; padding: 6px; border-bottom: 1px solid var(--borda);">Link</th></tr></thead>
+        <tbody id="history"></tbody>
+      </table>
+    </div>
+  </details>
+
+  <details style="margin: 10px 20px 0; font-size: 12px;" id="det-cobertura">
+    <summary style="cursor: pointer; color: var(--tx2); font-weight: 600;">Cobertura das fontes e varreduras</summary>
+    <div style="overflow-x: auto; margin-top: 8px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <thead><tr><th style="text-align: left; padding: 6px; border-bottom: 1px solid var(--borda);">Fonte</th><th style="text-align: left; padding: 6px; border-bottom: 1px solid var(--borda);">Consulta</th><th style="text-align: left; padding: 6px; border-bottom: 1px solid var(--borda);">Resultados</th><th style="text-align: left; padding: 6px; border-bottom: 1px solid var(--borda);">Situação</th></tr></thead>
+        <tbody id="coverage"></tbody>
+      </table>
+    </div>
+  </details>
+
+  <footer>
+    Aderência não é probabilidade de contratação. Salários não publicados permanecem pendentes.
+    Notas de empresas são retratos datados. Nenhuma candidatura ou mensagem é enviada por este painel.
+  </footer>
+  <div id="cards" style="display:none" aria-hidden="true"></div>
+</div>
+
 <script>
 const DATA=__DATA__;
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const norm=s=>String(s??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
-const fitLabel={alta:'Alta aderência',boa:'Boa aderência',condicional:'Condicional',incompativel:'Incompatível'};
-const link=(u,text)=>/^https?:\/\//.test(u||'')?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(text)}</a>`:'';
+const esc=s=>String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const relLink=(u,text)=>/^curriculos\/[^\\%?#:]+\.pdf$/.test(u||'')&&!u.split('/').includes('..')?`<a href="/${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(text)}</a>`:'';
-const salary=v=>v==null?'Salário não divulgado':typeof v==='number'?'R$ '+v.toLocaleString('pt-BR')+'/mês':esc(v);
-const perfil=DATA.perfil||{};
-document.getElementById('nome').textContent=perfil.nome||'';
-document.getElementById('avatar').textContent=(perfil.nome||'?').split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
-document.getElementById('especialidade').textContent=perfil.especialidade||'';
-document.getElementById('regiao').textContent=perfil.regiao||'';
-document.getElementById('notice').textContent=(perfil.aviso||'')+' '+DATA.queue+' anúncios de metadados aguardam leitura e validação; não são apresentados como vagas aderentes.';
-const ids=['search','fit','mode','contract','portal','applied','discard','scope','status'];
-const portalSelect=document.getElementById('portal');
-[...new Set(DATA.vagas.map(j=>j.portal_candidatura||'Pendente'))].sort((a,b)=>a.localeCompare(b,'pt-BR')).forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;portalSelect.append(o);});
-document.getElementById('stats').innerHTML=[['Avaliadas',DATA.vagas.length],['Alta aderência',DATA.vagas.filter(j=>j.aderencia==='alta').length],['Histórico',DATA.historico.length]].map(([t,n])=>`<div><strong>${n}</strong>${t}</div>`).join('');
-const markers=new Map();
-const api=window.PAINEL_API||null;
-const marked=j=>{const m=markers.get(j.id);return m?m.aplicada:Boolean(j.candidatura_usuario&&j.candidatura_usuario.aplicada);};
-const discarded=j=>{const m=markers.get(j.id);return m?m.descartada:Boolean(j.descarte_usuario&&j.descarte_usuario.descartada);};
-const cvBlocked=j=>!!(j.cv_gate&&j.cv_gate.status==='bloqueado'&&!j.cv_gate.aprovada);
-const materialLinks=j=>(perfil.pdfs_base||[]).map(p=>relLink(p.href,p.texto)).join('');
-const artLink=(u,text)=>/^artifacts\/cv\/[A-Za-z0-9._-]+\/[0-9a-f]{64}\/cv-(ats|visual)\.pdf$/.test(u||'')?`<a href="/${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(text)}</a>`:'';
+const materialLinks=j=>(DATA.perfil?.pdfs_base||[]).map(p=>relLink(p.href,p.texto)).join('');
 const cvOf=j=>(DATA.cvs||{})[j.id]||null;
+const artLink=(u,text)=>/^artifacts\/cv\/[A-Za-z0-9._-]+\/[0-9a-f]{64}\/cv-(ats|visual)\.pdf$/.test(u||'')?`<a href="/${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(text)}</a>`:'';
 const cvLinks=j=>{if(cvBlocked(j))return '';const cv=cvOf(j);if(!cv||!cv.atual)return materialLinks(j);const base=cv.atual.tipo!=='adaptado';return artLink(cv.atual.ats,base?'PDF-base para enviar':'PDF para enviar')+artLink(cv.atual.visual,base?'PDF-base visual':'PDF visual')+(cv.enviado&&cv.enviado.hash!==cv.atual.hash?artLink(cv.enviado.ats,'PDF enviado'):'');};
-const cvNotice=j=>{const cv=cvOf(j);const motivo=cvBlocked(j)?(((j.cv_gate.motivos||[])[0]||{}).motivo||'conferir o CV'):(cv&&cv.bloqueio&&!cv.atual?(cv.bloqueio.motivos[0]||'conferir o CV'):null);if(motivo)return `<p class="cv-blocked"><strong>CV bloqueado:</strong> ${esc(motivo)}</p>`;if(cv&&cv.bloqueio&&cv.atual)return `<p class="cv-blocked"><strong>Versão nova do CV bloqueada:</strong> ${esc(cv.bloqueio.motivos[0]||'')}. Vale a versão aprovada anterior.</p>`;return '';};
-function card(j){const done=marked(j),gone=discarded(j);
-return `<article class="card${done?' applied-card':''}${gone?' discarded-card':''}" data-vaga-id="${esc(j.id)}"><div class="badges"><span class="badge ${esc(j.aderencia)}">${esc(fitLabel[j.aderencia]||j.aderencia||'')}</span> <span class="badge">${esc(j.url_status)}</span> <span class="badge">Candidatura: ${esc(j.portal_candidatura||'Pendente')}</span>${j.historico?' <span class="badge">Histórico</span>':''}${gone?' <span class="badge">Descartada</span>':''}</div><div class="company">${esc(j.empresa)}</div><h2>${esc(j.cargo)}</h2><p class="meta">${esc(j.modalidade)} · ${esc(j.local)} · ${esc(j.regime||'Regime pendente')} · Condições: ${esc((j.condicoes&&j.condicoes.situacao)||'pendente')}</p><p><strong>${salary(j.salario)}</strong></p><p>${esc(j.descricao)}</p><p class="meta"><strong>Por que considerar:</strong> ${esc((j.motivos||[]).join('; '))}</p><details><summary>Requisitos, lacunas e condições</summary><p>${esc((j.lacunas||[]).join('; ')||'Sem lacuna obrigatória identificada')}</p><p>${esc([...(j.pendencias||[]),...((j.condicoes&&j.condicoes.motivos)||[])].join('; '))}</p><ul>${(j.requisitos||[]).map(r=>`<li>${esc(r.requisito)}: <strong>${esc(r.avaliacao)}</strong> (${esc(r.tipo)})</li>`).join('')}</ul></details>${cvNotice(j)}<div class="links">${link(j.url,'Abrir vaga')}${cvLinks(j)}</div><div class="application-control"><label><input type="checkbox" class="applied-box" ${done?'checked':''}> Já me candidatei</label><label class="date-label">Data <input type="date" class="applied-date" value="${esc((markers.get(j.id)&&markers.get(j.id).data)||(j.candidatura_usuario&&j.candidatura_usuario.data)||'')}"></label><button type="button" class="discard-btn">${gone?'Restaurar vaga':'Descartar vaga'}</button><span class="application-feedback" role="status"></span></div><p class="meta">${esc(j.status)} · Consultada em ${esc(j.consultado_em)}</p></article>`;}
-function render(){const v=Object.fromEntries(ids.map(id=>[id,document.getElementById(id).value]));
-const jobs=DATA.vagas.filter(j=>(v.scope==='todas'||(v.scope==='historico'?j.historico:!j.historico))&&(v.status==='todas'||(v.status==='ativas'?j.url_status==='aberta'&&j.aderencia!=='incompativel':v.status==='encerradas'?j.url_status==='encerrada':j.url_status!=='aberta'&&j.url_status!=='encerrada'))&&(!v.portal||(j.portal_candidatura||'Pendente')===v.portal)&&(!v.fit||j.aderencia===v.fit)&&(!v.mode||norm(j.modalidade).includes(v.mode))&&(!v.contract||(v.contract==='pendente'?!['CLT','PJ'].includes(j.regime):j.regime===v.contract))&&(!v.applied||(v.applied==='sim')===marked(j))&&(v.discard==='todas'||(v.discard==='sim')===discarded(j))&&(!v.search||norm([j.empresa,j.cargo,j.descricao,...(j.motivos||[]),...(j.lacunas||[])].join(' ')).includes(norm(v.search))));
-document.getElementById('count').textContent=`${jobs.length} vagas exibidas`;
-document.getElementById('cards').innerHTML=jobs.map(card).join('')||'<p class="empty">Nenhuma vaga com esses filtros.</p>';}
-async function send(route,body,feedback){
-if(!api){feedback.textContent='Abra o painel pelo servidor local para salvar.';return null;}
-try{const r=await fetch('/api/'+route,{method:'POST',headers:{'Content-Type':'application/json','X-Painel-Token':api.token},body:JSON.stringify(body)});const out=await r.json();
-if(r.status===409){feedback.textContent=out.erro||'Gravação desligada.';return null;}
-if(!r.ok){feedback.textContent=out.erro||'Não foi possível salvar.';return null;}
-markers.set(out.id,out);feedback.textContent='Salvo.';return out;}catch(e){feedback.textContent='Servidor local indisponível.';return null;}}
-document.getElementById('cards').addEventListener('change',async e=>{
-const box=e.target.closest('.applied-box'),date=e.target.closest('.applied-date');if(!box&&!date)return;
-const el=e.target.closest('.card'),feedback=el.querySelector('.application-feedback'),input=el.querySelector('.applied-box'),when=el.querySelector('.applied-date');
-if(input.checked&&!when.value){feedback.textContent='Informe a data da candidatura.';return;}
-const out=await send('candidaturas',{id:el.dataset.vagaId,aplicada:input.checked,...(input.checked?{data:when.value}:{})},feedback);
-if(out)render();else input.checked=marked(DATA.vagas.find(x=>x.id===el.dataset.vagaId));});
-document.getElementById('cards').addEventListener('click',async e=>{
-const btn=e.target.closest('.discard-btn');if(!btn)return;const el=btn.closest('.card'),feedback=el.querySelector('.application-feedback');
-const j=DATA.vagas.find(x=>x.id===el.dataset.vagaId);const out=await send('descarte',{id:j.id,descartada:!discarded(j)},feedback);if(out)render();});
-ids.forEach(id=>document.getElementById(id).addEventListener(id==='search'?'input':'change',render));
-document.getElementById('clear').onclick=()=>{ids.forEach(id=>document.getElementById(id).value=id==='scope'?'novas':id==='status'?'ativas':id==='discard'?'nao':'');render();};
-document.getElementById('history').innerHTML=DATA.historico.map(j=>`<tr><td>${esc(j.empresa)}</td><td>${esc(j.cargo)}</td><td>${esc(j.status)}</td><td>${link(j.url,'Vaga')}</td></tr>`).join('');
-document.getElementById('coverage').innerHTML=DATA.coverage.map(c=>`<tr><td>${esc(c.fonte)}</td><td>${esc(c.consulta)}</td><td>${esc(c.resultados??'—')}</td><td>${esc(c.status||c.limite||'Consulta manual')}</td></tr>`).join('');
-if(api){fetch('/api/candidaturas',{headers:{'X-Painel-Token':api.token}}).then(r=>r.ok?r.json():null).then(d=>{if(d)d.vagas.forEach(m=>markers.set(m.id,m));render();}).catch(()=>{});}
+const cvNotice=j=>{const cv=cvOf(j);const motivo=cvBlocked(j)?(((j.cv_gate?.motivos||[])[0]||{}).motivo||'conferir o CV'):(cv&&cv.bloqueio&&!cv.atual?(cv.bloqueio.motivos[0]||'conferir o CV'):null);if(motivo)return `<p class="cv-blocked"><strong>CV bloqueado:</strong> ${esc(motivo)}</p>`;if(cv&&cv.bloqueio&&cv.atual)return `<p class="cv-blocked"><strong>Versão nova do CV bloqueada:</strong> ${esc(cv.bloqueio.motivos[0]||'')}. Vale a versão aprovada anterior.</p>`;return '';};
+function card(j){return `<article class="card" data-vaga-id="${esc(j.id)}">${cvNotice(j)}<div class="links">${cvLinks(j)}</div></article>`;}
+const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+const ORDEM = ['alta', 'boa', 'condicional', 'baixa', 'incompativel'];
+const ADER = {
+  alta: 'Alta aderência',
+  boa: 'Boa aderência',
+  condicional: 'Condicional',
+  baixa: 'Baixa aderência',
+  incompativel: 'Incompatível',
+};
+const CURTO = {
+  alta: 'Alta',
+  boa: 'Boa',
+  condicional: 'Condicional',
+  baixa: 'Baixa',
+  incompativel: 'Incompatível',
+};
+const DESC = {
+  alta: 'Atende os obrigatórios e as suas condições',
+  boa: 'Quase tudo; uma lacuna contornável',
+  condicional: 'Perfil serve; local, modalidade ou salário não',
+  baixa: 'Pouca relação com o que você procura',
+  incompativel: 'Esbarra numa condição obrigatória',
+};
+const PORTAL_NOMES = { gupy: 'Gupy', solides: 'Sólides', greenhouse: 'Greenhouse', lever: 'Lever', ashby: 'Ashby', inhire: 'InHire' };
+
+// Estado
+const marcas = new Map();
+const api = window.PAINEL_API || null;
+const S = {
+  tema: localStorage.getItem('cb_tema') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'escuro' : 'claro'),
+  ader: new Set(['alta', 'boa', 'condicional', 'baixa']),
+  busca: '',
+  modo: '',
+  regime: '',
+  portal: '',
+  cand: '',
+  desc: 'nao',
+  sel: null,
+  fundoParado: localStorage.getItem('cb_fundo_parado') === '1',
+  menuAberto: false,
+  balaoAberto: false,
+};
+
+function aplicarTema(t) {
+  S.tema = t;
+  document.documentElement.setAttribute('data-tema', t);
+  localStorage.setItem('cb_tema', t);
+  const ic = document.getElementById('ic-tema');
+  if (ic) {
+    if (t === 'escuro') {
+      ic.innerHTML = '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>';
+    } else {
+      ic.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+    }
+  }
+}
+aplicarTema(S.tema);
+
+const aplicada = v => marcas.get(v.id)?.aplicada ?? Boolean(v.candidatura_usuario?.aplicada);
+const dataCand = v => marcas.get(v.id)?.data ?? v.candidatura_usuario?.data ?? '';
+const descartada = v => marcas.get(v.id)?.descartada ?? Boolean(v.descarte_usuario?.descartada);
+const cvBlocked = v => Boolean(v.cv_gate && v.cv_gate.status === 'bloqueado' && !v.cv_gate.aprovada);
+
+function formatarSalario(val) {
+  if (val === null || val === undefined || val === '') return 'Não divulgado';
+  if (typeof val === 'number') return `R$ ${val.toLocaleString('pt-BR')}`;
+  return esc(val);
+}
+
+function filtrar() {
+  const b = norm(S.busca);
+  return (DATA.vagas || []).filter(v => {
+    if (!S.ader.has(v.aderencia)) return false;
+    if (S.modo && !norm(v.modalidade).startsWith(norm(S.modo))) return false;
+    if (S.regime) {
+      if (S.regime === 'pendente') {
+        if (['CLT', 'PJ'].includes(v.regime)) return false;
+      } else if (v.regime !== S.regime) {
+        return false;
+      }
+    }
+    if (S.portal && v.portal_candidatura !== S.portal) return false;
+    if (S.cand && (S.cand === 'sim') !== aplicada(v)) return false;
+    if (S.desc !== 'todas' && (S.desc === 'sim') !== descartada(v)) return false;
+    if (b) {
+      const texto = norm([v.empresa, v.cargo, v.descricao, ...(v.motivos || []), ...(v.lacunas || [])].join(' '));
+      if (!texto.includes(b)) return false;
+    }
+    return true;
+  }).sort((x, y) => {
+    const ox = ORDEM.indexOf(x.aderencia);
+    const oy = ORDEM.indexOf(y.aderencia);
+    if (ox !== oy) return ox - oy;
+    return (y.consultado_em || '').localeCompare(x.consultado_em || '');
+  });
+}
+
+function renderRamais(lista) {
+  if (!lista.length) {
+    return '<div class="vazio"><strong>Nenhuma vaga com esses filtros.</strong>Tente ajustar as opções ou limpe os filtros.</div>';
+  }
+
+  let html = '';
+  for (const a of ORDEM) {
+    const doGrupo = lista.filter(v => v.aderencia === a);
+    if (!doGrupo.length) continue;
+
+    html += `<section class="ramal" data-a="${a}" aria-label="${ADER[a]}">
+      <header>
+        <span class="plaqueta" data-a="${a}">${ADER[a]}</span>
+        <span class="n">${doGrupo.length}</span>
+        <span class="desc">${DESC[a]}</span>
+      </header>`;
+
+    doGrupo.forEach((v, i) => {
+      const isIni = i === 0;
+      const isFim = i === doGrupo.length - 1;
+      const isFeita = aplicada(v);
+      const isDesc = descartada(v);
+      const isSel = v.id === S.sel;
+
+      html += `<button type="button" class="estacao ${isIni ? 'ini' : ''} ${isFim ? 'fim' : ''} ${isFeita ? 'feita' : ''} ${isDesc ? 'descartada' : ''}"
+        data-a="${a}" data-id="${esc(v.id)}" aria-current="${isSel}">
+        <span class="bola" data-a="${a}" aria-hidden="true"></span>
+        <span class="t">
+          <span class="cargo">${esc(v.cargo)}</span>
+          <span class="sub">${esc(v.empresa)} · ${esc(v.modalidade || 'Remoto')} · ${esc(PORTAL_NOMES[v.portal_candidatura] || v.portal_candidatura || 'Direto')}</span>
+        </span>
+        <span class="lado">
+          ${isFeita ? '<span class="selo"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>candidatada</span>' : `<span>${esc(v.consultado_em ? v.consultado_em.slice(5) : '')}</span>`}
+        </span>
+      </button>`;
+    });
+
+    html += '</section>';
+  }
+  return html;
+}
+
+function renderCvs(v) {
+  if (v.portal_candidatura === 'gupy') {
+    return `<div class="gupy">
+      <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+      <div>
+        <strong>A Gupy usa o perfil do site, não PDF.</strong>
+        <p class="meta" style="margin: 2px 0 6px;">${esc(v.perfil_gupy?.resumo || 'Proposta de perfil pronta para preenchimento.')}</p>
+      </div>
+    </div>`;
+  }
+
+  const cvs = (DATA.cvs || {})[v.id] || null;
+  const motivo = cvBlocked(v) ? (((v.cv_gate?.motivos || [])[0] || {}).motivo || 'conferir o CV') : (cvs?.bloqueio && !cvs.atual ? (cvs.bloqueio.motivos[0] || 'conferir o CV') : null);
+
+  if (motivo) {
+    return `<div class="alerta perigo">
+      <svg class="ic" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      <div><strong>CV bloqueado:</strong> ${esc(motivo)}</div>
+    </div>`;
+  }
+
+  const baseLinks = (DATA.perfil?.pdfs_base || []).map(p => {
+    return `<a class="cv" href="/${esc(p.href)}" target="_blank" rel="noopener noreferrer">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      <div><strong>${esc(p.texto)}</strong><span>PDF base</span></div>
+    </a>`;
+  }).join('');
+
+  if (!cvs || !cvs.atual) {
+    return `<div class="cvs">${baseLinks || '<p class="meta">PDFs da vaga serão gerados na próxima rodada.</p>'}</div>`;
+  }
+
+  const artLink = (u, tit, desc) => u ? `<a class="cv" href="/${esc(u)}" target="_blank" rel="noopener noreferrer">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+    <div><strong>${esc(tit)}</strong><span>${esc(desc)}</span></div>
+  </a>` : '';
+
+  return `<div class="cvs">
+    ${artLink(cvs.atual.ats, 'CV para ATS', 'Texto puro, leitura por robôs')}
+    ${artLink(cvs.atual.visual, 'CV visual', 'Layout formatado para recrutador')}
+  </div>`;
+}
+
+function renderDetalhe(v) {
+  if (!v) {
+    return '<div class="vazio"><strong>Nenhuma vaga selecionada.</strong>Escolha uma estação na lista ao lado.</div>';
+  }
+
+  const feita = aplicada(v);
+  const desc = descartada(v);
+  const cond = v.condicoes && v.condicoes.situacao !== 'ok' ? v.condicoes : null;
+  const av = v.empresa_avaliacao;
+
+  return `<article class="det" aria-label="${esc(v.cargo)}">
+    <div class="det-topo">
+      <span class="plaqueta" data-a="${esc(v.aderencia)}">${esc(ADER[v.aderencia] || v.aderencia)}</span>
+      <strong>${esc(v.empresa)}</strong>
+      <span class="vista">
+        <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        ${esc(v.consultado_em || 'hoje')}
+      </span>
+      ${v.url ? `<a class="btn prim peq abrir-topo" href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">Abrir vaga <svg class="ic" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></a>` : ''}
+    </div>
+
+    <h2>${esc(v.cargo)}</h2>
+
+    ${cond ? `<div class="alerta ${v.aderencia === 'incompativel' ? 'perigo' : ''}">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+      <div><strong>${v.aderencia === 'incompativel' ? 'Não bate com uma condição obrigatória.' : 'Condição pendente.'}</strong> ${esc((cond.motivos || []).join('; '))}</div>
+    </div>` : ''}
+
+    <dl class="fatos">
+      <div><dt>Modalidade</dt><dd>${esc(v.modalidade || 'Remoto')}</dd></div>
+      <div><dt>Local</dt><dd>${esc(v.local || 'Não informado')}</dd></div>
+      <div><dt>Regime</dt><dd>${esc(v.regime || 'Regime pendente')}</dd></div>
+      <div><dt>Salário</dt><dd>${formatarSalario(v.salario)}</dd></div>
+      <div><dt>Portal</dt><dd>${esc(PORTAL_NOMES[v.portal_candidatura] || v.portal_candidatura || 'Direto')}</dd></div>
+      <div>
+        <dt>Empresa</dt>
+        <dd>${av && av.nota ? `<span class="nota">★ ${Number(av.nota).toFixed(1).replace('.', ',')}</span> <span class="meta">(${av.quantidade || 0} av.)</span>` : '<span class="meta">Sem avaliações</span>'}</dd>
+      </div>
+    </dl>
+
+    <section>
+      <h3>Descrição da vaga</h3>
+      <p>${esc(v.descricao || 'Sem descrição fornecida.')}</p>
+    </section>
+
+    ${v.motivos?.length ? `<section>
+      <h3>Por que considerar</h3>
+      <ul class="marcadores">
+        ${v.motivos.map(m => `<li><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>${esc(m)}</li>`).join('')}
+      </ul>
+    </section>` : ''}
+
+    ${(v.lacunas?.length || v.pendencias?.length) ? `<section>
+      <h3>Lacunas e pendências</h3>
+      <ul class="marcadores lacunas">
+        ${[...(v.lacunas || []), ...(v.pendencias || [])].map(m => `<li><svg class="ic" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>${esc(m)}</li>`).join('')}
+      </ul>
+    </section>` : ''}
+
+    ${v.requisitos?.length ? `<section>
+      <h3>Requisitos avaliados</h3>
+      <table class="reqs">
+        ${v.requisitos.map(r => `<tr>
+          <td>${esc(r.requisito)}${r.tipo === 'desejavel' ? ' <span class="meta">(desejável)</span>' : ''}</td>
+          <td class="${esc(r.avaliacao)}">${{ atende: 'Atende', parcial: 'Em parte', nao_atende: 'Não atende' }[r.avaliacao] || esc(r.avaliacao)}</td>
+        </tr>`).join('')}
+      </table>
+    </section>` : ''}
+
+    <section>
+      <h3>Currículos desta vaga</h3>
+      ${renderCvs(v)}
+    </section>
+
+    ${av && av.nota ? `<section>
+      <h3>A empresa no ${esc(av.plataforma || 'Glassdoor')}</h3>
+      <div class="empresa-avaliacao">
+        <div class="grande">${Number(av.nota).toFixed(1).replace('.', ',')}</div>
+        <div>
+          <div class="meta">de 5 · ${av.quantidade ? av.quantidade.toLocaleString('pt-BR') : 0} avaliações coletadas em ${esc(av.data || 'recente')}</div>
+          ${av.resumo ? `<p style="margin-top: 4px;">${esc(av.resumo)}</p>` : ''}
+        </div>
+      </div>
+    </section>` : ''}
+
+    <div class="acoes">
+      ${v.url ? `<a class="btn prim" href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">Abrir vaga <svg class="ic" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></a>` : ''}
+      <label>
+        <input type="checkbox" id="check-aplicada" data-id="${esc(v.id)}" ${feita ? 'checked' : ''}> Já me candidatei
+      </label>
+      <input type="date" class="campo" id="data-aplicada" data-id="${esc(v.id)}" value="${esc(dataCand(v))}" style="${feita ? '' : 'display:none;'}" aria-label="Data da candidatura">
+      <button type="button" class="btn discreto" id="btn-descarte" data-id="${esc(v.id)}">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></svg>
+        ${desc ? 'Restaurar vaga' : 'Descartar vaga'}
+      </button>
+      <span class="aplicacao-feedback" id="aplicacao-feedback" role="status"></span>
+    </div>
+  </article>`;
+}
+
+async function apiPost(endpoint, body) {
+  if (!api || !api.token) return null;
+  const res = await fetch('/api/' + endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Painel-Token': api.token,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error('Falha ao gravar.');
+  return res.json();
+}
+
+function atualizarContadores() {
+  const vagas = DATA.vagas || [];
+  const altas = vagas.filter(v => v.aderencia === 'alta').length;
+  const boas = vagas.filter(v => v.aderencia === 'boa').length;
+  const conds = vagas.filter(v => v.aderencia === 'condicional').length;
+  const baixas = vagas.filter(v => v.aderencia === 'baixa').length;
+  const incomp = vagas.filter(v => v.aderencia === 'incompativel').length;
+
+  document.getElementById('n-alta').textContent = altas;
+  document.getElementById('n-boa').textContent = boas;
+  document.getElementById('n-condicional').textContent = conds;
+  document.getElementById('n-baixa').textContent = baixas;
+  document.getElementById('n-incompativel').textContent = incomp;
+
+  document.getElementById('badge-vagas').textContent = vagas.filter(v => ['alta', 'boa'].includes(v.aderencia) && !descartada(v) && !aplicada(v)).length;
+  document.getElementById('badge-historico').textContent = (DATA.historico || []).length;
+  document.getElementById('badge-processos').textContent = 0;
+  document.getElementById('badge-curriculo').textContent = 0;
+
+  const elFila = document.getElementById('radar-fila');
+  if (elFila) elFila.textContent = `${DATA.queue || 0} anúncios na fila`;
+}
+
+function render() {
+  atualizarContadores();
+  const lista = filtrar();
+  document.getElementById('total-vagas').textContent = `${lista.length} vagas`;
+
+  if (!lista.some(v => v.id === S.sel)) {
+    S.sel = lista[0]?.id || null;
+  }
+
+  document.getElementById('a-lista').innerHTML = renderRamais(lista);
+  const vagaSel = (DATA.vagas || []).find(v => v.id === S.sel) || null;
+  document.getElementById('detalhe-conteudo').innerHTML = renderDetalhe(vagaSel);
+  const elCards = document.getElementById('cards');
+  if (elCards) {
+    elCards.innerHTML = (DATA.vagas || []).map(card).join('');
+  }
+}
+
+// Event Listeners
+document.getElementById('a-lista').addEventListener('click', e => {
+  const btn = e.target.closest('.estacao');
+  if (!btn) return;
+  S.sel = btn.dataset.id;
+  render();
+  if (window.innerWidth <= 900) {
+    document.getElementById('a-mesa').classList.add('abre-det');
+  }
+});
+
+document.getElementById('btn-voltar').addEventListener('click', () => {
+  document.getElementById('a-mesa').classList.remove('abre-det');
+});
+
+// Chips de aderência
+document.querySelectorAll('.chips .chip').forEach(c => {
+  c.addEventListener('click', () => {
+    const a = c.dataset.ader;
+    if (S.ader.has(a)) {
+      if (S.ader.size > 1) S.ader.delete(a);
+    } else {
+      S.ader.add(a);
+    }
+    c.setAttribute('aria-pressed', String(S.ader.has(a)));
+    render();
+  });
+});
+
+// Filtros
+document.getElementById('search').addEventListener('input', e => {
+  S.busca = e.target.value;
+  render();
+});
+document.getElementById('mode').addEventListener('change', e => { S.modo = e.target.value; render(); });
+document.getElementById('contract').addEventListener('change', e => { S.regime = e.target.value; render(); });
+document.getElementById('portal').addEventListener('change', e => { S.portal = e.target.value; render(); });
+document.getElementById('applied').addEventListener('change', e => { S.cand = e.target.value; render(); });
+document.getElementById('discard').addEventListener('change', e => { S.desc = e.target.value; render(); });
+
+document.getElementById('btn-limpar-filtros').addEventListener('click', () => {
+  S.busca = '';
+  S.modo = '';
+  S.regime = '';
+  S.portal = '';
+  S.cand = '';
+  S.desc = 'nao';
+  S.ader = new Set(['alta', 'boa', 'condicional', 'baixa']);
+  document.getElementById('search').value = '';
+  document.getElementById('mode').value = '';
+  document.getElementById('contract').value = '';
+  document.getElementById('portal').value = '';
+  document.getElementById('applied').value = '';
+  document.getElementById('discard').value = 'nao';
+  document.querySelectorAll('.chips .chip').forEach(c => c.setAttribute('aria-pressed', String(S.ader.has(c.dataset.ader))));
+  render();
+});
+
+// Portais dinâmicos
+const portaisSet = new Set((DATA.vagas || []).map(v => v.portal_candidatura).filter(Boolean));
+const selectPortal = document.getElementById('portal');
+[...portaisSet].sort().forEach(p => {
+  const opt = document.createElement('option');
+  opt.value = p;
+  opt.textContent = PORTAL_NOMES[p] || p;
+  selectPortal.append(opt);
+});
+
+// Ações no detalhe
+document.getElementById('detalhe-conteudo').addEventListener('change', async e => {
+  if (e.target.id === 'check-aplicada') {
+    const id = e.target.dataset.id;
+    const feita = e.target.checked;
+    const dataInput = document.getElementById('data-aplicada');
+    const feedback = document.getElementById('aplicacao-feedback');
+    const dataVal = dataInput?.value || new Date().toISOString().slice(0, 10);
+
+    feedback.textContent = 'Salvando...';
+    try {
+      await apiPost('candidaturas', { id, aplicada: feita, data: dataVal });
+      marcas.set(id, { ...marcas.get(id), aplicada: feita, data: dataVal });
+      feedback.textContent = 'Salvo.';
+      render();
+    } catch {
+      feedback.textContent = 'Erro ao salvar.';
+      e.target.checked = !feita;
+    }
+  } else if (e.target.id === 'data-aplicada') {
+    const id = e.target.dataset.id;
+    const feedback = document.getElementById('aplicacao-feedback');
+    feedback.textContent = 'Salvando data...';
+    try {
+      await apiPost('candidaturas', { id, aplicada: true, data: e.target.value });
+      marcas.set(id, { ...marcas.get(id), aplicada: true, data: e.target.value });
+      feedback.textContent = 'Salvo.';
+    } catch {
+      feedback.textContent = 'Erro ao salvar.';
+    }
+  }
+});
+
+document.getElementById('detalhe-conteudo').addEventListener('click', async e => {
+  const btnDesc = e.target.closest('#btn-descarte');
+  if (!btnDesc) return;
+  const id = btnDesc.dataset.id;
+  const v = (DATA.vagas || []).find(x => x.id === id);
+  if (!v) return;
+  const novoEstado = !descartada(v);
+  const feedback = document.getElementById('aplicacao-feedback');
+  feedback.textContent = 'Salvando descarte...';
+  try {
+    await apiPost('descarte', { id, descartada: novoEstado });
+    marcas.set(id, { ...marcas.get(id), descartada: novoEstado });
+    feedback.textContent = 'Salvo.';
+    render();
+  } catch {
+    feedback.textContent = 'Erro ao salvar.';
+  }
+});
+
+// Tema
+document.getElementById('btn-tema').addEventListener('click', () => {
+  aplicarTema(S.tema === 'claro' ? 'escuro' : 'claro');
+});
+
+// Menu
+const btnMenu = document.getElementById('btn-menu');
+const menuDropdown = document.getElementById('menu-dropdown');
+btnMenu.addEventListener('click', () => {
+  S.menuAberto = !S.menuAberto;
+  btnMenu.setAttribute('aria-expanded', String(S.menuAberto));
+  menuDropdown.hidden = !S.menuAberto;
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.menu')) {
+    S.menuAberto = false;
+    btnMenu.setAttribute('aria-expanded', 'false');
+    menuDropdown.hidden = true;
+  }
+});
+
+// Animação de fundo toggle no menu
+const optFundo = document.getElementById('opt-fundo');
+const rotuloFundo = document.getElementById('rotulo-fundo');
+function atualizarRotuloFundo() {
+  rotuloFundo.textContent = S.fundoParado ? 'Animar o fundo' : 'Parar a animação do fundo';
+}
+atualizarRotuloFundo();
+optFundo.addEventListener('click', () => {
+  S.fundoParado = !S.fundoParado;
+  localStorage.setItem('cb_fundo_parado', S.fundoParado ? '1' : '0');
+  atualizarRotuloFundo();
+  if (window.__fundo) window.__fundo.reiniciar();
+});
+
+document.getElementById('opt-limpar').addEventListener('click', () => {
+  localStorage.removeItem('cb_tema');
+  localStorage.removeItem('cb_fundo_parado');
+  S.fundoParado = false;
+  aplicarTema('claro');
+  atualizarRotuloFundo();
+  if (window.__fundo) window.__fundo.reiniciar();
+});
+
+// Coruja mascote
+const btnCoruja = document.getElementById('btn-coruja');
+const balaoCoruja = document.getElementById('coruja-balao');
+function recadoCoruja() {
+  const vagas = DATA.vagas || [];
+  const altas = vagas.filter(v => v.aderencia === 'alta' && !descartada(v) && !aplicada(v));
+  if (altas.length) {
+    return `<b>${altas.length}</b> vagas de alta aderência aguardam você. Destaque: ${esc(altas[0].empresa)}.`;
+  }
+  return 'Nenhuma nova oportunidade de alta aderência no momento. Radar ativo.';
+}
+btnCoruja.addEventListener('click', () => {
+  S.balaoAberto = !S.balaoAberto;
+  btnCoruja.setAttribute('aria-expanded', String(S.balaoAberto));
+  balaoCoruja.hidden = !S.balaoAberto;
+  if (S.balaoAberto) {
+    balaoCoruja.innerHTML = recadoCoruja();
+    setTimeout(() => {
+      S.balaoAberto = false;
+      btnCoruja.setAttribute('aria-expanded', 'false');
+      balaoCoruja.hidden = true;
+    }, 6000);
+  }
+});
+
+// Atalhos de teclado J/K/A/D/O
+document.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toUpperCase();
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag) || e.target.isContentEditable || e.ctrlKey || e.altKey || e.metaKey) {
+    return;
+  }
+  const lista = filtrar();
+  if (!lista.length) return;
+  const idx = lista.findIndex(v => v.id === S.sel);
+  const k = e.key.toLowerCase();
+
+  if (k === 'j') {
+    const prox = Math.min(lista.length - 1, (idx === -1 ? 0 : idx + 1));
+    S.sel = lista[prox].id;
+    render();
+    const el = document.querySelector(`.estacao[data-id="${S.sel}"]`);
+    el?.scrollIntoView({ block: 'nearest' });
+  } else if (k === 'k') {
+    const ant = Math.max(0, (idx === -1 ? 0 : idx - 1));
+    S.sel = lista[ant].id;
+    render();
+    const el = document.querySelector(`.estacao[data-id="${S.sel}"]`);
+    el?.scrollIntoView({ block: 'nearest' });
+  } else if (k === 'a') {
+    const check = document.getElementById('check-aplicada');
+    if (check) {
+      check.click();
+    }
+  } else if (k === 'd') {
+    const btn = document.getElementById('btn-descarte');
+    if (btn) {
+      btn.click();
+    }
+  } else if (k === 'o') {
+    const v = lista.find(x => x.id === S.sel);
+    if (v && v.url) {
+      window.open(v.url, '_blank', 'noopener,noreferrer');
+    }
+  }
+});
+
+// Fundo animado: céu pixel com serra
+const fundo = (function() {
+  const cv = document.getElementById('fundo');
+  if (!cv) return null;
+  const ctx = cv.getContext('2d');
+  const reduz = matchMedia('(prefers-reduced-motion: reduce)');
+  let w = window.innerWidth, h = window.innerHeight, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let raf, ultimo = 0, t0 = performance.now();
+  let estrelas = [], nuvens = [], serra = [];
+
+  function parado() {
+    return reduz.matches || S.fundoParado;
+  }
+
+  function redimensionar() {
+    w = window.innerWidth;
+    h = window.innerHeight;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = w * dpr;
+    cv.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const P = 4;
+    estrelas = Array.from({ length: Math.round(w * h / 9000) }, (_, i) => ({
+      x: Math.floor((i * 137.5) % w / P) * P,
+      y: Math.floor((i * 73.1) % (h * 0.8) / P) * P,
+      g: (i % 7 === 0),
+    }));
+    nuvens = Array.from({ length: 5 }, (_, i) => ({
+      x: (i * w / 5),
+      y: 50 + (i * 35),
+      l: 12 + (i * 4),
+      v: 6 + (i * 3),
+    }));
+    serra = [];
+    let y = h * 0.86;
+    for (let x = 0; x <= w + P * 6; x += P * 6) {
+      y = Math.max(h * 0.76, Math.min(h * 0.94, y + (Math.sin(x * 0.01) * 20)));
+      serra.push([x, Math.floor(y / P) * P]);
+    }
+  }
+
+  function desenhar(agora) {
+    const t = (agora - t0) / 1000;
+    const P = 4;
+    const escuro = S.tema === 'escuro';
+    ctx.clearRect(0, 0, w, h);
+
+    if (escuro) {
+      for (const e of estrelas) {
+        ctx.fillStyle = e.g ? '#E6B450' : '#BAC8DC';
+        ctx.fillRect(e.x, e.y, e.g ? P : 2, e.g ? P : 2);
+      }
+    } else {
+      ctx.fillStyle = '#FFFFFF';
+      for (const n of nuvens) {
+        const x = ((n.x + t * n.v) % (w + 200)) - 100;
+        ctx.fillRect(Math.round(x / P) * P, n.y, n.l * P, P * 2);
+      }
+    }
+
+    // Serra
+    ctx.fillStyle = escuro ? '#152236' : '#D3DAE2';
+    for (let i = 0; i < serra.length - 1; i++) {
+      const [x, y] = serra[i];
+      ctx.fillRect(x, y, P * 6, h - y);
+    }
+  }
+
+  function loop(agora) {
+    raf = requestAnimationFrame(loop);
+    if (agora - ultimo < 33) return; // 30 fps
+    ultimo = agora;
+    desenhar(agora);
+  }
+
+  function reiniciar() {
+    cancelAnimationFrame(raf);
+    if (document.hidden) return;
+    if (parado()) {
+      desenhar(t0);
+    } else {
+      raf = requestAnimationFrame(loop);
+    }
+  }
+
+  window.addEventListener('resize', () => { redimensionar(); reiniciar(); });
+  document.addEventListener('visibilitychange', reiniciar);
+  reduz.addEventListener?.('change', reiniciar);
+
+  redimensionar();
+  reiniciar();
+  return { reiniciar };
+})();
+window.__fundo = fundo;
+
+// Preencher tabelas de compatibilidade histórica e cobertura
+document.getElementById('history').innerHTML = (DATA.historico || []).map(j => `<tr>
+  <td>${esc(j.empresa)}</td><td>${esc(j.cargo)}</td><td>${esc(j.status)}</td>
+  <td>${j.url ? `<a href="${esc(j.url)}" target="_blank" rel="noopener noreferrer">Vaga</a>` : '—'}</td>
+</tr>`).join('') || '<tr><td colspan="4" class="meta" style="padding: 10px;">Nenhum histórico registrado.</td></tr>';
+
+document.getElementById('coverage').innerHTML = (DATA.coverage || []).map(c => `<tr>
+  <td>${esc(c.fonte)}</td><td>${esc(c.consulta)}</td><td>${esc(c.resultados ?? '—')}</td><td>${esc(c.status || c.limite || 'Consulta manual')}</td>
+</tr>`).join('') || '<tr><td colspan="4" class="meta" style="padding: 10px;">Sem fontes ativas.</td></tr>';
+
+// Carregar marcações salvas da API
+if (api) {
+  fetch('/api/candidaturas', { headers: { 'X-Painel-Token': api.token } })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      if (d && Array.isArray(d.vagas)) {
+        d.vagas.forEach(m => marcas.set(m.id, m));
+        render();
+      }
+    })
+    .catch(() => {});
+}
+
 render();
-</script></body></html>
+</script>
+</body>
+</html>
