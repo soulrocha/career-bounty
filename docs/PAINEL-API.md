@@ -292,3 +292,102 @@ Retorna exclusivamente os processos seletivos não-encerrados que estão em esta
 ##### `403 Forbidden`
 Token ausente, inválido ou cabeçalho Host não local.
 
+---
+
+### 5. Histórico e Linha do Tempo por Vaga (`/api/historico`)
+
+Retorna o histórico completo e a linha do tempo cronológica agregada por vaga, reunindo eventos de descoberta no radar, registros de candidatura, contatos e mensagens trocadas com recrutadores, avanço de etapas de entrevista, desfechos e descartes. Dados confidenciais (telefones e e-mails) são estritamente mascarados antes de serem expostos.
+
+- **Método:** `GET`
+- **Caminho:** `/api/historico`
+- **Cabeçalhos:**
+  - `x-painel-token: <token>`
+- **Parâmetros de Consulta (Query Strings, opcionais):**
+  - `inicio=AAAA-MM-DD`: filtra oportunidades cujo último movimento ocorreu a partir desta data.
+  - `fim=AAAA-MM-DD`: filtra oportunidades cujo último movimento ocorreu até esta data.
+  - `situacao=<situacao>`: filtra pela situação corrente do processo (`ativo`, `aguardando_retorno`, `aguardando_voce`, `encerrado`).
+  - `portal=<portal>`: filtra pelo portal de origem da vaga (`gupy`, `greenhouse`, `linkedin`, etc.).
+
+#### Respostas
+
+##### `200 OK`
+```json
+{
+  "historico": [
+    {
+      "vaga_id": "vaga-ficticia-101",
+      "empresa": "Empresa Alfa",
+      "cargo": "Arquiteto de Software",
+      "portal": "gupy",
+      "situacao_processo": "aguardando_voce",
+      "desfecho": null,
+      "ultimo_movimento": "2026-10-18",
+      "linha_do_tempo": [
+        {
+          "id": "e-desc-01",
+          "tipo": "descoberta",
+          "origem": "radar",
+          "data": "2026-10-10",
+          "ts": "2026-10-10T09:30:00.000Z",
+          "titulo": "Vaga descoberta: Arquiteto de Software",
+          "detalhe": "https://empresa-alfa.test/vagas/101"
+        },
+        {
+          "id": "e-cand-01",
+          "tipo": "candidatura",
+          "origem": "painel",
+          "data": "2026-10-12",
+          "ts": "2026-10-12T14:00:00.000Z",
+          "titulo": "Candidatura registrada",
+          "detalhe": "Candidatura enviada/marcada"
+        },
+        {
+          "id": "e-etapa-01",
+          "tipo": "etapa",
+          "origem": "cli",
+          "etapa": "entrevista_rh",
+          "data": "2026-10-15",
+          "ts": "2026-10-15T11:00:00.000Z",
+          "titulo": "Etapa: entrevista_rh",
+          "detalhe": "Alinhamento cultural inicial realizado"
+        },
+        {
+          "id": "c-contato-01",
+          "tipo": "contato",
+          "origem": "recrutador",
+          "canal": "email",
+          "direcao": "recebido",
+          "data": "2026-10-18",
+          "ts": "2026-10-18T16:20:00.000Z",
+          "titulo": "Contato com Camila Recruiter",
+          "resumo": "Envio do teste de arquitetura. Dúvidas via (11) 9****-**42 ou c***@empresa-alfa.test",
+          "detalhe": "Envio do teste de arquitetura. Dúvidas via (11) 9****-**42 ou c***@empresa-alfa.test",
+          "pergunta": "Você consegue entregar o diagrama de blocos até quinta-feira?",
+          "proxima_etapa": {
+            "texto": "Apresentação técnica com equipe de engenharia",
+            "data": "2026-10-24"
+          },
+          "pessoa": {
+            "nome": "Camila Recruiter",
+            "papel": "Tech Recruiter"
+          },
+          "endereco": "c***@empresa-alfa.test"
+        }
+      ]
+    }
+  ],
+  "totais": {
+    "total": 1,
+    "ativos": 0,
+    "aguardando_retorno": 0,
+    "aguardando_voce": 1,
+    "encerrados": 0
+  },
+  "total": 1
+}
+```
+
+##### `403 Forbidden`
+Token ausente, inválido ou cabeçalho Host não local.
+
+
