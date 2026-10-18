@@ -103,7 +103,7 @@ export async function aprovarPendente({ dataRoot, id }) {
   const arquivo = path.join(await raizMarkdown(dataRoot), 'claims.local.md');
   let atual = '';
   try { atual = await readFile(arquivo, 'utf8'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
-  if (new RegExp(`^id:\\s*${id}\\s*$`, 'm').test(atual)) throw new Error(`${id} já existe em claims.local.md.`);
+  if (new RegExp(`^id:\\s*${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'm').test(atual)) throw new Error(`${id} já existe em claims.local.md.`);
   const bloco = ['---', `id: ${pendente.id}`, `nivel_prova: ${pendente.nivel_prova}`, `origem: "${pendente.fonte}"`, 'uso: [Ent]', 'publicavel: nao',
     `numeros: [${pendente.numeros.map(n => `"${n}"`).join(', ')}]`, ...(pendente.periodo ? [`periodo: "${pendente.periodo}"`] : []), '---', pendente.texto, ''].join('\n');
   await atomicWriteFile(arquivo, `${atual ? `${atual.trimEnd()}\n\n` : ''}${bloco}`);
