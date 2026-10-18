@@ -103,7 +103,7 @@ export async function emitirAprovacaoPolitica(dataRoot, { vagaId, chave = null, 
   });
 }
 
-export const aprovacaoValida = (estado, vagaId, ts) => estado.aprovacoes.find(a => a.vaga_id === vagaId && !a.usada_em && Date.parse(a.expira_em) > Date.parse(ts)) ?? null;
+export const aprovacaoValida = (estado, vagaId, ts, origem = null) => estado.aprovacoes.find(a => a.vaga_id === vagaId && !a.usada_em && Date.parse(a.expira_em) > Date.parse(ts) && (origem === null || a.origem === origem)) ?? null;
 
 // Envios da Gupy consumidos no dia civil de São Paulo (trava de segurança gupy.max_por_dia). Conta o consumo da aprovação,
 // não o desfecho: tentativa incerta ou com falha também ocupa a vaga do dia (conservador, nunca devolve automaticamente).
@@ -113,7 +113,8 @@ export const consumosGupyNoDia = (estado, ts) => (estado.consumos ?? []).filter(
 export async function consumirAprovacao(dataRoot, { vagaId, ts = new Date().toISOString(), limiteGupy = 5, aceiteGupy = false, contexto = 'humano', hashPdf = null, hashRespostas = null }) {
   return withLock(trava(dataRoot), {}, async () => {
     const estado = await lerAprovacoes(dataRoot);
-    const valida = aprovacaoValida(estado, vagaId, ts);
+    // Prefere a aprovação da origem certa para o contexto: uma da política pendente não bloqueia a humana (nem o inverso).
+    const valida = aprovacaoValida(estado, vagaId, ts, contexto === 'driver' ? 'politica' : 'humano') ?? aprovacaoValida(estado, vagaId, ts);
     if (!valida) return { ok: false, motivo: 'aprovação já usada ou vencida' };
     if (valida.origem === 'politica' && contexto !== 'driver') {
       return { ok: false, motivo: 'aprovação emitida pela política só vale para o processo do driver' };
@@ -121,10 +122,12 @@ export async function consumirAprovacao(dataRoot, { vagaId, ts = new Date().toIS
     if (valida.origem === 'humano' && contexto === 'driver') {
       return { ok: false, motivo: 'aprovação emitida por humano não pode ser consumida pelo driver automático' };
     }
-    if (valida.hash_pdf && hashPdf && valida.hash_pdf !== hashPdf) {
+    // Aprovação da política é estrita: hash ausente na chamada nega. A humana segue tolerante (o hook não tem o hash).
+    const estrito = valida.origem === 'politica';
+    if (valida.hash_pdf && (estrito || hashPdf) && valida.hash_pdf !== hashPdf) {
       return { ok: false, motivo: 'hash do PDF divergente da aprovação' };
     }
-    if (valida.hash_respostas && hashRespostas && valida.hash_respostas !== hashRespostas) {
+    if (valida.hash_respostas && (estrito || hashRespostas) && valida.hash_respostas !== hashRespostas) {
       return { ok: false, motivo: 'hash das respostas divergente da aprovação' };
     }
     // Aprovação sem rota (emitida antes da trava da Gupy) não é contável: refaça o lote.

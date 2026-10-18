@@ -35,6 +35,8 @@ else if (!entrada || typeof entrada.tool_name !== 'string') {
 
     if (await isEnvioPausado(dataRoot)) {
       saida('deny', 'envio pausado pelo kill switch (envio.pausado)');
+      // Só sai depois de a negação ser escrita: process.exit logo após o write pode cortar a saída num pipe.
+      await new Promise(resolve => process.stdout.write('', resolve));
       process.exit(0);
     }
 

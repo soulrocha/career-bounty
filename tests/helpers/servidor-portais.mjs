@@ -37,6 +37,8 @@ const ROTAS = {
   '/greenhouse-erro': () => FORMS.greenhouse().replace('/enviar/greenhouse', '/enviar/greenhouse?erro=1'),
   '/lever': () => FORMS.lever(),
   '/ashby': () => FORMS.ashby(),
+  '/greenhouse-sucesso-falso': () => FORMS.greenhouse({ extra: '<p>Thank you for applying to other roles at Empresa 01!</p>' }),
+  '/greenhouse-sucesso-falso': () => FORMS.greenhouse({ extra: '<p>Thank you for applying to other roles at Empresa 01!</p>' }),
   '/captcha': () => FORMS.greenhouse({ extra: '<div class="g-recaptcha" data-sitekey="chave-ficticia"></div>' }),
   '/login': () => pagina('Sign in', '<h1>Log in to apply</h1><form><label for="u">Email</label><input id="u" type="email"><label for="p">Password</label><input id="p" type="password"><button>Sign in</button></form>'),
 };
@@ -56,11 +58,14 @@ export async function servidorPortais(t) {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       return res.end(url.searchParams.get('erro') ? pagina('Error', '<p class="error">There was an error submitting your application.</p>') : pagina('Obrigado', `<h1>${SUCESSO[portal]}</h1>`));
     }
+    if (url.pathname === '/redirecionar') { res.writeHead(302, { Location: url.searchParams.get('para') }); return res.end(); }
+    if (url.pathname === '/redirecionar') { res.writeHead(302, { Location: url.searchParams.get('para') }); return res.end(); }
     const rota = ROTAS[url.pathname];
     res.writeHead(rota ? 200 : 404, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(rota ? rota() : 'não encontrado');
   });
   await new Promise(resolve => servidor.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => servidor.close(resolve)));
-  return { url: caminho => `http://127.0.0.1:${servidor.address().port}${caminho}`, recebidos };
+  const origin = `http://127.0.0.1:${servidor.address().port}`;
+  return { origin, url: caminho => `http://127.0.0.1:${servidor.address().port}${caminho}`, recebidos };
 }

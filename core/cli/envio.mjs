@@ -19,9 +19,10 @@ export const envioCommands = {
     if (sub === 'audit') {
       const parsed = parseFlags(flags, { allowed: ['--dia', '--day'], withValue: ['--dia', '--day'] });
       const dia = parsed['--dia'] ?? parsed['--day'] ?? localDay(new Date().toISOString());
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dia) || Number.isNaN(Date.parse(`${dia}T12:00:00Z`))) throw new Error(`--dia deve ser uma data AAAA-MM-DD (recebi "${dia}").`);
       const decisoes = await auditarDecisoes(dataRoot, { dia });
       const pausado = await isEnvioPausado(dataRoot);
-      const text = [`Auditoria de envio para ${dia} (Kill switch: ${pausado ? 'PAUSADO' : 'ATIVO'}):`,
+      const text = [`Auditoria de envio para ${dia} (${pausado ? 'envio PAUSADO pelo kill switch' : 'envio liberado, kill switch desligado'}):`,
         ...decisoes.map(d => `[${d.ts}] ${d.tipo} ${d.vaga_id ?? ''} ${JSON.stringify(d.dados)}`)].join('\n');
       return {
         result: { dia, pausado, decisoes },

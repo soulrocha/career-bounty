@@ -60,7 +60,7 @@ if (command.length === 1 && command[0] === '--version') {
     } else if (name === 'migrate' && values['--from']) result = await importFromFile({ dataRoot: settings.dataRoot, from: values['--from'] });
     else if (name === 'migrate' && values['--corte']) {
       const { cutoverMigration } = await import('../core/migration/cutover.mjs');
-      result = await cutoverMigration({ dataRoot: config.dataRoot, confirmo: Boolean(values['--confirmar-corte']) });
+      result = await cutoverMigration({ dataRoot: config.dataRoot, careerRoot: config.careerRoot, confirmo: Boolean(values['--confirmar-corte']) });
     } else if (name === 'migrate') result = values['--rollback']
       ? await exportRollback({ ...config, destination: values['--out'], confirmoVault: Boolean(values['--confirmo-vault']) })
       : values['--shadow'] ? await runShadow({ ...config, aceitarAusentes: Boolean(values['--aceitar-ausentes']) })
