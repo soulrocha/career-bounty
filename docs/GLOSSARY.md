@@ -142,3 +142,20 @@ Registro imutável no log append-only (`tipo: empresa.avaliada`, `entidade: empr
 ## Validade de avaliação
 
 Janela temporal padrão de vigência de uma avaliação de empresa (configurável, padrão de 90 dias a contar da data de referência). Avaliações expiradas deixam de ser projetadas nas vagas ativas para evitar a exibição de dados defasados.
+
+## Análise de currículo (analise-curriculo)
+
+Diagnóstico contínuo e determinístico entre os fatos sustentados pela base de conhecimento e o conteúdo do currículo, organizado nos quatro grupos: fatos conferidos (`confere`), bullets sem prova documental (`sem_prova`), afirmações comprovadas fora do currículo (`fora_do_cv`) e faltas na base (`lacuna`).
+
+## Evento analise.afirmacao_incluida
+
+Registro imutável no log append-only (`tipo: analise.afirmacao_incluida`, `entidade: afirmacao`) que indica a decisão de vincular uma afirmação comprovada do grupo fora do currículo a uma experiência profissional declarada.
+
+## Evento analise.item_marcado
+
+Registro imutável no log append-only (`tipo: analise.item_marcado`, `entidade: item_analise`) que anota uma decisão operacional da pessoa usuária sobre qualquer item da matriz de análise (`revisar`, `ignorado` ou `ativo`), com justificativa opcional.
+
+## Evento analise.lacuna_entrevista
+
+Registro imutável no log append-only (`tipo: analise.lacuna_entrevista`, `entidade: lacuna`) que documenta o encaminhamento de uma lacuna para o fluxo de entrevista investigativa, gerando pergunta sugerida e rascunho em `outbox/lacunas/`.
+
