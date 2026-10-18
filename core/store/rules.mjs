@@ -139,3 +139,19 @@ export function validarContatoVinculado(dados) {
   return null;
 }
 
+export function validarContatoRemovido(dados) {
+  if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
+    return 'Dados de remoção inválidos.';
+  }
+  if (typeof dados.contato_id !== 'string' || !dados.contato_id.trim()) {
+    return 'ID do contato obrigatório.';
+  }
+  if (dados.motivo !== undefined && dados.motivo !== null) {
+    if (typeof dados.motivo !== 'string' || !dados.motivo.trim()) {
+      return 'Motivo da remoção deve ser um texto válido.';
+    }
+  }
+  return null;
+}
+
+

@@ -41,15 +41,8 @@ import { envioCommands } from './envio.mjs';
 import { preferenciasCommands } from './preferencias.mjs';
 import { demoCommands } from './demo.mjs';
 import { contatoCommands } from './contato.mjs';
-
-// Relógio simulado só com --teste: sem a flag, --now é recusado para não gravar marcador, rodada ou orçamento num dia que não é o real.
-export function relogio(values) {
-  if (!values['--now']) return new Date();
-  if (!values['--teste']) throw new Error('--now só é aceito junto com --teste (relógio simulado, para testes).');
-  const now = new Date(values['--now']);
-  if (Number.isNaN(now.getTime())) throw new Error('Opção inválida: --now deve ser uma data ISO.');
-  return now;
-}
+import { relogio } from './relogio.mjs';
+export { relogio } from './relogio.mjs';
 
 async function privacy(rest, { parseFlags }) {
   const [sub, ...flags] = rest;
