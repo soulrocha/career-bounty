@@ -70,6 +70,11 @@ export async function runDoctor({
   const rules = activeRules(settings);
   if (rules.length) add('envio', 'aviso', `ATENÇÃO: ${rules.length} regra(s) de envio automático ativa(s) em config.yml.`);
   else add('envio', 'ok', 'Nenhuma regra de envio automático ativa.');
+
+  const pausado = await exists(path.join(dataRoot, 'envio.pausado'));
+  if (pausado) add('kill_switch', 'aviso', 'ATENÇÃO: envio pausado pelo kill switch (envio.pausado presente).');
+  else add('kill_switch', 'ok', 'Kill switch desligado (envio liberado).');
+
   if (settings.fontes.linkedin_guest.ativo) add('linkedin_guest', 'aviso', 'ATENÇÃO: coletor guest do LinkedIn ligado; você respondeu pelos termos de uso do site.');
   else add('linkedin_guest', 'ok', 'Coletor guest do LinkedIn desligado.');
 

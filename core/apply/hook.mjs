@@ -13,7 +13,7 @@ const LIVRES = new Set(['navigate', 'find', 'read_page', 'get_page_text', 'tabs_
 const ACOES_LIVRES = new Set(['screenshot', 'scroll', 'scroll_to', 'hover', 'zoom', 'wait', 'type']);
 const TECLAS_DE_ENVIO = /(^|[\s+])(enter|return|kp_enter|space)($|[\s+])/i;
 
-const nega = motivo => ({ decisao: 'negar', motivo });
+const nega = (motivo, vagaId = null) => ({ decisao: 'negar', motivo, ...(vagaId ? { vagaId } : {}) });
 // A etapa observada da Gupy vale para a página que estava aberta: navegar ou rodar script que pode mudar a página a apaga,
 // e ela vence em VALIDADE_ETAPA_MIN. O envio exige etapa de perguntas observada depois da última mudança.
 export const VALIDADE_ETAPA_MIN = 10;
@@ -38,16 +38,16 @@ function decidirScript(texto, aba, { sessao, aprovacoes, agora }) {
   const clique = /^\(\(\)=>\{const T=("(?:[^"\\]|\\.)*"),/.exec(t);
   if (clique) {
     let alvo;
-    try { alvo = JSON.parse(clique[1]); } catch { return nega('script de clique malformado'); }
+    try { alvo = JSON.parse(clique[1]); } catch { return nega('script de clique malformado', aba.vaga_id); }
     if (t === scriptDeClique(alvo).trim()) return muda(aba);
   }
   // O script de envio carrega a rota da aba e confere o domínio da página: página da Gupy só pela rota Gupy.
   if (t === scriptDeEnvio(aba.vaga_id, aba.rota ?? null).trim()) {
-    if (!aprovacoes || !aprovacaoValida(aprovacoes, aba.vaga_id, agora)) return nega(`envio sem aprovação: digite no chat a frase do lote ("enviar estas N: ...") para ${aba.vaga_id}`);
-    if (aba.rota === 'gupy' && !etapaVigente(aba, agora)) return nega(`Gupy: falta etapa observada de perguntas desde a última mudança da página (ou ela tem mais de ${VALIDADE_ETAPA_MIN} min); rode o script de etapa (chamada individual) antes de enviar`);
+    if (!aprovacoes || !aprovacaoValida(aprovacoes, aba.vaga_id, agora)) return nega(`envio sem aprovação: digite no chat a frase do lote ("enviar estas N: ...") para ${aba.vaga_id}`, aba.vaga_id);
+    if (aba.rota === 'gupy' && !etapaVigente(aba, agora)) return nega(`Gupy: falta etapa observada de perguntas desde a última mudança da página (ou ela tem mais de ${VALIDADE_ETAPA_MIN} min); rode o script de etapa (chamada individual) antes de enviar`, aba.vaga_id);
     return { decisao: 'permitir', consumir: aba.vaga_id, motivo: 'envio aprovado pela pessoa' };
   }
-  return nega('aba de candidatura: só scripts do CareerBounty (extrator, preenchimento registrado, clique e envio aprovado)');
+  return nega('aba de candidatura: só scripts do CareerBounty (extrator, preenchimento registrado, clique e envio aprovado)', aba.vaga_id);
 }
 
 function decidirAcao(ferramenta, input, aba, ctx) {
@@ -56,8 +56,8 @@ function decidirAcao(ferramenta, input, aba, ctx) {
   if (ferramenta === 'computer') {
     const acao = input?.action;
     if (ACOES_LIVRES.has(acao)) return null;
-    if (acao === 'key') return TECLAS_DE_ENVIO.test(String(input?.text ?? '')) ? nega('aba de candidatura: Enter e espaço podem enviar o formulário') : null;
-    return nega(`aba de candidatura: ${acao ?? 'ação'} por coordenada negado; use o script de clique do CareerBounty`);
+    if (acao === 'key') return TECLAS_DE_ENVIO.test(String(input?.text ?? '')) ? nega('aba de candidatura: Enter e espaço podem enviar o formulário', aba.vaga_id) : null;
+    return nega(`aba de candidatura: ${acao ?? 'ação'} por coordenada negado; use o script de clique do CareerBounty`, aba.vaga_id);
   }
   if (ferramenta === 'javascript_tool') return decidirScript(input?.text, aba, ctx);
   if (ferramenta === 'file_upload') {
@@ -65,11 +65,11 @@ function decidirAcao(ferramenta, input, aba, ctx) {
     const vaga = String(aba.vaga_id).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const cv = new RegExp(`[\\\\/]artifacts[\\\\/]cv[\\\\/]${vaga}[\\\\/][0-9a-f]{64}[\\\\/]cv-ats\\.pdf$`);
     const caminhos = Array.isArray(input?.paths) ? input.paths : [];
-    if ('cv_ats' in aba && (!aba.cv_ats || caminhos.some(c => c !== aba.cv_ats))) return nega('aba de candidatura: use o PDF escolhido ao iniciar esta tentativa');
-    if (!caminhos.length || input?.files?.length || !caminhos.every(c => typeof c === 'string' && cv.test(c))) return nega('aba de candidatura: só o PDF ATS aprovado desta vaga pode ser anexado');
+    if ('cv_ats' in aba && (!aba.cv_ats || caminhos.some(c => c !== aba.cv_ats))) return nega('aba de candidatura: use o PDF escolhido ao iniciar esta tentativa', aba.vaga_id);
+    if (!caminhos.length || input?.files?.length || !caminhos.every(c => typeof c === 'string' && cv.test(c))) return nega('aba de candidatura: só o PDF ATS aprovado desta vaga pode ser anexado', aba.vaga_id);
     return null;
   }
-  return nega(`aba de candidatura: ferramenta ${ferramenta} não liberada`);
+  return nega(`aba de candidatura: ferramenta ${ferramenta} não liberada`, aba.vaga_id);
 }
 
 // entrada: JSON do Claude Code ao hook. ctx: { sessao, aprovacoes, agora }. Devolve null (não decide) ou { decisao, motivo, consumir? }.
