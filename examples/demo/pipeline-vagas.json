@@ -1,0 +1,512 @@
+{
+  "schema_version": 1,
+  "atualizado": "2026-10-14",
+  "vagas": [
+    {
+      "aderencia": "alta",
+      "alerta_pretensao": {
+        "data": "2026-10-02",
+        "moeda": "texto moeda 1",
+        "resumo": "texto resumo 1",
+        "snapshot_empregador": "2026-10-02",
+        "valor_inicial": 14773,
+        "valor_perfil_corrigido": 2327
+      },
+      "anuncio_publicado": "texto anuncio_publicado 1",
+      "cadastro_corrigido": "texto cadastro_corrigido 1",
+      "candidatura_indicio": {
+        "confirmacao_envio": true,
+        "consultado_em": "2026-10-02",
+        "origem": "texto origem 1",
+        "texto": "texto texto 1"
+      },
+      "cargo": "Gerente de Produto",
+      "coleta_http": {
+        "caracteres": 5937,
+        "data": "2026-10-02",
+        "status": 7622,
+        "url_final": "https://vagas.exemplo.test/url_final/1"
+      },
+      "consultado_em": "2026-10-17",
+      "curriculo_html": "texto curriculo_html 1",
+      "curriculo_necessario": true,
+      "elegivel_brasil": false,
+      "empresa": "Empresa Alfa",
+      "etapa_usuario": {
+        "data_conclusao": "2026-10-02",
+        "estado": "texto estado 1",
+        "etapa": "texto etapa 1",
+        "observacao": "texto observacao 1",
+        "origem": "texto origem 1"
+      },
+      "evidencia_historico": {
+        "data": "2026-10-02",
+        "descricao": "texto descricao 1",
+        "mensagem_id": "texto mensagem_id 1",
+        "origem": "texto origem 1",
+        "url": "https://vagas.exemplo.test/url/1",
+        "vaga": "texto vaga 1",
+        "cargo": "texto cargo 1",
+        "conclusao": "texto conclusao 1",
+        "recebido_em": "2026-10-02"
+      },
+      "execucao_candidatura": {
+        "data": "2026-10-02",
+        "estado": "texto estado 1",
+        "motivo": "texto motivo 1",
+        "comprovante": "texto comprovante 1",
+        "material_preparado": {},
+        "comprovante_bloqueio": "texto comprovante_bloqueio 1",
+        "comprovante_login": "texto comprovante_login 1",
+        "curriculo_anexado": "texto curriculo_anexado 1",
+        "enviado": true,
+        "retomada": "texto retomada 1"
+      },
+      "fonte_descricao_completa": "texto fonte_descricao_completa 1",
+      "id": "empresa-alfa-0000000001",
+      "local": "Brasil",
+      "metadata_publicacao": {
+        "data_freehire": "2026-10-02",
+        "nota": "texto nota 1"
+      },
+      "modalidade": "remoto",
+      "portal_candidatura": "greenhouse",
+      "prazo_inscricao": "2026-10-02",
+      "regime": "CLT",
+      "salario": "R$ 18.000 a R$ 22.000",
+      "source_name": "texto source_name 1",
+      "status": "avaliada-sem-envio",
+      "status_processo_observacao": "texto status_processo_observacao 1",
+      "status_validacao": "texto status_validacao 1",
+      "url": "https://vagas.exemplo.test/1",
+      "url_status": "https://vagas.exemplo.test/url_status/1"
+    },
+    {
+      "aderencia": "alta",
+      "cargo": "Líder de Engenharia",
+      "consultado_em": "2026-10-17",
+      "curriculo_html": "texto curriculo_html 2",
+      "curriculo_necessario": true,
+      "descricao": "texto descricao 2",
+      "distincao_historico": [
+        "item distincao_historico 2"
+      ],
+      "empresa": "Empresa Beta",
+      "evidencia_historico": {
+        "data": "2026-10-03",
+        "descricao": "texto descricao 2",
+        "mensagem_id": "texto mensagem_id 2",
+        "origem": "texto origem 2",
+        "url": "https://vagas.exemplo.test/url/2",
+        "vaga": "texto vaga 2",
+        "cargo": "texto cargo 2",
+        "conclusao": "texto conclusao 2",
+        "recebido_em": "2026-10-03"
+      },
+      "execucao_candidatura": {
+        "data": "2026-10-03",
+        "estado": "texto estado 2",
+        "motivo": "texto motivo 2",
+        "comprovante": "texto comprovante 2",
+        "material_preparado": {},
+        "comprovante_bloqueio": "texto comprovante_bloqueio 2",
+        "comprovante_login": "texto comprovante_login 2",
+        "curriculo_anexado": "texto curriculo_anexado 2",
+        "enviado": true,
+        "retomada": "texto retomada 2"
+      },
+      "fontes": [
+        "item fontes 2"
+      ],
+      "historico": true,
+      "historico_execucao": [
+        {
+          "acao": "texto acao 2",
+          "antes": {},
+          "data": "2026-10-03",
+          "estado": "texto estado 2",
+          "motivo": "texto motivo 2"
+        }
+      ],
+      "id": "empresa-beta-0000000002",
+      "local": "Cidade Exemplo",
+      "metadata_publicacao": {
+        "data_freehire": "2026-10-03",
+        "nota": "texto nota 2"
+      },
+      "modalidade": "híbrido",
+      "portal_candidatura": "lever",
+      "publicada_em": "2026-10-03",
+      "regime": "CLT",
+      "revisao_independente": "texto revisao_independente 2",
+      "salario": "R$ 20.000 a R$ 26.000",
+      "source_name": "texto source_name 2",
+      "status": "avaliada-sem-envio",
+      "status_historico": "texto status_historico 2",
+      "status_processo_observacao": "texto status_processo_observacao 2",
+      "url": "https://vagas.exemplo.test/2",
+      "url_espelho_gupy": "https://vagas.exemplo.test/url_espelho_gupy/2",
+      "url_status": "https://vagas.exemplo.test/url_status/2"
+    },
+    {
+      "aderencia": "boa",
+      "cargo": "Gerente de Operações",
+      "consultado_em": "2026-10-17",
+      "curriculo_html": "texto curriculo_html 3",
+      "curriculo_necessario": true,
+      "descricao_prova_local": "texto descricao_prova_local 3",
+      "empresa": "Empresa Gama",
+      "fonte_descricao_completa": "texto fonte_descricao_completa 3",
+      "historico_email": [
+        {
+          "depois": {},
+          "status_anterior": "texto status_anterior 3",
+          "correspondencia": "texto correspondencia 3",
+          "data": "2026-10-04",
+          "data_email": "2026-10-04",
+          "etapa": "texto etapa 3",
+          "evento": "texto evento 3",
+          "fonte": "texto fonte 3",
+          "message_id": "texto message_id 3",
+          "resumo": "texto resumo 3",
+          "antes": {},
+          "data_registro": "2026-10-04",
+          "assunto": "texto assunto 3",
+          "id": "texto id 3",
+          "url": "https://vagas.exemplo.test/url/3",
+          "comprovante": "texto comprovante 3",
+          "curriculo_enviado": "texto curriculo_enviado 3",
+          "observacao": "texto observacao 3",
+          "requisicao_linkedin": "texto requisicao_linkedin 3",
+          "sha256": "texto sha256 3"
+        }
+      ],
+      "historico_etapas": [
+        {
+          "antes": null,
+          "data": "2026-10-04",
+          "depois": {}
+        }
+      ],
+      "historico_execucao_candidatura": [
+        {
+          "data": "2026-10-04",
+          "estado": "texto estado 3",
+          "motivo": "texto motivo 3",
+          "comprovante": "texto comprovante 3",
+          "observacao_usuario": "texto observacao_usuario 3"
+        }
+      ],
+      "id": "empresa-gama-0000000003",
+      "local": "Brasil",
+      "metadados_oficiais": {},
+      "metadata_publicacao": {
+        "data_freehire": "2026-10-04",
+        "nota": "texto nota 3"
+      },
+      "modalidade": "remoto",
+      "municipio": "texto municipio 3",
+      "portal_candidatura": "gupy",
+      "prazo": "2026-10-04",
+      "publicada_em": "2026-10-04",
+      "regime": "PJ",
+      "salario": "R$ 15.000 a R$ 19.000",
+      "salario_original": {
+        "maximo": 12794,
+        "minimo": 18429,
+        "moeda": "texto moeda 3",
+        "natureza": "texto natureza 3",
+        "periodicidade": "texto periodicidade 3"
+      },
+      "status": "avaliada-sem-envio",
+      "status_evidencia": "texto status_evidencia 3",
+      "status_processo_observacao": "texto status_processo_observacao 3",
+      "url": "https://vagas.exemplo.test/3",
+      "url_status": "https://vagas.exemplo.test/url_status/3",
+      "validacao": "texto validacao 3"
+    },
+    {
+      "aderencia": "condicional",
+      "application_url": "https://vagas.exemplo.test/application_url/4",
+      "cargo": "Coordenador de Dados",
+      "comprovante_envio": {
+        "arquivo": "texto arquivo 4",
+        "data": "2026-10-05",
+        "fonte": "texto fonte 4",
+        "texto": "texto texto 4",
+        "data_envio_exata": null,
+        "nota": "texto nota 4",
+        "pdf_enviado": null,
+        "tipo": "texto tipo 4",
+        "verificado_em": "2026-10-05"
+      },
+      "consultado_em": "2026-10-17",
+      "curriculo_necessario": true,
+      "descricao_completa": "texto descricao_completa 4",
+      "empresa": "Empresa Delta",
+      "evidencias_perfil": [
+        "item evidencias_perfil 4"
+      ],
+      "execucao_candidatura": {
+        "data": "2026-10-05",
+        "estado": "texto estado 4",
+        "motivo": "texto motivo 4",
+        "comprovante": "texto comprovante 4",
+        "material_preparado": {},
+        "comprovante_bloqueio": "texto comprovante_bloqueio 4",
+        "comprovante_login": "texto comprovante_login 4",
+        "curriculo_anexado": "texto curriculo_anexado 4",
+        "enviado": false,
+        "retomada": "texto retomada 4"
+      },
+      "fonte_salario": "texto fonte_salario 4",
+      "id": "empresa-delta-0000000004",
+      "local": "Outra Cidade",
+      "materiais_browseruse": {
+        "analise": "texto analise 4",
+        "gerado_em": "2026-10-05",
+        "idioma": "texto idioma 4",
+        "observacao": "texto observacao 4"
+      },
+      "modalidade": "presencial",
+      "modalidade_fonte": "texto modalidade_fonte 4",
+      "municipio": "texto municipio 4",
+      "portal_candidatura": "ashby",
+      "prazo": "2026-10-05",
+      "regime": "CLT",
+      "salario": "R$ 12.000 a R$ 14.000",
+      "salario_maximo": 19303,
+      "salario_original": {
+        "maximo": 7025,
+        "minimo": 15450,
+        "moeda": "texto moeda 4",
+        "natureza": "texto natureza 4",
+        "periodicidade": "texto periodicidade 4"
+      },
+      "status": "avaliada-sem-envio",
+      "status_candidatura": "texto status_candidatura 4",
+      "status_processo": "texto status_processo 4",
+      "url": "https://vagas.exemplo.test/4",
+      "url_status": "https://vagas.exemplo.test/url_status/4",
+      "url_status_evidencia": "https://vagas.exemplo.test/url_status_evidencia/4"
+    },
+    {
+      "aderencia": "incompativel",
+      "cargo": "Diretor de Tecnologia",
+      "consultado_em": "2026-10-17",
+      "curriculo": "texto curriculo 5",
+      "curriculo_necessario": true,
+      "empresa": "Empresa Épsilon",
+      "etapa_usuario": {
+        "data_conclusao": "2026-10-06",
+        "estado": "texto estado 5",
+        "etapa": "texto etapa 5",
+        "observacao": "texto observacao 5",
+        "origem": "texto origem 5"
+      },
+      "etapas_pendentes": [
+        {
+          "data": "2026-10-06",
+          "estado": "texto estado 5",
+          "fonte": "texto fonte 5",
+          "observacao": "texto observacao 5",
+          "tipo": "texto tipo 5",
+          "prioridade": "texto prioridade 5"
+        }
+      ],
+      "evidencia_historico": {
+        "data": "2026-10-06",
+        "descricao": "texto descricao 5",
+        "mensagem_id": "texto mensagem_id 5",
+        "origem": "texto origem 5",
+        "url": "https://vagas.exemplo.test/url/5",
+        "vaga": "texto vaga 5",
+        "cargo": "texto cargo 5",
+        "conclusao": "texto conclusao 5",
+        "recebido_em": "2026-10-06"
+      },
+      "id": "empresa-e-psilon-0000000005",
+      "local": "Brasil",
+      "modalidade": "remoto",
+      "modalidade_fonte": "texto modalidade_fonte 5",
+      "portal_candidatura": "outro",
+      "prazo_inscricao": "2026-10-06",
+      "pretensao_portal": 14157,
+      "regime": "CLT",
+      "requisitos_obrigatorios": [
+        {
+          "avaliacao": "texto avaliacao 5",
+          "evidencia": "texto evidencia 5",
+          "requisito": "texto requisito 5",
+          "ressalva": "texto ressalva 5",
+          "tipo": "texto tipo 5"
+        }
+      ],
+      "revisao_aderencia": "texto revisao_aderencia 5",
+      "salario": "R$ 30.000 a R$ 38.000",
+      "source_name": "texto source_name 5",
+      "status": "avaliada-sem-envio",
+      "url": "https://vagas.exemplo.test/5",
+      "url_status": "https://vagas.exemplo.test/url_status/5",
+      "validacao_post_recente": {
+        "data": "2026-10-06",
+        "observacao": "texto observacao 5",
+        "portal": "texto portal 5"
+      },
+      "validacao_status": "texto validacao_status 5"
+    },
+    {
+      "aderencia": "boa",
+      "candidatura_portal": {
+        "aplicada": false,
+        "comprovante": "texto comprovante 6",
+        "confirmacao": "texto confirmacao 6",
+        "curriculo_enviado": "texto curriculo_enviado 6",
+        "data": "2026-10-07",
+        "sha256": "texto sha256 6",
+        "url_confirmacao": "https://vagas.exemplo.test/url_confirmacao/6",
+        "pretensao_clt_mensal": 4879,
+        "requisicao_linkedin": "texto requisicao_linkedin 6",
+        "conferido_em": "2026-10-07",
+        "curriculo_enviado_pendente_confirmacao": true,
+        "id_aplicacao": "texto id_aplicacao 6",
+        "material": "texto material 6",
+        "respostas_resumo": {},
+        "data_relativa_observada": "2026-10-07",
+        "fonte": "texto fonte 6",
+        "prova": "texto prova 6",
+        "verificado_em": "2026-10-07",
+        "data_fonte": "2026-10-07"
+      },
+      "cargo": "Gerente de Projetos",
+      "condicoes": {
+        "motivos": [
+          "item motivos 6"
+        ],
+        "piso": 2268,
+        "salario": 9359,
+        "situacao": "texto situacao 6",
+        "faixa_publicada": {}
+      },
+      "consultado_em": "2026-10-17",
+      "curriculo_enviado": "texto curriculo_enviado 6",
+      "curriculo_necessario": true,
+      "empresa": "Empresa Zeta",
+      "etapas_pendentes": [
+        {
+          "data": "2026-10-07",
+          "estado": "texto estado 6",
+          "fonte": "texto fonte 6",
+          "observacao": "texto observacao 6",
+          "tipo": "texto tipo 6",
+          "prioridade": "texto prioridade 6"
+        }
+      ],
+      "execucao_candidatura": {
+        "data": "2026-10-07",
+        "estado": "texto estado 6",
+        "motivo": "texto motivo 6",
+        "comprovante": "texto comprovante 6",
+        "material_preparado": {},
+        "comprovante_bloqueio": "texto comprovante_bloqueio 6",
+        "comprovante_login": "texto comprovante_login 6",
+        "curriculo_anexado": "texto curriculo_anexado 6",
+        "enviado": true,
+        "retomada": "texto retomada 6"
+      },
+      "historico_email": [
+        {
+          "depois": {},
+          "status_anterior": "texto status_anterior 6",
+          "correspondencia": "texto correspondencia 6",
+          "data": "2026-10-07",
+          "data_email": "2026-10-07",
+          "etapa": "texto etapa 6",
+          "evento": "texto evento 6",
+          "fonte": "texto fonte 6",
+          "message_id": "texto message_id 6",
+          "resumo": "texto resumo 6",
+          "antes": {},
+          "data_registro": "2026-10-07",
+          "assunto": "texto assunto 6",
+          "id": "texto id 6",
+          "url": "https://vagas.exemplo.test/url/6",
+          "comprovante": "texto comprovante 6",
+          "curriculo_enviado": "texto curriculo_enviado 6",
+          "observacao": "texto observacao 6",
+          "requisicao_linkedin": "texto requisicao_linkedin 6",
+          "sha256": "texto sha256 6"
+        }
+      ],
+      "id": "empresa-zeta-0000000006",
+      "lacunas": [
+        "item lacunas 6"
+      ],
+      "local": "Brasil",
+      "modalidade": "remoto",
+      "motivos": [
+        "item motivos 6"
+      ],
+      "portal_candidatura": "gupy",
+      "pretensao_clt": 11037,
+      "pretensao_faixa": [
+        "item pretensao_faixa 6"
+      ],
+      "regime": "CLT",
+      "rodada_descoberta": 2032,
+      "salario": "R$ 14.000 a R$ 17.000",
+      "salario_max": 19358,
+      "status": "avaliada-sem-envio",
+      "status_processo": "texto status_processo 6",
+      "status_validacao": "texto status_validacao 6",
+      "url": "https://vagas.exemplo.test/6",
+      "url_status": "https://vagas.exemplo.test/url_status/6"
+    }
+  ],
+  "eventos_email_sem_requisicao": [
+    {
+      "assunto": "texto assunto 1",
+      "cargo": "texto cargo 1",
+      "conferido_em": "2026-10-02",
+      "consultado_em": "2026-10-02",
+      "correspondencia": "texto correspondencia 1",
+      "data": "2026-10-02",
+      "data_email": "2026-10-02",
+      "data_local": "2026-10-02",
+      "empresa": "Empresa Beta",
+      "estado": "texto estado 1",
+      "etapa": "texto etapa 1",
+      "fonte": "texto fonte 1",
+      "id": "email-1",
+      "job_id": null,
+      "message_id": "texto message_id 1",
+      "observacao": "texto observacao 1",
+      "requisicao": "texto requisicao 1",
+      "resumo": "texto resumo 1",
+      "status": "texto status 1",
+      "tipo": "texto tipo 1"
+    },
+    {
+      "assunto": "texto assunto 2",
+      "cargo": "texto cargo 2",
+      "conferido_em": "2026-10-03",
+      "consultado_em": "2026-10-03",
+      "correspondencia": "texto correspondencia 2",
+      "data": "2026-10-03",
+      "data_email": "2026-10-03",
+      "data_local": "2026-10-03",
+      "empresa": "Empresa Gama",
+      "estado": "texto estado 2",
+      "etapa": "texto etapa 2",
+      "fonte": "texto fonte 2",
+      "id": "email-2",
+      "job_id": null,
+      "message_id": "texto message_id 2",
+      "observacao": "texto observacao 2",
+      "requisicao": "texto requisicao 2",
+      "resumo": "texto resumo 2",
+      "status": "texto status 2",
+      "tipo": "texto tipo 2"
+    }
+  ]
+}
