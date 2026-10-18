@@ -102,6 +102,13 @@ export async function runDoctor({
     add('cv_perfil', 'aviso', 'Perfil de CV ausente: crie cv/perfil.json com seus dados conforme docs/CV.md (necessário para cv gerar).');
   }
 
+  const criterios = settings.radar?.criterios ?? {};
+  if (criterios.modalidades?.length) {
+    add('preferencias', 'ok', `Modalidades aceitas: ${criterios.modalidades.join(', ')}; preferida: ${criterios.modalidade_preferida ?? 'nenhuma'}.`);
+  } else {
+    add('preferencias', 'aviso', 'Preferência de modalidade não definida (remoto, híbrido, presencial): rode o /setup ou o comando preferencias.');
+  }
+
   add('conector_gmail', 'ok', 'informativo: o conector Gmail só pode ser conferido dentro da sessão do Claude (spike F3.1).');
 
   return { ok: checks.every(c => c.status !== 'falha'), dataRoot, checks, padroes: describeDefaults(settings) };
