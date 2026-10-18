@@ -639,6 +639,546 @@ footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0;
   margin-bottom: 2px;
 }
 
+/* ==========================================================================
+   Aba Processos (Design Misto / 4 Estações Canônicas)
+   ========================================================================== */
+
+.painel-processos {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.painel-processos[hidden] {
+  display: none !important;
+}
+
+.proc-pagina {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 24px 60px;
+  width: 100%;
+}
+
+.processos-cabecalho {
+  margin-bottom: 24px;
+}
+.processos-cabecalho h1 {
+  margin: 0 0 6px;
+  font-size: var(--t-2xl);
+  font-weight: 700;
+  color: var(--tx);
+}
+.processos-cabecalho .sub {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--tx2);
+  max-width: 70ch;
+}
+
+/* Bloco 1: Pedem Acompanhamento */
+.secao-cobrar {
+  margin-bottom: 24px;
+}
+.secao-cobrar[hidden] {
+  display: none !important;
+}
+.secao-cobrar h2 {
+  font-size: var(--t-lg);
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: var(--tx);
+}
+.cobrar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cobrar .item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--sup);
+  border: 1px solid var(--borda);
+  border-radius: var(--r);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.cobrar .dias {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  height: 58px;
+  border-radius: var(--r);
+  font-family: var(--pixel);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.cobrar .dias small {
+  font-family: var(--fonte);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.cobrar .dias.atencao {
+  background: var(--atencao-fundo);
+  color: var(--atencao);
+  border: 1px solid var(--ouro);
+}
+.cobrar .dias.perigo {
+  background: var(--perigo-fundo);
+  color: var(--perigo);
+  border: 1px solid var(--perigo);
+}
+.cobrar .item-info {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--t-sm);
+}
+.cobrar .item-info .meta {
+  font-size: var(--t-xs);
+  color: var(--tx2);
+  margin-top: 4px;
+}
+.cobrar .acoes-l {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* Bloco 2: Filtros por Etapa (Chips) */
+.filtro-etapas {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.filtro-etapas .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  border: 1px solid var(--borda);
+  background: var(--sup);
+  color: var(--tx2);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur) var(--saida);
+  white-space: nowrap;
+}
+.filtro-etapas .chip:hover {
+  border-color: var(--borda2);
+  color: var(--tx);
+}
+.filtro-etapas .chip[aria-pressed="true"] {
+  background: var(--placa);
+  border-color: var(--placa);
+  color: #FFFFFF;
+}
+[data-tema="escuro"] .filtro-etapas .chip[aria-pressed="true"] {
+  background: var(--ouro);
+  border-color: var(--ouro);
+  color: #231804;
+}
+.filtro-etapas .chip .n {
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.08);
+  font-size: 11px;
+}
+
+/* Bloco 3: Grade de Processos */
+.proc-grade {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.proc-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.proc-item {
+  background: var(--sup);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--saida), box-shadow var(--dur) var(--saida);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.proc-item:hover {
+  border-color: var(--borda2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.proc-item.sel {
+  border-color: var(--ouro);
+  box-shadow: 0 0 0 2px var(--ouro);
+}
+.proc-item:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.proc-item-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.proc-item-empresa {
+  font-size: var(--t-xs);
+  color: var(--tx2);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+.proc-item-cargo {
+  margin: 2px 0 0;
+  font-size: var(--t-md);
+  font-weight: 700;
+  color: var(--tx);
+  letter-spacing: -.01em;
+}
+.proc-badge-etapa {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--sup3);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tx2);
+  white-space: nowrap;
+}
+
+.proc-item-rodape {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-xs);
+  color: var(--tx3);
+  padding-top: 4px;
+  border-top: 1px solid var(--borda);
+}
+
+/* Trilho de 4 Estações Canônicas */
+.trilho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  margin: 10px 0;
+  padding: 0 6px;
+}
+.seg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+  text-align: center;
+}
+.seg::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: 50%;
+  left: -50%;
+  height: 2px;
+  background: var(--borda);
+  z-index: 1;
+}
+.seg:first-child::before {
+  display: none;
+}
+.seg.feito::before {
+  background: var(--ouro);
+}
+.seg.espera::before {
+  background: repeating-linear-gradient(90deg, var(--ouro) 0, var(--ouro) 4px, transparent 4px, transparent 8px);
+}
+.seg .bola {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--sup);
+  border: 2px solid var(--borda2);
+  z-index: 2;
+  display: inline-grid;
+  place-items: center;
+  font-size: 10px;
+  transition: all var(--dur) var(--saida);
+}
+.seg.feito .bola {
+  background: var(--ouro);
+  border-color: var(--ouro);
+  color: #231804;
+}
+.seg.atual .bola {
+  border-color: var(--ouro);
+  border-width: 3px;
+  background: var(--sup);
+  box-shadow: 0 0 0 3px var(--atencao-fundo);
+}
+.seg .nome {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tx3);
+}
+.seg.feito .nome,
+.seg.atual .nome {
+  color: var(--tx);
+}
+
+.espera-n {
+  font-family: var(--pixel);
+  font-size: var(--t-xs);
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+  background: var(--sup2);
+  color: var(--tx2);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.espera-n.atencao {
+  background: var(--atencao-fundo);
+  color: var(--atencao);
+  border: 1px solid var(--ouro);
+}
+.espera-n.perigo {
+  background: var(--perigo-fundo);
+  color: var(--perigo);
+  border: 1px solid var(--perigo);
+}
+
+/* Detalhe do Processo */
+.proc-det {
+  background: var(--sup);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.proc-det-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.proc-det-titulo {
+  margin: 4px 0 0;
+  font-size: var(--t-2xl);
+  font-weight: 700;
+  color: var(--tx);
+}
+.proc-det-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--borda);
+}
+.proc-det-bloco h3 {
+  margin: 0;
+  font-size: var(--t-md);
+  font-weight: 700;
+  color: var(--tx);
+}
+
+.box-alerta-etapa {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--atencao-fundo);
+  border: 1px solid var(--ouro);
+  border-radius: var(--r);
+  font-size: var(--t-sm);
+  color: var(--atencao);
+  font-weight: 500;
+}
+
+.contatos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.contato-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--sup2);
+  border: 1px solid var(--borda);
+  border-radius: var(--r);
+}
+.contato-item .ic-canal {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--sup);
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--tx);
+}
+.contato-item .contato-info {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--t-sm);
+}
+.contato-item .contato-recencia {
+  font-size: var(--t-xs);
+  color: var(--tx3);
+  white-space: nowrap;
+}
+
+.tempo {
+  position: relative;
+  margin: 0;
+  padding-left: 20px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.tempo::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--borda);
+}
+.tempo-item {
+  position: relative;
+  font-size: var(--t-sm);
+}
+.tempo-item::before {
+  content: "";
+  position: absolute;
+  left: -19px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--sup);
+  border: 2px solid var(--ouro);
+}
+.tempo-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+  font-size: var(--t-xs);
+  color: var(--tx3);
+}
+.tempo-origem {
+  display: inline-flex;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--sup3);
+  color: var(--tx2);
+}
+.tempo-origem.gmail {
+  background: #EA433522;
+  color: #EA4335;
+}
+.tempo-origem.registro {
+  background: #008F8522;
+  color: #008F85;
+}
+
+.form-reg-contato {
+  display: grid;
+  grid-template-columns: 140px 1fr 140px auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.secao-rascunho {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--sup2);
+  border: 1px solid var(--borda);
+  border-radius: var(--r);
+}
+.secao-rascunho textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 90px;
+}
+.secao-rascunho .acoes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.aviso-envio {
+  font-size: var(--t-xs);
+  color: var(--tx3);
+  font-style: italic;
+}
+
+.prep-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 6px;
+}
+.prep-box {
+  padding: 14px;
+  border-radius: var(--r);
+  border: 1px solid var(--borda);
+  font-size: var(--t-sm);
+}
+.prep-box.fortes {
+  border-left: 4px solid var(--ok);
+  background: var(--sup2);
+}
+.prep-box.lacunas {
+  border-left: 4px solid var(--atencao);
+  background: var(--sup2);
+}
+.prep-box ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
 /* Responsividade móvel (375px a 900px) */
 @media (max-width: 900px) {
   .placa { padding: 0 12px; gap: 10px; }
@@ -662,6 +1202,13 @@ footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0;
   .hist-card { padding: 16px; }
   .hist-card-topo { flex-direction: column; align-items: flex-start; gap: 8px; }
   .hist-card-meta { width: 100%; justify-content: space-between; }
+  .proc-pagina { padding: 12px 12px 60px; }
+  .proc-grade { grid-template-columns: 1fr; }
+  .cobrar .item { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .cobrar .acoes-l { width: 100%; justify-content: flex-start; }
+  .form-reg-contato { grid-template-columns: 1fr; }
+  .prep-grid { grid-template-columns: 1fr; }
+  .trilho .seg .nome { font-size: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -865,6 +1412,60 @@ footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0;
       <div class="vazio" id="hist-estado">
         <strong>Carregando histórico...</strong>
         Consolidando eventos cronológicos.
+      </div>
+    </div>
+  </main>
+
+  <!-- Painel Processos (F10.3) -->
+  <main class="A-tela painel-processos" id="painel-processos" hidden>
+    <div class="pagina proc-pagina">
+      <header class="processos-cabecalho">
+        <h1>Processos</h1>
+        <p class="sub">
+          Candidaturas em andamento, contatos com recrutadores e o próximo passo de cada uma.
+          O Gmail alimenta a linha do tempo; WhatsApp e LinkedIn você registra aqui.
+        </p>
+      </header>
+
+      <!-- Bloco 1: Pedem Acompanhamento (inativos >= 5 dias) -->
+      <section class="secao-cobrar" id="secao-cobrar" aria-label="Processos que pedem acompanhamento" hidden>
+        <h2>Pedem acompanhamento</h2>
+        <div class="painel cobrar" id="lista-cobrar" role="feed"></div>
+      </section>
+
+      <!-- Bloco 2: Filtros por Etapa (Chips) -->
+      <div class="filtro-etapas" id="filtro-etapas-processos" role="group" aria-label="Filtrar por etapa">
+        <button type="button" class="chip" data-etapa="" aria-pressed="true">
+          Todas <span class="n" id="total-etapa-todas">0</span>
+        </button>
+        <button type="button" class="chip" data-etapa="candidatura" aria-pressed="false">
+          Candidatura <span class="n" id="total-etapa-candidatura">0</span>
+        </button>
+        <button type="button" class="chip" data-etapa="contato" aria-pressed="false">
+          Contato <span class="n" id="total-etapa-contato">0</span>
+        </button>
+        <button type="button" class="chip" data-etapa="entrevista" aria-pressed="false">
+          Entrevista <span class="n" id="total-etapa-entrevista">0</span>
+        </button>
+        <button type="button" class="chip" data-etapa="devolutiva" aria-pressed="false">
+          Devolutiva <span class="n" id="total-etapa-devolutiva">0</span>
+        </button>
+      </div>
+
+      <!-- Bloco 3: Grade de Processos (Lista e Detalhe) -->
+      <div class="proc-grade" id="proc-grade">
+        <!-- Lado Esquerdo: Lista de Processos -->
+        <div class="painel proc-lista" id="proc-lista" role="region" aria-label="Lista de processos seletivos">
+          <div class="vazio" id="proc-estado">
+            <strong>Carregando processos...</strong>
+            Buscando dados das candidaturas e etapas.
+          </div>
+        </div>
+
+        <!-- Lado Direito: Detalhe do Processo Selecionado -->
+        <div class="painel proc-det" id="proc-det" role="region" aria-label="Detalhe do processo selecionado">
+          <div class="vazio">Selecione um processo na lista ao lado para ver contatos, histórico e próximos passos.</div>
+        </div>
       </div>
     </div>
   </main>
@@ -1602,6 +2203,33 @@ if (api) {
       }
     })
     .catch(() => {});
+
+  fetch('/api/processos', { headers: { 'X-Painel-Token': api.token } })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      if (d) {
+        cacheProcessos = d.processos || [];
+      }
+    })
+    .catch(() => {});
+
+  fetch('/api/acompanhamento', { headers: { 'X-Painel-Token': api.token } })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      if (d) {
+        cacheAcompanhamento = d.pendentes || [];
+        const badge = document.getElementById('badge-processos');
+        if (badge) {
+          badge.textContent = cacheAcompanhamento.length;
+          if (cacheAcompanhamento.length > 0) {
+            badge.classList.add('atencao');
+          } else {
+            badge.classList.remove('atencao');
+          }
+        }
+      }
+    })
+    .catch(() => {});
 }
 
 // ==========================================================================
@@ -1872,11 +2500,721 @@ function renderizarHistorico() {
   }).join('');
 }
 
+// ==========================================================================
+// Aba Processos (F10.3)
+// ==========================================================================
+let cacheProcessos = [];
+let cacheAcompanhamento = [];
+let processoSelecionadoId = null;
+let filtroEtapaProcesso = '';
+const cacheContatosPorVaga = new Map();
+
+const ESTAPAS_CANONICAS_PROC = ['Candidatura', 'Contato', 'Entrevista', 'Devolutiva'];
+
+const ROTULOS_ETAPA_PROC = {
+  aplicada: 'Candidatura enviada',
+  triagem: 'Em triagem',
+  teste: 'Desafio prático',
+  entrevista_rh: 'Alinhamento com RH',
+  entrevista_tecnica: 'Entrevista técnica',
+  entrevista_gestor: 'Entrevista com gestor',
+  proposta: 'Proposta recebida',
+  aprovado: 'Aprovado',
+  encerrado: 'Encerrado',
+  negativa: 'Processo encerrado',
+};
+
+const DDDS_VALIDOS_PROC = new Set([
+  '11', '12', '13', '14', '15', '16', '17', '18', '19',
+  '21', '22', '24', '27', '28',
+  '31', '32', '33', '34', '35', '37', '38',
+  '41', '42', '43', '44', '45', '46', '47', '48', '49',
+  '51', '53', '54', '55',
+  '61', '62', '63', '64', '65', '66', '67', '68', '69',
+  '71', '73', '74', '75', '77', '79',
+  '81', '82', '83', '84', '85', '86', '87', '88', '89',
+  '91', '92', '93', '94', '95', '96', '97', '98', '99',
+]);
+
+function calcularNivelInatividadeProc(dias, situacao) {
+  let sit = situacao;
+  let d = dias;
+  if (typeof dias === 'object' && dias !== null) {
+    sit = dias.situacao;
+    d = dias.dias_inatividade;
+  }
+  if (sit === 'encerrado') return 'encerrado';
+  const n = Number(d) || 0;
+  if (n >= 7) return 'lembrar';
+  if (n >= 5) return 'atencao';
+  return 'normal';
+}
+
+function mapearEstacaoCanonicaProc(processo = {}) {
+  const p = typeof processo === 'string' ? { etapa_atual: processo } : (processo || {});
+  const etapa = p.etapa_atual || 'aplicada';
+  const situacao = p.situacao || 'ativo';
+  const desfecho = p.desfecho || null;
+  const dias = Number(p.dias_inatividade) || 0;
+
+  if (situacao === 'encerrado' || desfecho !== null || ['proposta', 'aprovado', 'negativa', 'encerrado'].includes(etapa)) {
+    return {
+      indice: 3,
+      nome: 'Devolutiva',
+      chave: 'devolutiva',
+      esperando: false,
+      diasInatividade: dias,
+      alerta: 'normal',
+    };
+  }
+  if (['teste', 'entrevista_rh', 'entrevista_tecnica', 'entrevista_gestor'].includes(etapa)) {
+    const esperando = (situacao === 'aguardando_retorno');
+    return {
+      indice: 2,
+      nome: 'Entrevista',
+      chave: 'entrevista',
+      esperando,
+      diasInatividade: dias,
+      alerta: esperando ? calcularNivelInatividadeProc(dias, situacao) : 'normal',
+    };
+  }
+  const temContato = Array.isArray(p.eventos) && p.eventos.some(e => e.tipo === 'contato.registrado' || e.tipo === 'email.recebido');
+  if (etapa === 'triagem' || temContato) {
+    const esperando = (situacao === 'aguardando_retorno');
+    return {
+      indice: 1,
+      nome: 'Contato',
+      chave: 'contato',
+      esperando,
+      diasInatividade: dias,
+      alerta: esperando ? calcularNivelInatividadeProc(dias, situacao) : 'normal',
+    };
+  }
+  const esperando = (situacao === 'aguardando_retorno' || situacao === 'ativo');
+  return {
+    indice: 0,
+    nome: 'Candidatura',
+    chave: 'candidatura',
+    esperando,
+    diasInatividade: dias,
+    alerta: esperando ? calcularNivelInatividadeProc(dias, situacao) : 'normal',
+  };
+}
+
+function mascararDadoSensivelProc(texto) {
+  if (typeof texto !== 'string') return texto;
+  let res = texto.replace(/([A-Za-z0-9_%+.-])[A-Za-z0-9_%+.-]*(@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)/g, '$1***$2');
+  res = res.replace(/(?<![\w+])\+(\d{1,4})((?:[\s\-./()]*\d)+[\s\-./()]*)(?![\w])/g, (match, d1) => {
+    const allDigits = match.replace(/\D/g, '');
+    if (allDigits.length < 8) return match;
+    if (allDigits.startsWith('55') && (allDigits.length === 12 || allDigits.length === 13)) {
+      const restDigits = allDigits.slice(2);
+      const ddd = restDigits.slice(0, 2);
+      if (DDDS_VALIDOS_PROC.has(ddd)) {
+        const ult = restDigits.slice(-2);
+        return `(${ddd}) 9****-**${ult}`;
+      }
+    }
+    const ult2 = allDigits.slice(-2);
+    return `+${d1} ****-**${ult2}`;
+  });
+  res = res.replace(/(?<![\d])\(([1-9][1-9])\)\s*(?:9\s*)?(\d{4,5})[-.\s]?(\d{2})(\d{2})(?![\d])/g, (match, ddd, miolo, penult, ult) => `(${ddd}) 9****-**${ult}`);
+  res = res.replace(/(?<![\d])([1-9][1-9])(?:[\s.-]+(?:9[\s.-]*)?(\d{4,5})[-.\s]?(\d{2})(\d{2})|(\d{6,7})(\d{2}))(?![\d])/g, (match, ddd, m1, p1, u1, m2, u2) => {
+    if (!DDDS_VALIDOS_PROC.has(ddd)) return match;
+    const ult = u1 ?? u2;
+    return `(${ddd}) 9****-**${ult}`;
+  });
+  res = res.replace(/(?<![\d])(?:9\s*)?(\d{4,5})[-.](\d{2})(\d{2})(?![\d])/g, (match, miolo, penult, ult) => `9****-**${ult}`);
+  return res;
+}
+
+function obterIconeSvgProcessoProc(tipo) {
+  switch (tipo) {
+    case 'mail':
+    case 'email':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
+    case 'msg':
+    case 'whatsapp':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>';
+    case 'in':
+    case 'linkedin':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7"/></svg>';
+    case 'doc':
+    case 'portal':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg>';
+    case 'copiar':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    case 'mais':
+    case 'adicionar':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+    case 'alerta':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+    case 'check':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+    case 'relogio':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+    default:
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/></svg>';
+  }
+}
+
+function gerarRascunhoMensagemProc(processo = {}, contato = null) {
+  const primeiroNome = contato?.nome ? contato.nome.trim().split(' ')[0] : '';
+  const saudacao = primeiroNome ? `Olá ${primeiroNome}, tudo bem?` : 'Olá, tudo bem?';
+  const cargo = processo.cargo || 'oportunidade';
+  const empresa = processo.empresa ? ` na ${processo.empresa}` : '';
+  const dataRef = processo.eventos?.[0]?.data ? formatarDataPtBr(processo.eventos[0].data) : '';
+  const mencaoData = dataRef ? ` em ${dataRef}` : '';
+
+  return `${saudacao} Me candidatei à vaga de ${cargo}${empresa}${mencaoData} e sigo com muito interesse na oportunidade. Gostaria de saber se há novidades sobre os próximos passos do processo seletivo. Fico à disposição para conversar.`;
+}
+
+function gerarMailtoGmailProc(destinatario = '', assunto = '', corpo = '') {
+  const base = 'https://mail.google.com/mail/?view=cm&fs=1';
+  const params = new URLSearchParams();
+  if (destinatario) params.set('to', destinatario);
+  if (assunto) params.set('su', assunto);
+  if (corpo) params.set('body', corpo);
+  const q = params.toString();
+  return q ? `${base}&${q}` : base;
+}
+
+async function carregarProcessos() {
+  const elEstado = document.getElementById('proc-estado');
+  if (api) {
+    try {
+      const [resProc, resAcomp] = await Promise.all([
+        fetch('/api/processos', { headers: { 'X-Painel-Token': api.token } }),
+        fetch('/api/acompanhamento', { headers: { 'X-Painel-Token': api.token } }),
+      ]);
+      if (resProc.ok) {
+        const d = await resProc.json();
+        cacheProcessos = d.processos || [];
+      }
+      if (resAcomp.ok) {
+        const d = await resAcomp.json();
+        cacheAcompanhamento = d.pendentes || [];
+      }
+    } catch (err) {
+      if (elEstado) elEstado.innerHTML = '<strong>Erro ao carregar processos.</strong> Verifique a conexão com o servidor local.';
+    }
+  } else {
+    if (cacheProcessos.length === 0 && Array.isArray(DATA.historico)) {
+      cacheProcessos = DATA.historico.map(v => ({
+        vaga_id: v.id || v.vaga_id,
+        empresa: v.empresa || '',
+        cargo: v.cargo || '',
+        etapa_atual: 'aplicada',
+        situacao: 'ativo',
+        dias_inatividade: 0,
+        eventos: [{ tipo: 'candidatura.marcada', data: v.data || '2026-10-18', detalhe: 'Candidatura registrada' }],
+      }));
+    }
+  }
+
+  const badge = document.getElementById('badge-processos');
+  if (badge) {
+    const pendentesCount = cacheAcompanhamento.length;
+    badge.textContent = pendentesCount;
+    if (pendentesCount > 0) {
+      badge.classList.add('atencao');
+    } else {
+      badge.classList.remove('atencao');
+    }
+  }
+
+  if (!processoSelecionadoId && cacheProcessos.length > 0) {
+    processoSelecionadoId = cacheProcessos[0].vaga_id;
+  }
+
+  renderizarCobrar();
+  renderizarChipsEtapas();
+  renderizarProcessos();
+  renderizarDetalheProcesso(processoSelecionadoId);
+}
+
+function renderizarCobrar() {
+  const secao = document.getElementById('secao-cobrar');
+  const lista = document.getElementById('lista-cobrar');
+  if (!secao || !lista) return;
+
+  if (cacheAcompanhamento.length === 0) {
+    secao.hidden = true;
+    lista.innerHTML = '';
+    return;
+  }
+
+  secao.hidden = false;
+  lista.innerHTML = cacheAcompanhamento.map(p => {
+    const dias = Number(p.dias_inatividade) || 0;
+    const classeAlerta = dias >= 7 ? 'perigo' : 'atencao';
+    const contatoInfo = p.quem_falou_por_ultimo === 'candidato'
+      ? 'enviado por você'
+      : (p.quem_falou_por_ultimo === 'recrutador' || p.quem_falou_por_ultimo === 'empresa' ? 'recebido da empresa' : 'registrado');
+    const proximaEtapaTexto = p.proxima_etapa?.texto
+      ? `Próxima etapa: ${esc(p.proxima_etapa.texto)}.`
+      : 'Nenhuma próxima etapa marcada.';
+
+    return `<article class="item" data-vaga-id="${esc(p.vaga_id)}">
+      <div class="dias ${classeAlerta}">
+        ${dias}
+        <small>dias</small>
+      </div>
+      <div class="item-info">
+        <strong>${esc(p.empresa || 'Empresa')}</strong> · <span>${esc(p.cargo || 'Cargo')}</span>
+        <div class="meta">
+          Último contato ${contatoInfo} em ${formatarDataPtBr(p.ultima_interacao_data)}.
+          ${proximaEtapaTexto}
+        </div>
+      </div>
+      <div class="acoes-l">
+        <button type="button" class="btn prim peq" data-acao="escrever-acompanhamento" data-id="${esc(p.vaga_id)}">
+          Escrever acompanhamento
+        </button>
+        <button type="button" class="btn peq" data-acao="adiar-acompanhamento" data-id="${esc(p.vaga_id)}">
+          Ainda em andamento
+        </button>
+        <button type="button" class="btn discreto peq" data-acao="encerrar-processo" data-id="${esc(p.vaga_id)}">
+          Encerrar
+        </button>
+      </div>
+    </article>`;
+  }).join('');
+
+  lista.querySelectorAll('button[data-acao]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const acao = btn.dataset.acao;
+      const vagaId = btn.dataset.id;
+      if (acao === 'escrever-acompanhamento') {
+        processoSelecionadoId = vagaId;
+        renderizarProcessos();
+        renderizarDetalheProcesso(vagaId);
+        setTimeout(() => {
+          const elRascunho = document.getElementById('bloco-rascunho');
+          if (elRascunho) elRascunho.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      } else if (acao === 'adiar-acompanhamento') {
+        const item = cacheProcessos.find(p => p.vaga_id === vagaId);
+        if (item) item.dias_inatividade = 0;
+        cacheAcompanhamento = cacheAcompanhamento.filter(p => p.vaga_id !== vagaId);
+        renderizarCobrar();
+        renderizarProcessos();
+      } else if (acao === 'encerrar-processo') {
+        const item = cacheProcessos.find(p => p.vaga_id === vagaId);
+        if (item) {
+          item.situacao = 'encerrado';
+          item.desfecho = 'cancelado';
+        }
+        cacheAcompanhamento = cacheAcompanhamento.filter(p => p.vaga_id !== vagaId);
+        renderizarCobrar();
+        renderizarProcessos();
+        if (processoSelecionadoId === vagaId) renderizarDetalheProcesso(vagaId);
+      }
+    });
+  });
+}
+
+function renderizarChipsEtapas() {
+  const container = document.getElementById('filtro-etapas-processos');
+  if (!container) return;
+
+  const contagens = {
+    todas: cacheProcessos.length,
+    candidatura: 0,
+    contato: 0,
+    entrevista: 0,
+    devolutiva: 0,
+  };
+
+  for (const p of cacheProcessos) {
+    const st = mapearEstacaoCanonicaProc(p);
+    if (contagens[st.chave] !== undefined) {
+      contagens[st.chave] += 1;
+    }
+  }
+
+  const elTodas = document.getElementById('total-etapa-todas');
+  const elCand = document.getElementById('total-etapa-candidatura');
+  const elCont = document.getElementById('total-etapa-contato');
+  const elEntr = document.getElementById('total-etapa-entrevista');
+  const elDev = document.getElementById('total-etapa-devolutiva');
+
+  if (elTodas) elTodas.textContent = contagens.todas;
+  if (elCand) elCand.textContent = contagens.candidatura;
+  if (elCont) elCont.textContent = contagens.contato;
+  if (elEntr) elEntr.textContent = contagens.entrevista;
+  if (elDev) elDev.textContent = contagens.devolutiva;
+
+  container.querySelectorAll('.chip').forEach(chip => {
+    const etapa = chip.dataset.etapa;
+    const ativo = (etapa === filtroEtapaProcesso);
+    chip.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+  });
+}
+
+function renderizarProcessos() {
+  const container = document.getElementById('proc-lista');
+  if (!container) return;
+
+  let filtrados = cacheProcessos;
+  if (filtroEtapaProcesso) {
+    filtrados = filtrados.filter(p => {
+      const st = mapearEstacaoCanonicaProc(p);
+      return st.chave === filtroEtapaProcesso;
+    });
+  }
+
+  filtrados.sort((a, b) => {
+    const aEnc = a.situacao === 'encerrado';
+    const bEnc = b.situacao === 'encerrado';
+    if (aEnc && !bEnc) return 1;
+    if (!aEnc && bEnc) return -1;
+    return (Number(b.dias_inatividade) || 0) - (Number(a.dias_inatividade) || 0);
+  });
+
+  if (filtrados.length === 0) {
+    container.innerHTML = `<div class="vazio">Nenhum processo seletivo encontrado nesta etapa.</div>`;
+    return;
+  }
+
+  container.innerHTML = filtrados.map(p => {
+    const isSel = (p.vaga_id === processoSelecionadoId);
+    const st = mapearEstacaoCanonicaProc(p);
+    const dias = Number(p.dias_inatividade) || 0;
+    const rotuloEtapa = ROTULOS_ETAPA_PROC[p.etapa_atual] || p.etapa_atual || 'Candidatura';
+
+    const trilhoHtml = ESTAPAS_CANONICAS_PROC.map((nomeEstacao, idx) => {
+      let classeSeg = 'seg';
+      if (idx < st.indice) {
+        classeSeg += ' feito';
+      } else if (idx === st.indice) {
+        classeSeg += ' atual';
+        if (st.esperando && dias > 0) classeSeg += ' espera';
+      } else {
+        classeSeg += ' futuro';
+      }
+
+      return `<div class="${classeSeg}">
+        <span class="bola">${idx < st.indice ? '✓' : idx + 1}</span>
+        <span class="nome">${nomeEstacao}</span>
+      </div>`;
+    }).join('');
+
+    const avisoEspera = dias >= 5
+      ? `<span class="espera-n ${dias >= 7 ? 'perigo' : 'atencao'}">${dias} dias sem retorno</span>`
+      : `<span class="espera-n">${dias}d sem retorno</span>`;
+
+    return `<article class="proc-item ${isSel ? 'sel' : ''}" data-vaga-id="${esc(p.vaga_id)}" tabindex="0" role="button" aria-selected="${isSel ? 'true' : 'false'}">
+      <div class="proc-item-topo">
+        <div>
+          <span class="proc-item-empresa">${esc(p.empresa || 'Empresa')}</span>
+          <h3 class="proc-item-cargo">${esc(p.cargo || 'Cargo')}</h3>
+        </div>
+        <span class="proc-badge-etapa">${esc(rotuloEtapa)}</span>
+      </div>
+      <div class="trilho" aria-label="Estações do processo">
+        ${trilhoHtml}
+      </div>
+      <div class="proc-item-rodape">
+        <span>Último contato: ${formatarDataPtBr(p.ultima_interacao_data)}</span>
+        ${avisoEspera}
+      </div>
+    </article>`;
+  }).join('');
+
+  container.querySelectorAll('.proc-item').forEach(item => {
+    const vagaId = item.dataset.vagaId;
+    const selecionar = () => {
+      processoSelecionadoId = vagaId;
+      renderizarProcessos();
+      renderizarDetalheProcesso(vagaId);
+    };
+    item.addEventListener('click', selecionar);
+    item.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selecionar();
+      }
+    });
+  });
+}
+
+async function renderizarDetalheProcesso(vagaId) {
+  const container = document.getElementById('proc-det');
+  if (!container) return;
+
+  const p = cacheProcessos.find(proc => proc.vaga_id === vagaId);
+  if (!p) {
+    container.innerHTML = `<div class="vazio">Selecione um processo seletivo na lista ao lado para ver os detalhes.</div>`;
+    return;
+  }
+
+  const st = mapearEstacaoCanonicaProc(p);
+  const dias = Number(p.dias_inatividade) || 0;
+  const rotuloEtapa = ROTULOS_ETAPA_PROC[p.etapa_atual] || p.etapa_atual || 'Candidatura';
+
+  if (!cacheContatosPorVaga.has(p.vaga_id) && api) {
+    try {
+      const res = await fetch(`/api/contatos?vaga=${encodeURIComponent(p.vaga_id)}`, {
+        headers: { 'X-Painel-Token': api.token },
+      });
+      if (res.ok) {
+        const d = await res.json();
+        cacheContatosPorVaga.set(p.vaga_id, d.contatos || []);
+      }
+    } catch {}
+  }
+  const contatos = cacheContatosPorVaga.get(p.vaga_id) || [];
+  const contatoPrincipal = contatos[0] || null;
+
+  const trilhoHtml = ESTAPAS_CANONICAS_PROC.map((nomeEstacao, idx) => {
+    let classeSeg = 'seg';
+    if (idx < st.indice) {
+      classeSeg += ' feito';
+    } else if (idx === st.indice) {
+      classeSeg += ' atual';
+      if (st.esperando && dias > 0) classeSeg += ' espera';
+    } else {
+      classeSeg += ' futuro';
+    }
+    return `<div class="${classeSeg}">
+      <span class="bola">${idx < st.indice ? '✓' : idx + 1}</span>
+      <span class="nome">${nomeEstacao}</span>
+    </div>`;
+  }).join('');
+
+  const boxProximaEtapa = p.proxima_etapa?.texto ? `
+    <div class="box-alerta-etapa">
+      ${obterIconeSvgProcessoProc('relogio')}
+      <div>
+        <strong>Próxima etapa: ${esc(p.proxima_etapa.texto)}</strong>
+        ${p.proxima_etapa.data ? `<div class="meta" style="margin-top: 2px;">Agendado para ${formatarDataPtBr(p.proxima_etapa.data)}</div>` : ''}
+      </div>
+    </div>` : '';
+
+  const contatosHtml = contatos.length > 0 ? `
+    <div class="contatos-lista">
+      ${contatos.map(c => `
+        <div class="contato-item">
+          <div class="ic-canal">${obterIconeSvgProcessoProc(c.canal || 'msg')}</div>
+          <div class="contato-info">
+            <strong>${esc(mascararDadoSensivelProc(c.nome || 'Recrutador'))}</strong>
+            ${c.papel ? `· <span class="meta">${esc(mascararDadoSensivelProc(c.papel))}</span>` : ''}
+            <div class="meta">${esc(mascararDadoSensivelProc(c.endereco || 'Contato via canal'))}</div>
+          </div>
+          <span class="contato-recencia">${c.dias_desde_ultimo_contato !== undefined ? `há ${c.dias_desde_ultimo_contato}d` : ''}</span>
+        </div>
+      `).join('')}
+    </div>` : `<p class="meta">Nenhum contato registrado.</p>`;
+
+  const eventosOrdenados = [...(p.eventos || [])].sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+  const tempoHtml = eventosOrdenados.length > 0 ? `
+    <ol class="tempo">
+      ${eventosOrdenados.map(ev => {
+        const isGmail = (ev.tipo === 'email.recebido');
+        const classeOrigem = isGmail ? 'gmail' : 'registro';
+        const labelOrigem = isGmail ? 'Gmail' : 'Registro';
+        const detalheMascarado = mascararDadoSensivelProc(ev.detalhe || ev.resumo || 'Evento do processo');
+
+        return `<li class="tempo-item">
+          <div class="tempo-meta">
+            <span class="tempo-origem ${classeOrigem}">${labelOrigem}</span>
+            <span>${formatarDataPtBr(ev.data)}</span>
+          </div>
+          <div>${esc(detalheMascarado)}</div>
+        </li>`;
+      }).join('')}
+    </ol>` : `<p class="meta">Nenhum evento registrado.</p>`;
+
+  const rascunhoTexto = gerarRascunhoMensagemProc(p, contatoPrincipal);
+  const emailDestinatario = contatoPrincipal?.canal === 'email' ? (contatoPrincipal.endereco || '') : '';
+  const urlGmail = gerarMailtoGmailProc(
+    emailDestinatario,
+    `Acompanhamento de processo seletivo — ${p.cargo || 'Oportunidade'}`,
+    rascunhoTexto
+  );
+
+  const hojeIso = new Date().toISOString().slice(0, 10);
+
+  const isEntrevista = (st.indice === 2 || p.etapa_atual?.startsWith('entrevista') || p.etapa_atual === 'teste');
+  const blocoPreparacaoHtml = isEntrevista ? `
+    <div class="proc-det-bloco" id="bloco-preparacao">
+      <h3>Preparação para a entrevista</h3>
+      <div class="prep-grid">
+        <div class="prep-box fortes">
+          <strong>Pontos fortes para reforçar</strong>
+          <ul>
+            <li>Alinhamento com arquitetura de software, resiliência e contratos de dados.</li>
+            <li>Experiência comprovada em migrações e sistemas de alto volume.</li>
+            <li>Autonomia técnica e comunicação com stakeholders e engenharia.</li>
+          </ul>
+        </div>
+        <div class="prep-box lacunas">
+          <strong>Pontos de atenção / lacunas a esclarecer</strong>
+          <ul>
+            <li>Validar expectativas de escala técnica, infraestrutura e monitoramento.</li>
+            <li>Perguntar sobre processo de homologação e ciclo de deploy.</li>
+            <li>Confirmar modelo de trabalho, benefícios e estrutura da liderança.</li>
+          </ul>
+        </div>
+      </div>
+    </div>` : '';
+
+  const isDevolutiva = (st.indice === 3 || p.situacao === 'encerrado');
+  const blocoDevolutivaHtml = isDevolutiva ? `
+    <div class="proc-det-bloco" id="bloco-devolutiva">
+      <h3>Devolutiva</h3>
+      <div class="box-alerta-etapa" style="background: var(--sup2); border-color: var(--borda);">
+        ${obterIconeSvgProcessoProc('alerta')}
+        <div>
+          <strong>Processo encerrado (${esc(p.desfecho || 'finalizado')}).</strong>
+          <div class="meta" style="margin-top: 4px;">Revise seus pontos de prova e notas de entrevista para evoluir a abordagem.</div>
+        </div>
+        <button type="button" class="btn peq discreto" style="margin-left: auto;" id="btn-ir-curriculo">
+          Ver a lacuna em Currículo e provas
+        </button>
+      </div>
+    </div>` : '';
+
+  container.innerHTML = `
+    <div class="proc-det-topo">
+      <span class="plaqueta" data-a="boa">Em andamento</span>
+      <strong>${esc(p.empresa || 'Empresa')}</strong>
+      <span class="proc-badge-etapa">${esc(rotuloEtapa)}</span>
+    </div>
+
+    <h2 class="proc-det-titulo">${esc(p.cargo || 'Cargo')}</h2>
+
+    <div class="trilho" aria-label="Estações do processo detalhado">
+      ${trilhoHtml}
+    </div>
+
+    ${boxProximaEtapa}
+
+    <!-- Seção Rascunho de Acompanhamento -->
+    <div class="proc-det-bloco secao-rascunho" id="bloco-rascunho">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Mensagem de acompanhamento</h3>
+        ${dias >= 5 ? `<span class="espera-n ${dias >= 7 ? 'perigo' : 'atencao'}">· ${dias} dias sem retorno</span>` : ''}
+      </div>
+      <textarea class="campo" id="rascunho" rows="4" aria-label="Rascunho de mensagem de acompanhamento">${esc(rascunhoTexto)}</textarea>
+      <div class="acoes">
+        <button type="button" class="btn peq" id="btn-copiar-rascunho">
+          ${obterIconeSvgProcessoProc('copiar')} <span id="txt-copiar">Copiar</span>
+        </button>
+        <a class="btn peq prim" id="btn-abrir-gmail" href="${esc(urlGmail)}" target="_blank" rel="noopener noreferrer">
+          ${obterIconeSvgProcessoProc('mail')} Abrir rascunho no Gmail
+        </a>
+        <span class="meta aviso-envio">O painel não envia mensagens.</span>
+      </div>
+    </div>
+
+    <!-- Seção Contatos Vinculados -->
+    <div class="proc-det-bloco">
+      <h3>Contatos vinculados</h3>
+      ${contatosHtml}
+    </div>
+
+    <!-- Seção Formulário Registrar Contato -->
+    <div class="proc-det-bloco" id="bloco-reg-contato">
+      <h3>Registrar contato</h3>
+      <div class="form-reg-contato">
+        <select id="rc-canal" class="campo" aria-label="Canal de comunicação">
+          <option value="whatsapp">WhatsApp</option>
+          <option value="linkedin">LinkedIn</option>
+          <option value="email">E-mail</option>
+          <option value="portal">Portal</option>
+        </select>
+        <input class="campo" id="rc-resumo" placeholder="Ex.: recrutadora pediu pretensão salarial" aria-label="Resumo do contato">
+        <input class="campo" type="date" id="rc-data" value="${hojeIso}" aria-label="Data do contato">
+        <button type="button" class="btn" id="btn-registrar-contato">
+          ${obterIconeSvgProcessoProc('mais')} Registrar contato
+        </button>
+      </div>
+    </div>
+
+    <!-- Seção Linha do Tempo -->
+    <div class="proc-det-bloco">
+      <h3>Linha do tempo</h3>
+      ${tempoHtml}
+    </div>
+
+    ${blocoPreparacaoHtml}
+    ${blocoDevolutivaHtml}
+  `;
+
+  const btnCopiar = document.getElementById('btn-copiar-rascunho');
+  if (btnCopiar) {
+    btnCopiar.addEventListener('click', async () => {
+      const elArea = document.getElementById('rascunho');
+      if (elArea) {
+        try {
+          await navigator.clipboard.writeText(elArea.value);
+          const txtSpan = document.getElementById('txt-copiar');
+          if (txtSpan) {
+            txtSpan.textContent = 'Mensagem copiada.';
+            setTimeout(() => { txtSpan.textContent = 'Copiar'; }, 2500);
+          }
+        } catch {}
+      }
+    });
+  }
+
+  const btnIrCurriculo = document.getElementById('btn-ir-curriculo');
+  if (btnIrCurriculo) {
+    btnIrCurriculo.addEventListener('click', () => alternarAba('curriculo'));
+  }
+
+  const btnRegContato = document.getElementById('btn-registrar-contato');
+  if (btnRegContato) {
+    btnRegContato.addEventListener('click', () => {
+      const elCanal = document.getElementById('rc-canal');
+      const elResumo = document.getElementById('rc-resumo');
+      const elData = document.getElementById('rc-data');
+      if (!elResumo || !elResumo.value.trim()) return;
+
+      const canal = elCanal ? elCanal.value : 'whatsapp';
+      const resumo = elResumo.value.trim();
+      const data = (elData && elData.value) ? elData.value : hojeIso;
+
+      if (!Array.isArray(p.eventos)) p.eventos = [];
+      p.eventos.push({
+        tipo: 'contato.registrado',
+        canal,
+        data,
+        detalhe: resumo,
+        resumo,
+        ts: new Date().toISOString(),
+      });
+      p.ultima_interacao_data = data;
+      p.quem_falou_por_ultimo = 'candidato';
+      p.dias_inatividade = 0;
+
+      elResumo.value = '';
+      renderizarProcessos();
+      renderizarDetalheProcesso(p.vaga_id);
+    });
+  }
+}
+
+const elFiltroEtapas = document.getElementById('filtro-etapas-processos');
+if (elFiltroEtapas) {
+  elFiltroEtapas.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      filtroEtapaProcesso = chip.dataset.etapa || '';
+      renderizarChipsEtapas();
+      renderizarProcessos();
+    });
+  });
+}
+
 // Gerenciamento de abas da Placa
 const botoesAba = document.querySelectorAll('.nav .aba-btn');
 const telas = {
   vagas: document.getElementById('painel-vagas'),
   historico: document.getElementById('painel-historico'),
+  processos: document.getElementById('painel-processos'),
 };
 
 function alternarAba(nomeAba) {
@@ -1894,6 +3232,9 @@ function alternarAba(nomeAba) {
 
   if (nomeAba === 'historico') {
     carregarHistorico();
+  }
+  if (nomeAba === 'processos') {
+    carregarProcessos();
   }
 }
 
