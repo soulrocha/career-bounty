@@ -11,14 +11,15 @@ do processamento/renderização, conectores, envio de candidaturas e publicaçã
 
 ## Estado desta preparação
 
-As fatias F0 a F6 estão implementadas: fundação e pacote público, migração em modo sombra, radar e fontes,
-leitura de e-mail, base de carreira, currículos com gates e candidatura assistida (inclusive perfil e candidatura
-na Gupy). A F7 (envio automático por política) está em andamento e a F8 (contribuição externa) não começou.
+As fatias F0 a F7 estão integralmente implementadas: fundação e pacote público, migração em modo sombra
+com ferramenta segura de corte (`migrate --corte`), radar e fontes, leitura de e-mail, base de carreira,
+currículos com gates, candidatura assistida (inclusive perfil e candidatura na Gupy) e envio automático
+por política com drivers (Greenhouse, Lever, Ashby), kill switch e auditoria de decisões.
 
 Execute `npm test` com Node >=20 para verificar a base. A CI roda Node 20 em Windows e Ubuntu.
 
-O corte da migração continua pendente: até ele, o radar legado é o escritor oficial e o CareerBounty roda em
-sombra. A continuidade depende do plano completo e das decisões pendentes no handoff do projeto.
+Para sair do modo sombra com segurança, utilize `node bin/career-bounty.mjs migrate --corte --confirmar-corte`
+após verificar que `verify` acusa diff zero.
 
 ## Configuração e uso
 
@@ -40,7 +41,9 @@ de currículos autorizados no painel; por padrão, a lista é vazia.
 4. `node bin/career-bounty.mjs project --json` reconstrói a projeção pelo log.
 5. `node bin/career-bounty.mjs migrate --rollback --out <arquivo-novo-privado> --json`
    exporta o documento integral sem sobrescrever arquivo existente ou origem.
-6. `node bin/career-bounty.mjs panel --port 8880` inicia o painel local de consulta.
+6. `node bin/career-bounty.mjs migrate --corte --confirmar-corte` conclui o corte
+   e passa a gravação de candidaturas para o modo ativo (exige paridade estrita).
+7. `node bin/career-bounty.mjs panel --port 8880` inicia o painel local de consulta.
 
 O snapshot preserva os arquivos privados em `backups/`, com manifesto de tamanhos
 e SHA-256. O log fica em `events/`; a projeção, em `projections/`.
@@ -63,6 +66,10 @@ está em [CV.md](CV.md).
 Candidaturas: `apply plan`, `apply iniciar`, `apply preparar`, `apply lote`, `apply envio`, `apply comprovante` e
 `apply desfecho`, conduzidos pela skill `aplicar` e protegidos pelos hooks. Perfil da Gupy: `gupy perfil iniciar|propor|confirmar|encerrar`,
 descrito em [GUPY-PERFIL.md](GUPY-PERFIL.md).
+
+Envio por política e Kill Switch: `envio pausar [--motivo "..."]`, `envio retomar` e `envio audit [--dia YYYY-MM-DD]`.
+O kill switch cria `DATA_ROOT/envio.pausado` e bloqueia instantaneamente qualquer envio no driver e no hook PreToolUse.
+Diagnóstico completo: `node bin/career-bounty.mjs doctor`.
 
 ## Retomar
 
