@@ -154,4 +154,103 @@ export function validarContatoRemovido(dados) {
   return null;
 }
 
+export const ETAPAS_PROCESSO = new Set([
+  'aplicada',
+  'triagem',
+  'teste',
+  'entrevista_rh',
+  'entrevista_tecnica',
+  'entrevista_gestor',
+  'proposta',
+  'aprovado',
+]);
+
+export const ORDEM_ETAPAS_PROCESSO = [
+  'aplicada',
+  'triagem',
+  'teste',
+  'entrevista_rh',
+  'entrevista_tecnica',
+  'entrevista_gestor',
+  'proposta',
+  'aprovado',
+];
+
+export const DESFECHOS_PROCESSO = new Set([
+  'aprovado',
+  'reprovado',
+  'desistencia',
+  'cancelado',
+  'proposta_recusada',
+]);
+
+export const SITUACOES_PROCESSO = new Set([
+  'ativo',
+  'aguardando_retorno',
+  'aguardando_voce',
+  'encerrado',
+]);
+
+export const DESFECHOS_QUE_DESCARTAM = new Set([
+  'reprovado',
+  'desistencia',
+  'cancelado',
+  'proposta_recusada',
+]);
+
+export function validarEtapaProcesso(dados, nowTs = new Date().toISOString()) {
+  if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
+    return 'Dados da etapa inválidos.';
+  }
+  if (typeof dados.vaga_id !== 'string' || !dados.vaga_id.trim()) {
+    return 'ID da vaga obrigatório.';
+  }
+  if (!ETAPAS_PROCESSO.has(dados.etapa)) {
+    return `Etapa inválida; use uma das seguintes: ${[...ETAPAS_PROCESSO].join(', ')}.`;
+  }
+  if (!isoDate(dados.data)) {
+    return 'Data da etapa inválida; use AAAA-MM-DD.';
+  }
+  if (dados.data > localDay(nowTs)) {
+    return 'A etapa não pode ter data futura.';
+  }
+  if (dados.detalhe !== undefined && dados.detalhe !== null) {
+    if (typeof dados.detalhe !== 'string') {
+      return 'Detalhe deve ser um texto.';
+    }
+    if (dados.detalhe.length > 500) {
+      return 'Detalhe excede o limite de 500 caracteres.';
+    }
+  }
+  return null;
+}
+
+export function validarEncerramentoProcesso(dados, nowTs = new Date().toISOString()) {
+  if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
+    return 'Dados de encerramento inválidos.';
+  }
+  if (typeof dados.vaga_id !== 'string' || !dados.vaga_id.trim()) {
+    return 'ID da vaga obrigatório.';
+  }
+  if (!DESFECHOS_PROCESSO.has(dados.desfecho)) {
+    return `Desfecho inválido; use um dos seguintes: ${[...DESFECHOS_PROCESSO].join(', ')}.`;
+  }
+  if (!isoDate(dados.data)) {
+    return 'Data de encerramento inválida; use AAAA-MM-DD.';
+  }
+  if (dados.data > localDay(nowTs)) {
+    return 'O encerramento não pode ter data futura.';
+  }
+  if (dados.nota !== undefined && dados.nota !== null) {
+    if (typeof dados.nota !== 'string') {
+      return 'Nota deve ser um texto.';
+    }
+    if (dados.nota.length > 500) {
+      return 'Nota excede o limite de 500 caracteres.';
+    }
+  }
+  return null;
+}
+
+
 

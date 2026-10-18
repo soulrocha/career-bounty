@@ -41,6 +41,8 @@ import { envioCommands } from './envio.mjs';
 import { preferenciasCommands } from './preferencias.mjs';
 import { demoCommands } from './demo.mjs';
 import { contatoCommands } from './contato.mjs';
+import { processoCommands } from './processo.mjs';
+import { acompanhamentoCommands } from './acompanhamento.mjs';
 import { relogio } from './relogio.mjs';
 export { relogio } from './relogio.mjs';
 
@@ -77,6 +79,8 @@ export const commands = {
   ...preferenciasCommands,
   ...demoCommands,
   ...contatoCommands,
+  ...processoCommands,
+  ...acompanhamentoCommands,
   async doctor(rest, { parseFlags }) {
     parseFlags(rest, { allowed: [] });
     const report = await runDoctor();

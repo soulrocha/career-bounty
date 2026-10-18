@@ -92,3 +92,23 @@ export function mascararContato(contato) {
   }
   return copia;
 }
+
+export function mascararProcesso(processo) {
+  if (!processo || typeof processo !== 'object') return processo;
+  const copia = { ...processo };
+  if (copia.empresa) copia.empresa = mascararTexto(copia.empresa);
+  if (copia.cargo) copia.cargo = mascararTexto(copia.cargo);
+  if (copia.nota) copia.nota = mascararTexto(copia.nota);
+  if (Array.isArray(copia.eventos)) {
+    copia.eventos = copia.eventos.map(e => {
+      const ev = { ...e };
+      if (ev.detalhe) ev.detalhe = mascararTexto(ev.detalhe);
+      if (ev.nota) ev.nota = mascararTexto(ev.nota);
+      if (ev.resumo) ev.resumo = mascararTexto(ev.resumo);
+      if (ev.pergunta) ev.pergunta = mascararTexto(ev.pergunta);
+      return ev;
+    });
+  }
+  return copia;
+}
+

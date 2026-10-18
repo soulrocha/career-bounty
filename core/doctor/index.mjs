@@ -111,5 +111,8 @@ export async function runDoctor({
 
   add('conector_gmail', 'ok', 'informativo: o conector Gmail só pode ser conferido dentro da sessão do Claude (spike F3.1).');
 
+  const ac = settings.acompanhamento ?? { dias_aviso: 5, dias_lembrete: 7 };
+  add('acompanhamento', 'ok', `Acompanhamento ativo: aviso após ${ac.dias_aviso} dias, lembrete após ${ac.dias_lembrete} dias.`);
+
   return { ok: checks.every(c => c.status !== 'falha'), dataRoot, checks, padroes: describeDefaults(settings) };
 }
