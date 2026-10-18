@@ -2,10 +2,11 @@
 // Função pura: mesmos eventos, mesmo documento.
 import { semanticHash } from './canonicalize.mjs';
 import { applyDescarte, applyMarcacao, aplicadaDe, descartadaDe, requisicaoKey } from './rules.mjs';
-import { chavesCanonicas } from '../dedup/keys.mjs';
+import { chavesCanonicas, companyKey } from '../dedup/keys.mjs';
 import { localDay } from './schema.mjs';
 import { portalCandidatura } from '../apply/portal.mjs';
 import { reducersEmail } from '../mail/reducer.mjs';
+import { projectAvaliacoes, obterAvaliacaoVigente } from './projections/avaliacoes.mjs';
 
 const clone = value => structuredClone(value);
 export const EMAILS = 'eventos_email_sem_requisicao';
@@ -223,7 +224,8 @@ function ordered(map, order) {
   return [...known, ...rest].map(([, value]) => value);
 }
 
-export function projectEvents(events, { avisos = [] } = {}) {
+export function projectEvents(events, options = {}) {
+  const { avisos = [], now = options?.now ?? new Date(), aliases = options?.aliases ?? {} } = options;
   let state = emptyState();
   const deferred = [];
   const apply = (event, defer) => {
@@ -239,8 +241,25 @@ export function projectEvents(events, { avisos = [] } = {}) {
   for (const event of deferred) apply(event, false);
   const document = {};
   const indice = state.chaves.includes('vagas') ? origens(state) : null;
+  const projAvaliacoes = projectAvaliacoes(events, { now });
   for (const key of state.chaves) {
-    if (key === 'vagas') document.vagas = ordered(state.vagas, state.ordemVagas).map(vaga => inherit(state, indice, vaga));
+    if (key === 'vagas') {
+      document.vagas = ordered(state.vagas, state.ordemVagas).map(vaga => {
+        const enriquecida = inherit(state, indice, vaga);
+        const chave = companyKey(enriquecida.empresa, aliases);
+        if (projAvaliacoes.por_empresa[chave]) {
+          const av = obterAvaliacaoVigente(enriquecida.empresa, projAvaliacoes, { aliases });
+          if (av) {
+            enriquecida.empresa_avaliacao = av;
+          } else {
+            delete enriquecida.empresa_avaliacao;
+          }
+        } else if (!state.importadas.has(vaga.id)) {
+          delete enriquecida.empresa_avaliacao;
+        }
+        return enriquecida;
+      });
+    }
     else if (key === EMAILS) document[EMAILS] = ordered(state.emails, state.ordemEmails).map(clone);
     else if (Object.hasOwn(state.raiz, key)) document[key] = clone(state.raiz[key]);
   }

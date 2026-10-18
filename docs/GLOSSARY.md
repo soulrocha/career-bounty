@@ -131,6 +131,14 @@ Unidade elementar que compõe a linha do tempo de uma vaga (`linha_do_tempo`). R
 
 Identificação do subsistema ou canal responsável pela geração de um item na linha do tempo: `radar` (varredura automatizada), `painel` (interação realizada pela interface local do usuário), `cli` (comando de terminal), `recrutador` (mensagem recebida externamente) ou `email` (notificação de e-mail identificada pelo pipeline).
 
+## Avaliação de empresa
 
+Indicador quantitativo e qualitativo da reputação de uma empresa contratante apurado em fontes públicas (como Glassdoor, Indeed ou Catho), composto por nota consolidada (escala de 1.0 a 5.0), quantidade de avaliações, resumo textual e lista obrigatória de URLs públicas de comprovação. Pertence à entidade empresa e não à vaga individual.
 
+## Evento empresa.avaliada
 
+Registro imutável no log append-only (`tipo: empresa.avaliada`, `entidade: empresa`) que consolida o snapshot de reputação apurado para uma empresa, indexado pela chave normalizada `empresa_chave` (`companyKey(empresa)`).
+
+## Validade de avaliação
+
+Janela temporal padrão de vigência de uma avaliação de empresa (configurável, padrão de 90 dias a contar da data de referência). Avaliações expiradas deixam de ser projetadas nas vagas ativas para evitar a exibição de dados defasados.
