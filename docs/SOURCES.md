@@ -133,3 +133,33 @@ no `claude -p` não interativo, então a leitura de e-mail entra na rotina (suba
   resolveram 54% e 56%; 46% e 44% foram ambíguos; fase B limitada a 3 e 5 mensagens; custo por rodada de US$ 0,10 a 0,12
   (cerca de 460 mil a 670 mil tokens, quase todos de cache de contexto). O orçamento padrão `mail.orcamento_tokens` ficou
   em 1.000.000. A consulta com 50 resultados bate o limite padrão (`mail.limite_resultados`).
+
+## Tokens por candidatura (F6.12)
+
+O relatório `node bin/career-bounty.mjs report tokens --by application --json` agrupa cada tentativa de candidatura,
+separa `navegador` de `runner` e soma entrada, saída, leitura e criação de cache, incluindo retries.
+`tentativa_id` identifica a reserva; `tentativa` nos eventos do runner continua sendo o ordinal do retry.
+O preparo registra somente quantidades de campos, desconhecidos e ignorados antes de chamar o LLM, preservando o resumo
+mesmo se o transporte ou o contrato do modelo falhar. Qualquer etapa desconhecida, ignorada,
+vazia ou bloqueada impede a classificação de formulário composto apenas por campos conhecidos.
+
+1. Use uma sessão dedicada a uma única candidatura e guarde o `tentativa_id` devolvido por `apply iniciar`.
+2. Consulte os contadores de uso que o ambiente da sessão efetivamente fornecer e normalize-os manualmente num arquivo
+   privado: `{"medicao_id":"sessao-1","tokens_in":100,"tokens_out":20,"tokens_cache_leitura":0,"tokens_cache_criacao":0}`.
+   O ID é opaco; não coloque e-mail, URL, prompt, resposta, captura ou texto da página. Cada registro representa um incremento
+   distinto, nunca repita um total cumulativo com outro ID. Para uma sessão inteira, registre uma única vez seu total final.
+3. Registre com `node bin/career-bounty.mjs apply tokens --vaga <id> --tentativa <id> --uso <arquivo.json> --json`.
+   Pode ser depois do desfecho. O mesmo ID com os mesmos números é idempotente; números diferentes são recusados.
+4. Rode o relatório. Código 1 significa mais de 15.000 tokens em formulário conhecido, mesmo se a medição ainda estiver
+   incompleta; 15.000 exatos não excedem o limite. Código 2 significa entrada ou log inválido. Código 0 só confirma execução
+   válida: confira `medicao` e `resultado` para saber se a meta foi comprovada.
+
+Sem contadores fornecidos pelo ambiente, deixe a medição ausente. Não estime tokens por caracteres, número de ferramentas
+ou chamadas do matcher. A proveniência `operador` informa que os números do navegador foram inseridos manualmente;
+o sistema não captura nem atesta o contador da sessão. Caches devem ser categorias separadas, sem duplicar a entrada.
+`fake` e `replay` aparecem nos modos por fonte e não certificam medição real. Ausência de navegador, preparo ou vínculo
+de uso produz `nao_verificada`; zeros nesses itens são ausência de consumo registrado, não prova de sessão com custo zero.
+Eventos legados sem vínculo de candidatura não são atribuídos por proximidade de data.
+
+Medição de três formulários reais abaixo da meta: **pendente, não verificada**. Os testes usam somente dados sintéticos;
+não comprovam F6.1 nem o aceite manual de F6.12.

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Gupy</title>
+<!-- Estrutura da página "Meu currículo" da Gupy observada em 17/10/2026 (só leitura), com a persona fictícia:
+     acordeões com cabeçalho div[role=button], sem <form>, "Salvar" da seção escondido até haver alteração. -->
+<style>.fechado{display:none}</style></head>
+<body>
+<h1>Meu currículo</h1>
+<div role="button" tabindex="0" id="abrir-exp" onclick="document.getElementById('sec-exp').classList.toggle('fechado')"><span>Experiência</span></div>
+<div id="sec-exp" class="fechado">
+  <h3>Experiência acadêmica</h3>
+  <label for="institution-autocomplete-0">Nome da instituição de ensino *</label><input id="institution-autocomplete-0" name="institution" value="Universidade Exemplo">
+  <h3>Experiência profissional</h3>
+  <div>
+    <button type="button" aria-label="Mais opções" onclick="document.body.dataset.menu='1'"></button>
+    <button type="button" class="fechado" onclick="document.body.dataset.removido='1'">Remover experiência</button>
+    <label for="companyName-0">Empresa *</label><input id="companyName-0" name="companyName" value="Empresa Gama">
+    <label for="role-0">Cargo *</label><input id="role-0" name="role" value="Gerente de Produto">
+    <label><input type="checkbox" id="isCurrentJob-0-0" name="isCurrentJob" checked> Meu emprego atual</label>
+    <label for="activitiesPerformed-0">Descrição das atividades</label><textarea id="activitiesPerformed-0" name="activitiesPerformed">Gestão de produto de uma plataforma interna de dados.</textarea>
+  </div>
+  <div>
+    <button type="button" aria-label="Mais opções" onclick="document.body.dataset.menu='1'"></button>
+    <label for="companyName-1">Empresa *</label><input id="companyName-1" name="companyName" value="Empresa Beta">
+    <label for="role-1">Cargo *</label><input id="role-1" name="role" value="Líder de Operações">
+    <label for="activitiesPerformed-1">Descrição das atividades</label><textarea id="activitiesPerformed-1" name="activitiesPerformed"></textarea>
+  </div>
+  <div id="barra-exp" class="fechado"><button type="submit" id="salvar" onclick="document.body.dataset.salvo=document.getElementById('activitiesPerformed-0').value">Salvar</button></div>
+</div>
+<div role="button" tabindex="0" onclick="document.getElementById('sec-dados').classList.toggle('fechado')"><span>Dados Pessoais</span></div>
+<div id="sec-dados" class="fechado">
+  <label for="identityCardNumber">Seu RG *</label><input id="identityCardNumber" name="identityCardNumber" value="RG-FICTICIO-000">
+  <label for="linkedinProfileUrl">Link (URL) do seu perfil (opcional)</label><input id="linkedinProfileUrl" name="linkedinProfileUrl" value="https://linkedin.example/persona">
+</div>
+<div role="button" tabindex="0"><span>Habilidades</span></div>
+<div>
+  <label for="skills-search-autocomplete">Habilidade (opcional)</label><input id="skills-search-autocomplete" maxlength="50">
+  <button type="button">Adicionar</button>
+  <button type="button" data-testid="candidate-skill">Scrum<svg width="8" height="8"></svg></button>
+  <button type="button" data-testid="candidate-skill">SQL<svg width="8" height="8"></svg></button>
+  <div class="fechado"><button type="button" onclick="document.body.dataset.salvoHabilidades='1'">Salvar</button></div>
+</div>
+<script>document.getElementById('sec-exp').addEventListener('input', () => document.getElementById('barra-exp').classList.remove('fechado'));</script>
+</body></html>

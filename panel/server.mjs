@@ -9,9 +9,15 @@ import { descartar } from '../core/store/commands/descartar.mjs';
 import { readEvents } from '../core/store/events.mjs';
 import { projectEvents } from '../core/store/project.mjs';
 import { renderPainelDe } from './render.mjs';
-import { injetarAbaQuadrantes, respostaQuadrantes } from './quadrantes.mjs';
+import { ABA_QUADRANTES, respostaQuadrantes } from './quadrantes.mjs';
+import { ABA_PERGUNTAS, listarPerguntas } from './perguntas.mjs';
+import { ABA_FILA, listarFila } from './fila.mjs';
+import { injetarAbas } from './abas.mjs';
+import { responderPergunta } from '../core/apply/perguntas.mjs';
 import { createMaterials, namedMaterialsOf, privateFile, validateBaseFiles } from './materials.mjs';
 import { arquivosServiveis, congelarCvEnviado, lerManifesto } from '../core/cv/artifacts.mjs';
+
+const ABAS = [ABA_QUADRANTES, ABA_PERGUNTAS, ABA_FILA];
 
 // Painel sem recurso externo: nada carrega nem envia dado para fora de 127.0.0.1. Script e estilo inline vêm do template local.
 const CSP = ["default-src 'none'", "script-src 'unsafe-inline'", "style-src 'unsafe-inline'", "img-src 'self' data:", "font-src 'self' data:", "connect-src 'self'", "base-uri 'self'", "form-action 'none'", "frame-ancestors 'none'", "object-src 'none'"].join('; ');
@@ -54,8 +60,25 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
       if (![`127.0.0.1:${actualPort}`, `localhost:${actualPort}`].includes(req.headers.host)) return send(403, { erro: 'Host inválido.' });
       if (req.method === 'POST') {
         if (![`http://127.0.0.1:${actualPort}`, `http://localhost:${actualPort}`].includes(req.headers.origin)
-          || req.headers['x-painel-token'] !== token || !['/api/candidaturas', '/api/descarte'].includes(req.url)) {
+          || req.headers['x-painel-token'] !== token || !['/api/candidaturas', '/api/descarte', '/api/perguntas'].includes(req.url)) {
           return send(403, { erro: 'Acesso inválido.' });
+        }
+        // Resposta de pergunta grava no answer bank e em evento fora da projeção legada: vale também no modo sombra.
+        if (req.url === '/api/perguntas') {
+          if ((req.headers['content-type'] ?? '').split(';')[0] !== 'application/json') return send(415, { erro: 'Formato inválido.' });
+          const tamanho = Number(req.headers['content-length'] ?? 0);
+          if (!(tamanho > 0 && tamanho <= 8192)) return send(413, { erro: 'Pedido inválido.' });
+          const partes = [];
+          for await (const parte of req) partes.push(parte);
+          let corpo;
+          try { corpo = JSON.parse(Buffer.concat(partes).toString('utf8')); } catch { return send(400, { erro: 'Pedido malformado.' }); }
+          if (!corpo || typeof corpo !== 'object' || Array.isArray(corpo) || Object.keys(corpo).some(k => !['id', 'resposta', 'escopo'].includes(k)) || typeof corpo.id !== 'string') return send(400, { erro: 'Campos inválidos.' });
+          try {
+            return send(200, await responderPergunta({ dataRoot, perguntaId: corpo.id, resposta: corpo.resposta, escopo: corpo.escopo, ts: now?.() ?? new Date().toISOString() }));
+          } catch (error) {
+            if (error.code === 'nao_encontrado') return send(404, { erro: error.message });
+            return send(400, { erro: String(error.message).slice(0, 200) });
+          }
         }
         if (!writable) return send(409, { erro: 'Modo sombra: gravação desligada.', gravacao_painel: 'desligada' });
         if ((req.headers['content-type'] ?? '').split(';')[0] !== 'application/json') return send(415, { erro: 'Formato inválido.' });
@@ -97,6 +120,14 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
         const vagas = writable ? projectEvents((await readEvents(dataRoot)).eventos).vagas : pipeline.vagas;
         return send(200, { vagas: vagas.map(publicMarker) });
       }
+      if (path === '/api/fila') {
+        if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
+        return send(200, await listarFila({ dataRoot }));
+      }
+      if (path === '/api/perguntas') {
+        if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
+        return send(200, await listarPerguntas({ dataRoot }));
+      }
       if (path === '/api/quadrantes') {
         if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
         const { status, corpo } = await respostaQuadrantes({ dataRoot });
@@ -111,7 +142,7 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
           .replaceAll('applicationApiReady=true', 'applicationApiReady=false')
           .replaceAll('Marcações salvas neste computador e consideradas nas próximas buscas.', 'SOMBRA — gravação desligada. Marcações importadas para consulta.')
           .replaceAll('Abra o painel interativo para salvar.', 'SOMBRA — gravação desligada.');
-        return send(200, Buffer.from(injetarAbaQuadrantes(page)), 'text/html; charset=utf-8');
+        return send(200, Buffer.from(injetarAbas(page, ABAS)), 'text/html; charset=utf-8');
       }
       // PDFs de CV (F5.8): só os listados no manifesto da vaga, lidos sem seguir link e sem sair do DATA_ROOT.
       const cv = /^\/artifacts\/cv\/([A-Za-z0-9][A-Za-z0-9._-]*)\/[0-9a-f]{64}\/cv-(?:ats|visual)\.pdf$/.exec(path);
