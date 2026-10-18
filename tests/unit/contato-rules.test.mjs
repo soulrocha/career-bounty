@@ -5,6 +5,7 @@ import {
   DIRECOES_CONTATO,
   validarContatoRegistrado,
   validarContatoVinculado,
+  validarContatoRemovido,
 } from '../../core/store/rules.mjs';
 
 const NOW = '2026-10-18T15:00:00.000-03:00';
@@ -113,3 +114,16 @@ test('validarContatoVinculado valida dados obrigatórios', () => {
   assert.match(validarContatoVinculado({ contato_id: 'con-1', vaga_id: '' }), /ID da vaga obrigatório/i);
   assert.equal(validarContatoVinculado({ contato_id: 'con-1', vaga_id: 'vaga-abc' }), null);
 });
+
+test('validarContatoRemovido valida contato_id obrigatório e motivo opcional', () => {
+  assert.match(validarContatoRemovido(null), /inválidos/i);
+  assert.match(validarContatoRemovido([]), /inválidos/i);
+  assert.match(validarContatoRemovido({}), /ID do contato obrigatório/i);
+  assert.match(validarContatoRemovido({ contato_id: '' }), /ID do contato obrigatório/i);
+  assert.match(validarContatoRemovido({ contato_id: '   ' }), /ID do contato obrigatório/i);
+  assert.match(validarContatoRemovido({ contato_id: 'con-1', motivo: '' }), /Motivo da remoção/i);
+  assert.match(validarContatoRemovido({ contato_id: 'con-1', motivo: 123 }), /Motivo da remoção/i);
+  assert.equal(validarContatoRemovido({ contato_id: 'con-1' }), null);
+  assert.equal(validarContatoRemovido({ contato_id: 'con-1', motivo: 'Registro inserido por engano em teste' }), null);
+});
+

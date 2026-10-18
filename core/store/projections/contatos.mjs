@@ -35,10 +35,13 @@ export function projectContatos(eventos, { now = new Date() } = {}) {
         registrado_em: evento.ts,
       });
     } else if (evento.tipo === 'contato.vinculado') {
-      const contato = contatosMap.get(evento.dados.contato_id || evento.entidade_id);
+      const contato = contatosMap.get(evento.dados?.contato_id || evento.entidade_id);
       if (contato) {
-        contato.vaga_id = evento.dados.vaga_id;
+        contato.vaga_id = evento.dados?.vaga_id;
       }
+    } else if (evento.tipo === 'contato.removido') {
+      const id = evento.dados?.contato_id || evento.entidade_id;
+      contatosMap.delete(id);
     }
   }
 

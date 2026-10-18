@@ -213,3 +213,74 @@ test('GET /api/contatos suporta query params ?vaga=<id> e ?ativos=1', async t =>
   assert.equal(dadosCombinado.total, 1);
   assert.equal(dadosCombinado.contatos[0].id, 'con-recente-a');
 });
+
+test('GET /api/contatos não retorna contatos que receberam contato.removido', async t => {
+  const env = await setupAmbiente(t);
+
+  const eventos = [
+    {
+      id: 'contato.registrado:1',
+      ts: '2026-10-18T10:00:00.000-03:00',
+      host: 'host-teste',
+      seq: 1,
+      ator: 'usuario',
+      tipo: 'contato.registrado',
+      entidade: 'contato',
+      entidade_id: 'con-para-remover',
+      dados: {
+        id: 'con-para-remover',
+        vaga_id: 'vaga-x',
+        canal: 'linkedin',
+        direcao: 'recebido',
+        resumo: 'Contato gravado por engano em teste',
+        data: '2026-10-18',
+      },
+      evidencia: [],
+    },
+    {
+      id: 'contato.registrado:2',
+      ts: '2026-10-18T11:00:00.000-03:00',
+      host: 'host-teste',
+      seq: 2,
+      ator: 'usuario',
+      tipo: 'contato.registrado',
+      entidade: 'contato',
+      entidade_id: 'con-valido',
+      dados: {
+        id: 'con-valido',
+        vaga_id: 'vaga-x',
+        canal: 'email',
+        direcao: 'recebido',
+        resumo: 'Contato válido e ativo',
+        data: '2026-10-18',
+      },
+      evidencia: [],
+    },
+    {
+      id: 'contato.removido:1',
+      ts: '2026-10-18T12:00:00.000-03:00',
+      host: 'host-teste',
+      seq: 3,
+      ator: 'usuario',
+      tipo: 'contato.removido',
+      entidade: 'contato',
+      entidade_id: 'con-para-remover',
+      dados: {
+        contato_id: 'con-para-remover',
+        motivo: 'Exclusão solicitada pelo usuário',
+      },
+      evidencia: [],
+    },
+  ];
+
+  await appendEvents(env.dataRoot, eventos, { now: NOW, host: 'host-teste' });
+
+  const res = await env.api('/api/contatos', { 'x-painel-token': env.token });
+  assert.equal(res.status, 200);
+  const dados = await res.json();
+  assert.equal(dados.total, 1);
+  assert.equal(dados.contatos.length, 1);
+  assert.equal(dados.contatos[0].id, 'con-valido');
+  assert.ok(!dados.contatos.some(c => c.id === 'con-para-remover'));
+});
+

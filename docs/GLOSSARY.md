@@ -95,3 +95,8 @@ expostos na API do painel.
 
 Evento que associa um contato previamente avulso ou existente a uma vaga canônica específica pelo seu `vaga_id`.
 
+## Evento contato.removido
+
+Evento que registra a remoção/descarte lógico de um contato (`tipo: contato.removido`), identificando `contato_id` e opcionalmente um `motivo`. Uma vez registrado, o contato deixa de ser exibido na projeção pura (`projectContatos`) e na API do painel.
+
+

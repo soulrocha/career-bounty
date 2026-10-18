@@ -8,13 +8,14 @@ import { loadSettings } from '../config.mjs';
 import { readEvents, appendEvents } from '../store/events.mjs';
 import { projectEvents } from '../store/project.mjs';
 import { localDay } from '../store/schema.mjs';
-import { validarContatoRegistrado, validarContatoVinculado } from '../store/rules.mjs';
+import { validarContatoRegistrado, validarContatoVinculado, validarContatoRemovido } from '../store/rules.mjs';
 import { projectContatos } from '../store/projections/contatos.mjs';
 import { gravarProposta } from '../kb/outbox.mjs';
 import { carregarFontes } from '../kb/fontes.mjs';
 import { lerBase } from '../kb/base.mjs';
 import { rascunharRespostas } from '../apply/rascunho.mjs';
 import { runnerDasOpcoes } from './llm.mjs';
+import { relogio } from './relogio.mjs';
 
 const NL = String.fromCharCode(10);
 
@@ -32,7 +33,6 @@ async function buscarVaga(dataRoot, vagaId) {
 
 export const contatoCommands = {
   async contato(rest, options = {}) {
-    const { relogio } = await import('./commands.mjs');
     const { parseFlags } = options;
     const [sub, ...flags] = rest;
     const settings = await loadSettings(options.dataRoot ? { dataRoot: options.dataRoot } : undefined);
@@ -181,6 +181,46 @@ export const contatoCommands = {
       return {
         result: { contato_id: values['--contato'], vaga_id: values['--vaga'], ok: true },
         text: `Contato ${values['--contato']} vinculado à vaga ${values['--vaga']}.`,
+      };
+    }
+
+    if (sub === 'remover') {
+      const values = parseFlags(flags, {
+        allowed: ['--contato', '--motivo', '--now', '--teste'],
+        withValue: ['--contato', '--motivo', '--now'],
+      });
+
+      if (!values['--contato']) throw new Error('Informe --contato <id>.');
+
+      const now = relogio(values);
+      const { eventos } = await readEvents(dataRoot);
+      const projecao = projectContatos(eventos, { now });
+      const contato = projecao.contatos.find(c => c.id === values['--contato']);
+      if (!contato) throw new Error(`Contato não encontrado: ${values['--contato']}`);
+
+      const dados = {
+        contato_id: values['--contato'],
+        ...(values['--motivo'] ? { motivo: values['--motivo'] } : {}),
+      };
+
+      const erro = validarContatoRemovido(dados);
+      if (erro) throw new Error(erro);
+
+      const evento = {
+        id: `contato.removido:${randomUUID()}`,
+        ts: now.toISOString(),
+        ator: 'usuario',
+        tipo: 'contato.removido',
+        entidade: 'contato',
+        entidade_id: values['--contato'],
+        dados,
+        evidencia: [],
+      };
+
+      await appendEvents(dataRoot, [evento], { now: now.toISOString() });
+      return {
+        result: { contato_id: values['--contato'], ok: true },
+        text: `Contato ${values['--contato']} removido com sucesso.`,
       };
     }
 
