@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
+import { localDay } from '../../core/store/schema.mjs';
 import { run, tempDir } from '../helpers/cli.mjs';
 import { makeLegado } from '../fixtures/make-legado.mjs';
 import { startPanel } from '../../panel/server.mjs';
@@ -21,7 +22,8 @@ async function ambiente(t, { modo = 'ativo' } = {}) {
   t.after(panel.close);
   const page = await (await fetch(panel.url)).text();
   const token = JSON.parse(page.match(/window\.PAINEL_API=(\{[^;]+\});/)[1]).token;
-  const hoje = new Date().toISOString().slice(0, 10);
+  // Dia civil de São Paulo, o mesmo que o servidor usa para recusar data futura (UTC adianta o dia após 21h).
+  const hoje = localDay(Date.now());
   const post = (rota, corpo, headers = {}) => fetch(`${panel.url}/api/${rota}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: panel.url, 'X-Painel-Token': token, ...headers }, body: typeof corpo === 'string' ? corpo : JSON.stringify(corpo) });
   const lista = async () => (await (await fetch(`${panel.url}/api/candidaturas`, { headers: { 'X-Painel-Token': token } })).json()).vagas;
   const total = async () => (await readEvents(dataRoot)).eventos.length;
