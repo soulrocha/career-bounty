@@ -29,6 +29,7 @@ export function defaultSettings() {
       termos: ['processo seletivo', 'sua candidatura', 'sua inscrição', 'próxima etapa', 'your application'],
     },
     acompanhamento: { dias_aviso: 5, dias_lembrete: 7 },
+    avaliacoes: { teto_diario: 5, validade_dias: 90, aderencias_alvo: ['alta', 'boa'] },
   };
 }
 
@@ -228,6 +229,26 @@ export function validateSettings(raw) {
   }
   if (settings.acompanhamento.dias_aviso > settings.acompanhamento.dias_lembrete) {
     throw invalid('acompanhamento.dias_aviso', 'não pode ser maior que dias_lembrete');
+  }
+
+  const avaliacoes = section(raw.avaliacoes, 'avaliacoes');
+  if (avaliacoes.teto_diario !== undefined) {
+    if (!Number.isInteger(avaliacoes.teto_diario) || avaliacoes.teto_diario < 1) {
+      throw invalid('avaliacoes.teto_diario', 'deve ser inteiro >= 1');
+    }
+    settings.avaliacoes.teto_diario = avaliacoes.teto_diario;
+  }
+  if (avaliacoes.validade_dias !== undefined) {
+    if (!Number.isInteger(avaliacoes.validade_dias) || avaliacoes.validade_dias < 1) {
+      throw invalid('avaliacoes.validade_dias', 'deve ser inteiro >= 1');
+    }
+    settings.avaliacoes.validade_dias = avaliacoes.validade_dias;
+  }
+  if (avaliacoes.aderencias_alvo !== undefined) {
+    if (!Array.isArray(avaliacoes.aderencias_alvo) || !avaliacoes.aderencias_alvo.every(a => typeof a === 'string')) {
+      throw invalid('avaliacoes.aderencias_alvo', 'deve ser lista de strings');
+    }
+    settings.avaliacoes.aderencias_alvo = [...avaliacoes.aderencias_alvo];
   }
 
   const perfil = section(raw.perfil, 'perfil');

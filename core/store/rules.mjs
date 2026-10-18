@@ -252,5 +252,62 @@ export function validarEncerramentoProcesso(dados, nowTs = new Date().toISOStrin
   return null;
 }
 
+export const PLATAFORMAS_AVALIACAO = new Set(['Glassdoor', 'Indeed', 'Catho', 'Outro']);
+
+export function validarEmpresaAvaliada(dados, nowTs = new Date().toISOString()) {
+  if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
+    return 'Dados da avaliação de empresa inválidos.';
+  }
+  if (typeof dados.empresa !== 'string' || !dados.empresa.trim()) {
+    return 'Nome da empresa é obrigatório.';
+  }
+  if (typeof dados.empresa_chave !== 'string' || !dados.empresa_chave.trim()) {
+    return 'Chave normalizada da empresa é obrigatória.';
+  }
+  if (typeof dados.nota !== 'number' || !Number.isFinite(dados.nota) || dados.nota < 1.0 || dados.nota > 5.0) {
+    return 'Nota deve ser um número entre 1.0 e 5.0.';
+  }
+  if (!Number.isInteger(dados.quantidade) || dados.quantidade < 0) {
+    return 'Quantidade de avaliações deve ser um número inteiro maior ou igual a zero.';
+  }
+  if (!PLATAFORMAS_AVALIACAO.has(dados.plataforma)) {
+    return `Plataforma inválida; use uma das seguintes: ${[...PLATAFORMAS_AVALIACAO].join(', ')}.`;
+  }
+  if (!isoDate(dados.data)) {
+    return 'Data da avaliação inválida; use AAAA-MM-DD.';
+  }
+  if (dados.data > localDay(nowTs)) {
+    return 'A avaliação não pode ter data futura.';
+  }
+  if (!Array.isArray(dados.fontes) || dados.fontes.length === 0) {
+    return 'Fontes com URL são obrigatórias para registrar uma avaliação.';
+  }
+  for (const fonte of dados.fontes) {
+    if (!fonte || typeof fonte !== 'object' || Array.isArray(fonte)) {
+      return 'Item de fonte inválido.';
+    }
+    if (typeof fonte.url !== 'string' || !/^https?:\/\/[^\s]+$/i.test(fonte.url.trim())) {
+      return 'URL da fonte inválida ou ausente.';
+    }
+    if (fonte.plataforma !== undefined && !PLATAFORMAS_AVALIACAO.has(fonte.plataforma)) {
+      return `Plataforma da fonte inválida: ${fonte.plataforma}.`;
+    }
+  }
+  if (dados.resumo !== undefined && dados.resumo !== null) {
+    if (typeof dados.resumo !== 'string') {
+      return 'Resumo deve ser um texto.';
+    }
+    if (dados.resumo.length > 500) {
+      return 'Resumo excede o limite de 500 caracteres.';
+    }
+  }
+  if (dados.validade_dias !== undefined && dados.validade_dias !== null) {
+    if (!Number.isInteger(dados.validade_dias) || dados.validade_dias < 1) {
+      return 'Validade em dias deve ser um inteiro positivo.';
+    }
+  }
+  return null;
+}
+
 
 

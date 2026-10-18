@@ -15,6 +15,14 @@ mudanças de comportamento podem acontecer entre versões menores.
   - Sugestão de respostas seguras via LLM gravando rascunho em outbox sem envio automático (`contato sugerir`).
   - Motor de mascaramento estrito de PII para telefones e e-mails (`core/privacy/mask.mjs`).
   - Endpoint HTTP local autenticado: `GET /api/contatos` com mascaramento anti-vazamento.
+- **F9.4 — Avaliação da Empresa:**
+  - Registro de eventos `empresa.avaliada` no log append-only com schema estrito (`empresa registrar`).
+  - Projeção pura e determinística com cálculo de vigência temporal de 90 dias (`projectAvaliacoes`, `obterAvaliacaoVigente`).
+  - Enriquecimento dinâmico de vagas no `projectEvents` com remoção automática de notas expiradas (nunca exibe nota 0 ou traço).
+  - Migração idempotente e determinística das avaliações do snapshot legado (`core/migration/avaliacoes.mjs`).
+  - Coleta automatizada via subagente LLM com leitura exclusiva de busca pública e citação obrigatória de URL pública (`agents/avaliador-empresa.md`, `core/company/evaluator.mjs`, `empresa avaliar`). Zero scraping do Glassdoor.
+  - Seleção inteligente e execução diária no `daily-run` com teto configurável (`avaliacoes.teto_diario`, `avaliacoes.validade_dias`) e inclusão na seção de novidades do digest diário.
+  - Documentação da API com chave `empresa_avaliacao` em `GET /api/vagas`.
 
 ## [0.2.0] - 2026-10-18
 
