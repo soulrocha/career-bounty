@@ -252,7 +252,7 @@ CLI subcommands (`node bin/career-bounty.mjs <command> [--json]`):
 | Group | Subcommands |
 |---|---|
 | Environment | `setup`, `demo`, `doctor`, `help`, `plugin validate`, `privacy scan` |
-| Openings | `collect`, `digest`, `daily-run`, `schedule`, `destinos`, `compare-radar` |
+| Openings | `collect`, `digest`, `daily-run`, `schedule`, `destinos`, `compare-radar`, `preferencias` |
 | Career base | `kb`, `quadrantes`, `entrevista`, `mentor`, `report`, `vault plan` |
 | Résumés | `cv gerar`, `cv gate`, `cv perfil-portal` |
 | Applications | `apply plan`, `apply preparar`, `apply lote`, `apply envio`, `apply comprovante`, `apply desfecho` |
@@ -272,6 +272,8 @@ Personal configuration lives only in `DATA_ROOT/config.yml` (plain JSON). See `c
 | `perfil.nome`, `.especialidade`, `.regiao` | empty | Identification shown in the panel |
 | `radar.termos` | `[]` | Search terms for the sources |
 | `radar.criterios` | `{}` | `titulos_alvo`, `palavras_chave`, `palavras_negativas`, `regiao_presencial`, `corte_prescore` and salary floors (`clt`, `pj`) |
+| `radar.criterios.modalidades` | all three | Accepted work modes (`remoto`, `hibrido`, `presencial`); openings in any other mode are dropped. `/setup` asks and saves them with the `preferencias` command |
+| `radar.criterios.modalidade_preferida` | none | The preferred mode scores higher in triage |
 | `radar.janela_dias` | `7` | How many days back each collection looks |
 | `fontes.<id>` | none | Every source with a block joins the collection: `gupy`, `freehire`, `inhire`, `solides`, `jobspy`, `careerops`, `linkedin_alertas` |
 | `envio.padrao` | `parar_antes_de_enviar` | Every application stops before the final click |
