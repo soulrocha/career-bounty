@@ -16,13 +16,13 @@ test('CLI protege antes da leitura, propõe F5.6 e edita sem aprovar; não exist
   assert.equal(inicio.json.protegida, true);
   assert.equal(JSON.parse(await readFile(path.join(root, 'state/perfil-gupy.json'))).abas[0].perfil, null);
   const envelope = { tool_name: 'mcp__claude-in-chrome__javascript_tool', tool_input: { tabId: 7, text: inicio.json.script }, session_id: 'sessao-01', tool_use_id: 'tool-read-01' };
-  const linked = spawnSync(process.execPath, [path.join(repoRoot, 'hooks/pre-tool-use.mjs')], { input: JSON.stringify(envelope), encoding: 'utf8', env: { ...process.env, DATA_ROOT: root, CLAUDE_SESSION_ID: '' } });
+  const linked = spawnSync(process.execPath, [path.join(repoRoot, 'hooks/pre-tool-use.mjs')], { input: JSON.stringify(envelope), encoding: 'utf8', env: { ...process.env, ...env, DATA_ROOT: root } });
   assert.equal(JSON.parse(linked.stdout).hookSpecificOutput.permissionDecision, 'allow');
   const extracao = path.join(root, 'extracao.json'), proposta = path.join(root, 'proposta.json');
   await writeFile(extracao, JSON.stringify({ versao: 'synthetic-v1', origem: 'https://login.gupy.io', perfil_id: 'profile-01', leitura_id: 'documento-01', sobre: '', experiencias: [], habilidades: ['Scrum'] }));
   const raw = JSON.stringify({ tipo: 'proposta', portal: 'gupy', secoes: [{ campo: 'habilidades', proposto: ['Scrum', 'indicadores'], afirmacoes: ['AF-202', 'AF-211', 'AF-212'] }] });
   await writeFile(proposta, raw);
-  const observado = spawnSync(process.execPath, [path.join(repoRoot, 'hooks/post-tool-use.mjs')], { input: JSON.stringify({ ...envelope, tool_response: JSON.parse(await readFile(extracao, 'utf8')) }), encoding: 'utf8', env: { ...process.env, DATA_ROOT: root } });
+  const observado = spawnSync(process.execPath, [path.join(repoRoot, 'hooks/post-tool-use.mjs')], { input: JSON.stringify({ ...envelope, tool_response: JSON.parse(await readFile(extracao, 'utf8')) }), encoding: 'utf8', env: { ...process.env, ...env, DATA_ROOT: root } });
   assert.equal(observado.status, 0, observado.stderr);
   const d = command(['propor', '--aba', '7', '--extracao', extracao, '--proposta', proposta]);
   assert.equal(d.status, 0, d.stdout);
