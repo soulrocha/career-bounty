@@ -28,6 +28,7 @@ export function defaultSettings() {
       ativo: false, so_portais: false, portais_extras: [], dominios_confiaveis: [], modelo: 'haiku', janela_dias: 7, limite_resultados: 50, limite_fase_b: 5, orcamento_tokens: 1000000,
       termos: ['processo seletivo', 'sua candidatura', 'sua inscrição', 'próxima etapa', 'your application'],
     },
+    acompanhamento: { dias_aviso: 5, dias_lembrete: 7 },
   };
 }
 
@@ -214,6 +215,19 @@ export function validateSettings(raw) {
   if (mail.modelo !== undefined) {
     if (!['haiku', 'sonnet'].includes(mail.modelo)) throw invalid('mail.modelo', 'deve ser haiku ou sonnet');
     settings.mail.modelo = mail.modelo;
+  }
+
+  const acompanhamento = section(raw.acompanhamento, 'acompanhamento');
+  if (acompanhamento.dias_aviso !== undefined) {
+    if (!Number.isInteger(acompanhamento.dias_aviso) || acompanhamento.dias_aviso < 1) throw invalid('acompanhamento.dias_aviso', 'deve ser inteiro >= 1');
+    settings.acompanhamento.dias_aviso = acompanhamento.dias_aviso;
+  }
+  if (acompanhamento.dias_lembrete !== undefined) {
+    if (!Number.isInteger(acompanhamento.dias_lembrete) || acompanhamento.dias_lembrete < 1) throw invalid('acompanhamento.dias_lembrete', 'deve ser inteiro >= 1');
+    settings.acompanhamento.dias_lembrete = acompanhamento.dias_lembrete;
+  }
+  if (settings.acompanhamento.dias_aviso > settings.acompanhamento.dias_lembrete) {
+    throw invalid('acompanhamento.dias_aviso', 'não pode ser maior que dias_lembrete');
   }
 
   const perfil = section(raw.perfil, 'perfil');

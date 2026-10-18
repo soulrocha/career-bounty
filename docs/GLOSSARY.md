@@ -99,4 +99,25 @@ Evento que associa um contato previamente avulso ou existente a uma vaga canôni
 
 Evento que registra a remoção/descarte lógico de um contato (`tipo: contato.removido`), identificando `contato_id` e opcionalmente um `motivo`. Uma vez registrado, o contato deixa de ser exibido na projeção pura (`projectContatos`) e na API do painel.
 
+## Processo seletivo
+
+Visão agregada e contínua do relacionamento com uma oportunidade após a candidatura. Junta histórico de candidaturas, e-mails recebidos, contatos com recrutadores e avanços de etapas para acompanhar o ciclo de vida da vaga até sua contratação ou encerramento definitivo.
+
+## Etapas do processo
+
+Vocabulário progressivo e padronizado que representa os passos sucessivos da triagem e entrevistas de um processo: `aplicada`, `triagem`, `teste`, `entrevista_rh`, `entrevista_tecnica`, `entrevista_gestor`, `proposta` e `aprovado`. A progressão respeita estrita monotonicidade (avanços não retrocedem por mensagens fora de ordem).
+
+## Desfecho do processo
+
+Resultado conclusivo de um processo encerrado: `aprovado`, `reprovado`, `desistencia`, `cancelado` ou `proposta_recusada`. Desfechos negativos ou de desistência/cancelamento pertencem a `DESFECHOS_QUE_DESCARTAM` e acionam o descarte automático da vaga no radar.
+
+## Situação do processo
+
+Estado operacional corrente do processo seletivo: `ativo` (em andamento geral), `aguardando_retorno` (candidato realizou ação e aguarda resposta da empresa), `aguardando_voce` (empresa solicitou ação, teste ou agendamento pendente de resposta do candidato) ou `encerrado` (processo concluído com desfecho registrado).
+
+## Alerta de acompanhamento
+
+Indicador de inatividade baseado na quantidade de dias transcorridos desde a última interação com a oportunidade: `normal` (< 5 dias de inatividade), `atencao` (>= 5 dias sem contato) e `lembrar` (>= 7 dias sem contato). Processos encerrados permanecem em `normal` e não disparam alertas.
+
+
 

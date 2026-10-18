@@ -29,7 +29,7 @@ export function contarRodadasSemAltas(historico, projecao) {
   return total;
 }
 
-export function buildDigest({ rodada, projecao, historico = [] }) {
+export function buildDigest({ rodada, projecao, historico = [], processos = [], acompanhamento = [] }) {
   const dia = localDay(rodada.ts);
   const ids = idsDaRodada(rodada);
   const destaque = projecao.filter(vaga => ids.has(vaga.id) && ['alta', 'media'].includes(vaga.aderencia));
@@ -52,6 +52,25 @@ export function buildDigest({ rodada, projecao, historico = [] }) {
   if (talvez.length) decisoes.push(`- ${talvez.length} ${talvez.length === 1 ? 'vaga em "talvez"' : 'vagas em "talvez"'} aguardam sua decisão`);
   if (perguntas) decisoes.push(`- ${perguntas} ${perguntas === 1 ? 'pergunta pendente' : 'perguntas pendentes'} para você responder`);
   if (decisoes.length) secoes.push('## Aguardando você', ...decisoes);
+
+  const listaAcompanhamento = [
+    ...(acompanhamento ?? []),
+    ...(processos ?? []),
+    ...(rodada.acompanhamento ?? []),
+  ].filter(p => p && (p.alerta === 'atencao' || p.alerta === 'lembrar'));
+
+  if (listaAcompanhamento.length) {
+    secoes.push(
+      '## Acompanhamento de processos',
+      ...listaAcompanhamento.map(p => {
+        const emp = p.empresa ? `${p.empresa} - ` : '';
+        const carg = p.cargo ?? p.vaga_id;
+        const tag = p.alerta === 'lembrar' ? '🚨 LEMBRAR' : '⚠️ ATENÇÃO';
+        return `- ${tag} (${p.dias_inatividade}d sem contato): ${emp}${carg} - Etapa: ${p.etapa_atual ?? 'em andamento'}`;
+      })
+    );
+  }
+
   if (rodada.falha) secoes.unshift('## Rodada interrompida', `- A rodada foi interrompida no estágio ${rodada.falha.estagio}: ${rodada.falha.erro}`);
   const vazio = secoes.length === 0;
   const linhas = [`# Radar de ${dia}`];

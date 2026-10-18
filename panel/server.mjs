@@ -20,7 +20,9 @@ import { createMaterials, namedMaterialsOf, privateFile, validateBaseFiles } fro
 import { arquivosServiveis, congelarCvEnviado, lerManifesto } from '../core/cv/artifacts.mjs';
 import { localDay } from '../core/store/schema.mjs';
 import { projectContatos } from '../core/store/projections/contatos.mjs';
-import { mascararContato, mascararTexto } from '../core/privacy/mask.mjs';
+import { projectProcessos } from '../core/store/projections/processos.mjs';
+import { mascararContato, mascararProcesso, mascararTexto } from '../core/privacy/mask.mjs';
+import { loadSettings } from '../core/config.mjs';
 
 const ABAS = [ABA_QUADRANTES, ABA_PERGUNTAS, ABA_FILA];
 const PANEL_DIR = dirname(fileURLToPath(import.meta.url));
@@ -189,6 +191,45 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
           por_vaga: porVagaMascarado,
           por_pessoa: porPessoaMascarado,
           total: contatosMascarados.length,
+        });
+      }
+      if (path === '/api/processos') {
+        if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
+        const { eventos } = await readEvents(dataRoot);
+        const nowTs = now?.() ?? new Date();
+        const settings = await loadSettings({ dataRoot }).catch(() => ({}));
+        const projecao = projectProcessos(eventos, { now: nowTs, config: settings });
+        const query = new URL(req.url, 'http://127.0.0.1').searchParams;
+        const situacaoFiltro = query.get('situacao');
+        const alertaFiltro = query.get('alerta');
+
+        let processos = projecao.processos;
+        if (situacaoFiltro) {
+          processos = processos.filter(p => p.situacao === situacaoFiltro);
+        }
+        if (alertaFiltro) {
+          processos = processos.filter(p => p.alerta === alertaFiltro);
+        }
+
+        const processosMascarados = processos.map(mascararProcesso);
+        return send(200, {
+          processos: processosMascarados,
+          totais: projecao.totais,
+          total: processosMascarados.length,
+        });
+      }
+      if (path === '/api/acompanhamento') {
+        if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
+        const { eventos } = await readEvents(dataRoot);
+        const nowTs = now?.() ?? new Date();
+        const settings = await loadSettings({ dataRoot }).catch(() => ({}));
+        const projecao = projectProcessos(eventos, { now: nowTs, config: settings });
+
+        const pendentesMascarados = projecao.pendentes.map(mascararProcesso);
+        return send(200, {
+          pendentes: pendentesMascarados,
+          totais: projecao.totais,
+          total: pendentesMascarados.length,
         });
       }
       if (['/icone.svg', '/favicon.ico'].includes(path)) {
