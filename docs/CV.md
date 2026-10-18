@@ -60,6 +60,10 @@ Requisito "atendido" sem afirmação ligada não conta como prova de aderência:
 - São exatamente 4 cards, cada um ligado a afirmações (`claim_ids`); número de card sem afirmação bloqueia o CV.
 - Cada afirmação vai para a experiência da mesma empresa (e do período que mais se sobrepõe). A que não casa com nenhuma
   vai para "Destaques". `afirmacoes` na experiência fixa a ordem da base; o resto vem depois, por ID.
+- Toda experiência do perfil aparece no CV, na ordem do perfil. A que não tem afirmação liberada sai com cargo, período e
+  intro, sem bullet: o histórico não some e nenhum fato sem prova entra.
+- `itens_por_experiencia` (inteiro de 1 a 10, padrão 6) limita os bullets por experiência. Com histórico longo, um valor
+  menor mantém o CV em 2 páginas.
 - Afirmação entra no CV só com prova (`verificado` ou `entregue`), `publicavel` diferente de `nao` e `uso` com `CV`.
   `variantes` cadastra frases alternativas; `anonimizar` lista termos que nunca podem aparecer no CV.
 
