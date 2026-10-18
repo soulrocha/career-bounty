@@ -9,7 +9,7 @@ O painel é uma ferramenta de uso estritamente local e opera sem carregar depend
 
 1. **Endereço e Host:** Apenas `127.0.0.1` e `localhost` na porta designada. Qualquer outro cabeçalho `Host` é rejeitado com `403 Forbidden`.
 2. **Autenticação:** Toda requisição à API (exceto `/api/status`) exige o cabeçalho `X-Painel-Token` com o token efêmero de 64 caracteres hexadecimais gerado na inicialização do servidor e injetado em `window.PAINEL_API`.
-3. **Somente Leitura por Padrão:** As rotas são `GET`, exceto onde expressamente previsto (`/api/candidaturas`, `/api/descarte`, `/api/perguntas`).
+3. **Somente Leitura por Padrão:** As rotas são `GET`, exceto onde expressamente previsto (`/api/candidaturas`, `/api/descarte`, `/api/perguntas`, `/api/analise-curriculo/incluir`, `/api/analise-curriculo/marcar`, `/api/analise-curriculo/entrevista`).
 4. **Mascaramento Estrito de PII:** Dados de contato de recrutadores (telefones, e-mails, endereços de WhatsApp) são estritamente mascarados antes de qualquer resposta da API. Resumos de mensagens nunca expõem números completos ou endereços privados de pessoas físicas.
 
 ---
@@ -422,5 +422,223 @@ A rota `GET /api/vagas` (e as listagens de vagas no painel local) expõe o campo
   }
 }
 ```
+
+---
+
+### 7. Análise do Currículo contra a Base (`/api/analise-curriculo`)
+
+Diagnóstico contínuo e determinístico entre os fatos sustentados pela base e o conteúdo do currículo, organizado nos 4 grupos (`confere`, `sem_prova`, `fora_do_cv`, `lacuna`).
+
+#### 7.1 `GET /api/analise-curriculo`
+
+Retorna todos os itens da matriz de análise classificados nos quatro grupos, contadores agregados e avisos, com mascaramento estrito de PII e redação de identidade.
+
+##### Requisição
+- **Método:** `GET`
+- **Caminho:** `/api/analise-curriculo`
+- **Cabeçalhos:** `X-Painel-Token: <token-de-64-caracteres>`
+
+##### Respostas
+
+###### `200 OK`
+```json
+{
+  "grupos": {
+    "confere": [
+      {
+        "id": "confere:claim:AF-001",
+        "grupo": "confere",
+        "tipo_origem": "cv_bullet",
+        "texto": "Liderou time de 10 engenheiros aumentando throughput em 35%.",
+        "afirmacoes": ["AF-001"],
+        "evidencias": ["EV-010"],
+        "nivel_prova": "verificado",
+        "motivo": "Fato e números conferem com afirmações comprovadas da base.",
+        "pergunta": null,
+        "peso": 2,
+        "status": "ativo"
+      }
+    ],
+    "sem_prova": [
+      {
+        "id": "sem_prova:cv:linha:20",
+        "grupo": "sem_prova",
+        "tipo_origem": "cv_bullet",
+        "texto": "Gerenciou orçamento de 2 milhões sem documento.",
+        "afirmacoes": ["AF-099"],
+        "evidencias": [],
+        "nivel_prova": "relato",
+        "motivo": "AF-099 (relato) usada como fato; só verificado ou entregue sustenta número e fato no CV",
+        "pergunta": "Qual registro ou documento comprova a informação: \"Gerenciou orçamento de 2 milhões sem documento.\"?",
+        "peso": 4,
+        "status": "ativo"
+      }
+    ],
+    "fora_do_cv": [
+      {
+        "id": "fora_do_cv:af:AF-034",
+        "grupo": "fora_do_cv",
+        "tipo_origem": "afirmacao",
+        "texto": "Publicou artigo técnico sobre arquitetura event-driven.",
+        "afirmacoes": ["AF-034"],
+        "evidencias": ["EV-034"],
+        "nivel_prova": "verificado",
+        "motivo": "Afirmação com prova liberada para CV que nenhum bullet cita",
+        "pergunta": "Em qual experiência do currículo esta afirmação comprovada pode ser incluída?",
+        "peso": 3,
+        "status": "ativo"
+      }
+    ],
+    "lacuna": [
+      {
+        "id": "lacuna:sem_fonte:AF-010",
+        "grupo": "lacuna",
+        "tipo_origem": "lacuna_fonte",
+        "texto": "AF-010 não tem evidência ligada",
+        "afirmacoes": ["AF-010"],
+        "evidencias": [],
+        "nivel_prova": "nenhum",
+        "motivo": "AF-010 não tem evidência ligada",
+        "pergunta": "Onde está o registro que sustenta AF-010?",
+        "peso": 5,
+        "status": "ativo"
+      }
+    ]
+  },
+  "contadores": {
+    "total": 4,
+    "confere": 1,
+    "sem_prova": 1,
+    "fora_do_cv": 1,
+    "lacuna": 1,
+    "ativos": 4,
+    "revisar": 0,
+    "ignorados": 0
+  },
+  "avisos": []
+}
+```
+
+###### `403 Forbidden`
+Token ausente ou inválido.
+
+---
+
+#### 7.2 `POST /api/analise-curriculo/incluir`
+
+Registra a intenção de ligar uma afirmação comprovada de `fora_do_cv` a uma experiência profissional no currículo. Grava o evento `analise.afirmacao_incluida`.
+
+##### Requisição
+- **Método:** `POST`
+- **Caminho:** `/api/analise-curriculo/incluir`
+- **Cabeçalhos:**
+  - `X-Painel-Token: <token-de-64-caracteres>`
+  - `Origin: http://127.0.0.1:<port>`
+  - `Content-Type: application/json`
+- **Corpo:**
+```json
+{
+  "afirmacao_id": "AF-034",
+  "experiencia_id": "exp-empresa-alfa"
+}
+```
+
+##### Respostas
+
+###### `200 OK`
+```json
+{
+  "ok": true,
+  "afirmacao_id": "AF-034",
+  "experiencia_id": "exp-empresa-alfa"
+}
+```
+
+###### `400 Bad Request`
+Afirmação inexistente na base ou payload inválido.
+
+###### `403 Forbidden`
+Token inválido ou cabeçalho Origin externo (proteção anti-CSRF).
+
+###### `409 Conflict`
+Modo sombra ativo (`state.mode === 'shadow'`).
+
+---
+
+#### 7.3 `POST /api/analise-curriculo/marcar`
+
+Anota operacionalmente um item da análise como `revisar`, `ignorado` ou `ativo`, com justificativa opcional. Grava o evento `analise.item_marcado`.
+
+##### Requisição
+- **Método:** `POST`
+- **Caminho:** `/api/analise-curriculo/marcar`
+- **Cabeçalhos:**
+  - `X-Painel-Token: <token-de-64-caracteres>`
+  - `Origin: http://127.0.0.1:<port>`
+  - `Content-Type: application/json`
+- **Corpo:**
+```json
+{
+  "item_id": "sem_prova:cv:linha:20",
+  "como": "revisar",
+  "motivo": "Localizar documento original no arquivo"
+}
+```
+
+##### Respostas
+
+###### `200 OK`
+```json
+{
+  "ok": true,
+  "item_id": "sem_prova:cv:linha:20",
+  "como": "revisar"
+}
+```
+
+###### `400 Bad Request`
+Status inválido ou item_id ausente.
+
+###### `403 Forbidden` / `409 Conflict`
+Token ou Origin inválidos / Modo sombra ativo.
+
+---
+
+#### 7.4 `POST /api/analise-curriculo/entrevista`
+
+Dispara a criação de proposta de pergunta investigativa para resolução de uma lacuna, gravando o rascunho em `outbox/lacunas/` e o evento auditável `analise.lacuna_entrevista`.
+
+##### Requisição
+- **Método:** `POST`
+- **Caminho:** `/api/analise-curriculo/entrevista`
+- **Cabeçalhos:**
+  - `X-Painel-Token: <token-de-64-caracteres>`
+  - `Origin: http://127.0.0.1:<port>`
+  - `Content-Type: application/json`
+- **Corpo:**
+```json
+{
+  "item_id": "lacuna:sem_fonte:AF-010"
+}
+```
+
+##### Respostas
+
+###### `200 OK`
+```json
+{
+  "ok": true,
+  "item_id": "lacuna:sem_fonte:AF-010",
+  "pergunta": "Onde está o registro que sustenta AF-010?",
+  "rascunho": "outbox/lacunas/lacuna-sem-fonte-af-010-2026-10-18.md"
+}
+```
+
+###### `404 Not Found`
+Item de lacuna não localizado na análise.
+
+###### `403 Forbidden` / `409 Conflict`
+Token ou Origin inválidos / Modo sombra ativo.
+
 
 

@@ -309,5 +309,80 @@ export function validarEmpresaAvaliada(dados, nowTs = new Date().toISOString()) 
   return null;
 }
 
+export function validarAfirmacaoIncluida(dados, nowTs = new Date().toISOString()) {
+  if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
+    return 'Dados da afirmação incluída inválidos.';
+  }
+  if (typeof dados.afirmacao_id !== 'string' || !dados.afirmacao_id.trim()) {
+    return 'ID da afirmação é obrigatório.';
+  }
+  if (dados.experiencia_id !== undefined && dados.experiencia_id !== null) {
+    if (typeof dados.experiencia_id !== 'string' || !dados.experiencia_id.trim()) {
+      return 'ID da experiência deve ser uma string válida.';
+    }
+  }
+  if (!isoDate(dados.data)) {
+    return 'Data de inclusão inválida; use AAAA-MM-DD.';
+  }
+  if (dados.data > localDay(nowTs)) {
+    return 'A inclusão não pode ter data futura.';
+  }
+  return null;
+}
+
+export const STATUS_ITEM_ANALISE = new Set(['revisar', 'ignorado', 'ativo']);
+
+export function validarItemMarcado(dados, nowTs = new Date().toISOString()) {
+  if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
+    return 'Dados da marcação de item inválidos.';
+  }
+  if (typeof dados.item_id !== 'string' || !dados.item_id.trim()) {
+    return 'ID do item é obrigatório.';
+  }
+  if (!STATUS_ITEM_ANALISE.has(dados.como)) {
+    return 'Status da marcação inválido; use "revisar", "ignorado" ou "ativo".';
+  }
+  if (dados.motivo !== undefined && dados.motivo !== null) {
+    if (typeof dados.motivo !== 'string') {
+      return 'Motivo deve ser um texto.';
+    }
+    if (dados.motivo.length > 500) {
+      return 'Motivo excede o limite de 500 caracteres.';
+    }
+  }
+  if (!isoDate(dados.data)) {
+    return 'Data da marcação inválida; use AAAA-MM-DD.';
+  }
+  if (dados.data > localDay(nowTs)) {
+    return 'A marcação não pode ter data futura.';
+  }
+  return null;
+}
+
+export function validarLacunaEntrevista(dados, nowTs = new Date().toISOString()) {
+  if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
+    return 'Dados do registro de entrevista para lacuna inválidos.';
+  }
+  if (typeof dados.item_id !== 'string' || !dados.item_id.trim()) {
+    return 'ID do item de lacuna é obrigatório.';
+  }
+  if (typeof dados.pergunta !== 'string' || !dados.pergunta.trim()) {
+    return 'Pergunta de entrevista é obrigatória.';
+  }
+  if (dados.arquivo_rascunho !== undefined && dados.arquivo_rascunho !== null) {
+    if (typeof dados.arquivo_rascunho !== 'string' || !dados.arquivo_rascunho.trim()) {
+      return 'Caminho do arquivo de rascunho deve ser um texto válido.';
+    }
+  }
+  if (!isoDate(dados.data)) {
+    return 'Data de entrevista inválida; use AAAA-MM-DD.';
+  }
+  if (dados.data > localDay(nowTs)) {
+    return 'O agendamento de entrevista não pode ter data futura.';
+  }
+  return null;
+}
+
+
 
 

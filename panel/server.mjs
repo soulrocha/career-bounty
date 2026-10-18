@@ -1,14 +1,14 @@
 import { createServer } from 'node:http';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { noLinks } from '../core/migration/paths.mjs';
 import { isDeepStrictEqual } from 'node:util';
-import { publicMarker } from '../core/store/rules.mjs';
+import { publicMarker, validarAfirmacaoIncluida, validarItemMarcado, validarLacunaEntrevista } from '../core/store/rules.mjs';
 import { marcarCandidatura } from '../core/store/commands/marcarCandidatura.mjs';
 import { descartar } from '../core/store/commands/descartar.mjs';
-import { readEvents } from '../core/store/events.mjs';
+import { readEvents, appendEvents } from '../core/store/events.mjs';
 import { projectEvents } from '../core/store/project.mjs';
 import { renderPainelDe } from './render.mjs';
 import { ABA_QUADRANTES, respostaQuadrantes } from './quadrantes.mjs';
@@ -22,7 +22,11 @@ import { localDay } from '../core/store/schema.mjs';
 import { projectContatos } from '../core/store/projections/contatos.mjs';
 import { projectProcessos } from '../core/store/projections/processos.mjs';
 import { projectHistorico } from '../core/store/projections/historico.mjs';
+import { projectAnaliseCurriculo } from '../core/store/projections/analiseCurriculo.mjs';
+import { analisarBase } from '../core/kb/analise.mjs';
+import { gravarProposta, slug } from '../core/kb/outbox.mjs';
 import { mascararContato, mascararProcesso, mascararTexto, mascararVagaHistorico, mascararHistorico } from '../core/privacy/mask.mjs';
+import { loadIdentityValues, redact } from '../core/privacy/redact.mjs';
 import { loadSettings } from '../core/config.mjs';
 
 const ABAS = [ABA_QUADRANTES, ABA_PERGUNTAS, ABA_FILA];
@@ -75,9 +79,160 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
     try {
       if (![`127.0.0.1:${actualPort}`, `localhost:${actualPort}`].includes(req.headers.host)) return send(403, { erro: 'Host inválido.' });
       if (req.method === 'POST') {
+        const rotasPostPermitidas = [
+          '/api/candidaturas',
+          '/api/descarte',
+          '/api/perguntas',
+          '/api/analise-curriculo/incluir',
+          '/api/analise-curriculo/marcar',
+          '/api/analise-curriculo/entrevista',
+        ];
         if (![`http://127.0.0.1:${actualPort}`, `http://localhost:${actualPort}`].includes(req.headers.origin)
-          || req.headers['x-painel-token'] !== token || !['/api/candidaturas', '/api/descarte', '/api/perguntas'].includes(req.url)) {
+          || req.headers['x-painel-token'] !== token || !rotasPostPermitidas.includes(req.url)) {
           return send(403, { erro: 'Acesso inválido.' });
+        }
+        // Rotas de analise-curriculo (F9.5)
+        if (req.url.startsWith('/api/analise-curriculo/')) {
+          if ((req.headers['content-type'] ?? '').split(';')[0] !== 'application/json') return send(415, { erro: 'Formato inválido.' });
+          const tamanho = Number(req.headers['content-length'] ?? 0);
+          if (!(tamanho > 0 && tamanho <= 8192)) return send(413, { erro: 'Pedido inválido.' });
+          if (!writable) return send(409, { erro: 'Modo sombra: gravação desligada.', gravacao_painel: 'desligada' });
+          const partes = [];
+          for await (const parte of req) partes.push(parte);
+          let corpo;
+          try { corpo = JSON.parse(Buffer.concat(partes).toString('utf8')); } catch { return send(400, { erro: 'Pedido malformado.' }); }
+          if (!corpo || typeof corpo !== 'object' || Array.isArray(corpo)) return send(400, { erro: 'Campos inválidos.' });
+
+          const nowTs = typeof now === 'function' ? now() : (now ?? new Date().toISOString());
+
+          if (req.url === '/api/analise-curriculo/incluir') {
+            if (typeof corpo.afirmacao_id !== 'string' || !corpo.afirmacao_id.trim()) {
+              return send(400, { erro: 'ID da afirmação é obrigatório.' });
+            }
+            const afirmacaoId = corpo.afirmacao_id.replace(/^fora_do_cv:af:/, '').trim();
+            const settings = await loadSettings({ dataRoot }).catch(() => ({}));
+            const { base } = await analisarBase({ dataRoot, settings, hoje: new Date(nowTs) });
+            const af = base.claims.find(c => c.id === afirmacaoId);
+            if (!af) {
+              return send(400, { erro: `Afirmação não encontrada na base: ${afirmacaoId}` });
+            }
+            const data = corpo.data ?? localDay(nowTs);
+            const dados = {
+              afirmacao_id: afirmacaoId,
+              experiencia_id: corpo.experiencia_id ?? null,
+              data,
+            };
+            const erro = validarAfirmacaoIncluida(dados, nowTs);
+            if (erro) return send(400, { erro });
+
+            const evento = {
+              id: `analise.afirmacao_incluida:${randomUUID()}`,
+              ts: new Date(nowTs).toISOString(),
+              ator: 'usuario',
+              tipo: 'analise.afirmacao_incluida',
+              entidade: 'afirmacao',
+              entidade_id: afirmacaoId,
+              dados,
+              evidencia: [],
+            };
+            await appendEvents(dataRoot, [evento], { now: nowTs, host: hostId });
+            return send(200, { ok: true, afirmacao_id: afirmacaoId, experiencia_id: dados.experiencia_id });
+          }
+
+          if (req.url === '/api/analise-curriculo/marcar') {
+            if (typeof corpo.item_id !== 'string' || !corpo.item_id.trim()) {
+              return send(400, { erro: 'ID do item é obrigatório.' });
+            }
+            const como = corpo.como === 'ignorar' ? 'ignorado' : corpo.como;
+            const data = corpo.data ?? localDay(nowTs);
+            const dados = {
+              item_id: corpo.item_id.trim(),
+              como,
+              motivo: corpo.motivo ?? null,
+              data,
+            };
+            const erro = validarItemMarcado(dados, nowTs);
+            if (erro) return send(400, { erro });
+
+            const evento = {
+              id: `analise.item_marcado:${randomUUID()}`,
+              ts: new Date(nowTs).toISOString(),
+              ator: 'usuario',
+              tipo: 'analise.item_marcado',
+              entidade: 'item_analise',
+              entidade_id: dados.item_id,
+              dados,
+              evidencia: [],
+            };
+            await appendEvents(dataRoot, [evento], { now: nowTs, host: hostId });
+            return send(200, { ok: true, item_id: dados.item_id, como });
+          }
+
+          if (req.url === '/api/analise-curriculo/entrevista') {
+            if (typeof corpo.item_id !== 'string' || !corpo.item_id.trim()) {
+              return send(400, { erro: 'ID do item é obrigatório.' });
+            }
+            const itemId = corpo.item_id.trim();
+            const settings = await loadSettings({ dataRoot }).catch(() => ({}));
+            const { base, quadrantes } = await analisarBase({ dataRoot, settings, hoje: new Date(nowTs) });
+            const { eventos } = await readEvents(dataRoot);
+            const projecao = projectAnaliseCurriculo({ quadrantes, evidencias: base.evidence, eventos, now: new Date(nowTs) });
+
+            const item = projecao.grupos.lacuna.find(l =>
+              l.id === itemId ||
+              l.id === `lacuna:${itemId}` ||
+              l.id.replace(/^lacuna:/, '') === itemId
+            );
+            if (!item) {
+              return send(404, { erro: 'Item de lacuna não encontrado na análise.' });
+            }
+            if (!item.pergunta || !item.pergunta.trim()) {
+              return send(400, { erro: 'Item de lacuna não possui pergunta sugerida.' });
+            }
+
+            const data = corpo.data ?? localDay(nowTs);
+            const md = [
+              '# Pergunta de Entrevista de Lacuna',
+              '',
+              `- **Item:** ${item.id}`,
+              `- **Tipo:** ${item.tipo_origem || 'lacuna'}`,
+              `- **Data de Geração:** ${data}`,
+              '',
+              '## Pergunta Sugerida',
+              item.pergunta,
+              '',
+              '## Justificativa',
+              item.motivo || item.texto,
+              '',
+            ].join('\n');
+
+            const slugId = slug(item.id.replace(/^lacuna:/, ''));
+            const nomeArquivo = `lacuna-${slugId}-${data}.md`;
+            const arquivoAbsoluto = await gravarProposta(dataRoot, 'lacunas', nomeArquivo, md);
+            const arquivoRelativo = relative(dataRoot, arquivoAbsoluto).replaceAll('\\', '/');
+
+            const dados = {
+              item_id: item.id,
+              pergunta: item.pergunta,
+              arquivo_rascunho: arquivoRelativo,
+              data,
+            };
+            const erro = validarLacunaEntrevista(dados, nowTs);
+            if (erro) return send(400, { erro });
+
+            const evento = {
+              id: `analise.lacuna_entrevista:${randomUUID()}`,
+              ts: new Date(nowTs).toISOString(),
+              ator: 'usuario',
+              tipo: 'analise.lacuna_entrevista',
+              entidade: 'lacuna',
+              entidade_id: item.id,
+              dados,
+              evidencia: [],
+            };
+            await appendEvents(dataRoot, [evento], { now: nowTs, host: hostId });
+            return send(200, { ok: true, item_id: item.id, pergunta: item.pergunta, rascunho: arquivoRelativo });
+          }
         }
         // Resposta de pergunta grava no answer bank e em evento fora da projeção legada: vale também no modo sombra.
         if (req.url === '/api/perguntas') {
@@ -148,6 +303,43 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
         if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
         const { status, corpo } = await respostaQuadrantes({ dataRoot });
         return send(status, corpo);
+      }
+      if (path === '/api/analise-curriculo') {
+        if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
+        const settings = await loadSettings({ dataRoot }).catch(() => ({}));
+        const nowTs = typeof now === 'function' ? now() : (now ?? new Date().toISOString());
+        const identidade = await loadIdentityValues({ env: { IDENTITY_FILE: join(dataRoot, 'identity.yml') } });
+        const { base, quadrantes } = await analisarBase({ dataRoot, settings, hoje: new Date(nowTs) });
+        const { eventos } = await readEvents(dataRoot);
+        const projecao = projectAnaliseCurriculo({ quadrantes, evidencias: base.evidence, eventos, now: new Date(nowTs) });
+
+        function sanitizarItem(item) {
+          const copia = { ...item };
+          if (copia.texto) copia.texto = mascararTexto(copia.texto);
+          if (copia.motivo) copia.motivo = mascararTexto(copia.motivo);
+          if (copia.pergunta) copia.pergunta = mascararTexto(copia.pergunta);
+          if (copia.entrevista?.pergunta) {
+            copia.entrevista = {
+              ...copia.entrevista,
+              pergunta: mascararTexto(copia.entrevista.pergunta),
+            };
+          }
+          return copia;
+        }
+
+        const corpo = {
+          grupos: {
+            confere: projecao.grupos.confere.map(sanitizarItem),
+            sem_prova: projecao.grupos.sem_prova.map(sanitizarItem),
+            fora_do_cv: projecao.grupos.fora_do_cv.map(sanitizarItem),
+            lacuna: projecao.grupos.lacuna.map(sanitizarItem),
+          },
+          contadores: projecao.contadores,
+          avisos: (projecao.avisos ?? []).map(mascararTexto),
+        };
+
+        const redigido = redact(corpo, identidade).valor;
+        return send(200, redigido);
       }
       if (path === '/api/contatos') {
         if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
