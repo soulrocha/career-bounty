@@ -12,6 +12,10 @@ import { loadSettings } from '../core/config.mjs';
 import { lerBase } from '../core/kb/base.mjs';
 import { carregarFontes } from '../core/kb/fontes.mjs';
 
+import { isEnvioPausado } from '../core/apply/policy/killswitch.mjs';
+import { appendEvents } from '../core/store/events.mjs';
+import { createHash } from 'node:crypto';
+
 const saida = (decisao, motivo) => process.stdout.write(`${JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: decisao, permissionDecisionReason: motivo } })}\n`);
 
 let texto = '';
@@ -28,6 +32,20 @@ else if (!entrada || typeof entrada.tool_name !== 'string') {
   try {
     const dataRoot = resolveDataRoot();
     const agora = process.env.CAREER_BOUNTY_NOW ?? new Date().toISOString();
+
+    if (await isEnvioPausado(dataRoot)) {
+      saida('deny', 'envio pausado pelo kill switch (envio.pausado)');
+      process.exit(0);
+    }
+
+    const registrarNegado = async (vagaId, motivo) => {
+      if (!vagaId) return;
+      try {
+        const id = `negado-${createHash('sha256').update(agora + entrada.tool_name + String(vagaId)).digest('hex').slice(0, 16)}`;
+        await appendEvents(dataRoot, [{ id, ts: agora, ator: 'hook', tipo: 'envio.negado', entidade: 'vaga', entidade_id: String(vagaId), dados: { ferramenta: entrada.tool_name, motivo } }], { now: agora });
+      } catch { /* falha ao registrar evento não impede negação */ }
+    };
+
     const perfil = decidirPerfil(entrada, await lerPerfil(dataRoot), agora);
     if (perfil) {
       if (perfil.decisao === 'negar') saida('deny', perfil.motivo);
@@ -45,8 +63,10 @@ else if (!entrada || typeof entrada.tool_name !== 'string') {
     const r = decidirNavegador(entrada, { sessao: await lerSessao(dataRoot), aprovacoes: await lerAprovacoes(dataRoot), agora });
     // Chamada que pode mudar a página da aba Gupy apaga a etapa observada antes de seguir (mesmo sem decisão própria).
     if (r?.invalidarEtapa?.length && r.decisao !== 'negar') await invalidarEtapa(dataRoot, r.invalidarEtapa);
-    if (r?.decisao === 'negar') saida('deny', r.motivo);
-    else if (r?.observarEtapa) {
+    if (r?.decisao === 'negar') {
+      if (r.vagaId) await registrarNegado(r.vagaId, r.motivo);
+      saida('deny', r.motivo);
+    } else if (r?.observarEtapa) {
       // Etapa da Gupy: registra esta chamada para o PostToolUse observar a resposta dela (e só dela).
       await registrarEtapaPendente(dataRoot, { tabId: r.observarEtapa.tabId, toolUseId: entrada.tool_use_id, ts: agora });
       saida('allow', r.motivo);
@@ -55,7 +75,10 @@ else if (!entrada || typeof entrada.tool_name !== 'string') {
       const { gupy } = await loadSettings({ dataRoot });
       const consumo = await consumirAprovacao(dataRoot, { vagaId: r.consumir, ts: agora, limiteGupy: gupy.max_por_dia, aceiteGupy: gupy.aceite_termos === true });
       if (consumo.ok) saida('allow', r.motivo);
-      else saida('deny', consumo.motivo);
+      else {
+        await registrarNegado(r.consumir, consumo.motivo);
+        saida('deny', consumo.motivo);
+      }
     }
     }
   } catch (error) {
