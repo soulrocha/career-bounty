@@ -28,3 +28,11 @@ Atribuições de design (MIT)
   uma implementação própria; nenhum arquivo do projeto de origem foi copiado.
 - core/sources/freehire.mjs: usa a API pública REST do Freehire descrita na skill freehire-search
   (MIT); implementação própria.
+
+Fontes tipográficas (SIL Open Font License 1.1)
+
+- Schibsted Grotesk (pesos 400, 500, 600, 700): Copyright (c) 2023 The Schibsted Grotesk Project Authors.
+  Distribuído em panel/fontes/ sob licença OFL-1.1 (ver panel/fontes/OFL-SchibstedGrotesk.txt).
+- Pixelify Sans (peso 500): Copyright (c) 2023 The Pixelify Sans Project Authors.
+  Distribuído em panel/fontes/ sob licença OFL-1.1 (ver panel/fontes/OFL-PixelifySans.txt).
+
