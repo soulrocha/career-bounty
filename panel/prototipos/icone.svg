@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512">
+  <title>CareerBounty</title>
+  <!-- Ladrilho azul-marinho da placa, moeda de recompensa em ouro e a coruja batedora cunhada em pixel. -->
+  <rect width="64" height="64" rx="14" fill="#0E2240"/>
+  <circle cx="32" cy="33" r="23" fill="#B8862A"/>
+  <circle cx="32" cy="32" r="23" fill="#D9A441"/>
+  <circle cx="32" cy="32" r="19.5" fill="none" stroke="#F2CC7A" stroke-width="1.5" opacity=".7"/>
+  <g transform="translate(14 19.5) scale(3)" shape-rendering="crispEdges">
+    <path fill="#2A2140" d="M2 0h1v1H2zM9 0h1v1H9zM1 1h1v1H1zM3 1h1v1H3zM8 1h1v1H8zM10 1h1v1h-1zM1 2h1v1H1zM10 2h1v1h-1zM0 3h1v4H0zM11 3h1v4h-1zM1 7h1v1H1zM10 7h1v1h-1zM2 8h8v1H2z"/>
+    <path fill="#7C6BC4" d="M2 1h1v1H2zM9 1h1v1H9zM2 2h8v1H2zM1 3h1v4H1zM10 3h1v4h-1zM5 3h2v2H5zM2 6h3v1H2zM7 6h3v1H7zM2 7h8v1H2z"/>
+    <path fill="#FFFFFF" d="M2 3h3v3H2zM7 3h3v3H7z"/>
+    <path fill="#1B1530" d="M3 4h1v1H3zM8 4h1v1H8z"/>
+    <path fill="#E07000" d="M5 5h2v2H5z"/>
+  </g>
+  <path fill="#FFF3D1" shape-rendering="crispEdges" d="M47 12h2v2h-2zM45 14h2v2h-2zM49 14h2v2h-2zM47 16h2v2h-2z"/>
+</svg>

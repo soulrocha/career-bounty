@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CareerBounty — protótipo do painel</title>
+<!-- PROTÓTIPO descartável. Fontes do Google só aqui; no painel real os arquivos ficam locais. -->
+<link rel="icon" href="icone.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<canvas id="fundo" aria-hidden="true"></canvas>
+<div id="app"></div>
+<div class="prot-barra" role="toolbar" aria-label="Protótipo: trocar variação">
+  <button id="prot-ant" aria-label="Variação anterior">‹</button><span class="rot" id="prot-rot"></span><button id="prot-prox" aria-label="Próxima variação">›</button><button id="prot-mundo">Mundo</button><button id="prot-tema">Tema</button>
+</div>
+<script src="dados.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
