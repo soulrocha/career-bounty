@@ -1,52 +1,365 @@
 # CareerBounty <!-- sec:titulo -->
 
-Claude Code plugin that organizes job search and applications. Read the
-[legal disclaimer](LEGAL_DISCLAIMER.md) first: you answer for each site's terms of use and
-automatic sending ships turned off. Portugues: [README.md](README.md).
+[![CI](https://github.com/soulrocha/career-bounty/actions/workflows/ci.yml/badge.svg)](https://github.com/soulrocha/career-bounty/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node >= 20](https://img.shields.io/badge/node-%3E%3D20-339933.svg)](https://nodejs.org)
+[![No npm dependencies](https://img.shields.io/badge/npm%20dependencies-0-brightgreen.svg)](package.json)
+
+**Your job-search agent inside Claude Code.** It finds openings, scores the fit against your own history, builds
+tailored résumés, prepares applications and follows the hiring process through your inbox, always with you approving
+whatever goes out in your name. Português: [README.md](README.md).
+
+Read the [legal disclaimer](LEGAL_DISCLAIMER.md) first: you answer for each site's terms of use, and automatic
+sending ships turned off. The interface text and some docs are in Brazilian Portuguese.
+
+![CareerBounty panel with the fictional demo persona](docs/img/painel.png)
 
 ## What it is <!-- sec:o-que-e -->
 
-A Node CLI plus a set of Claude Code commands and agents. Your data lives in a private folder
-outside the repository (`DATA_ROOT`); the repository only carries code, documentation and a
+CareerBounty combines three parts:
+
+- **A Node CLI** (`bin/career-bounty.mjs`) holding all the deterministic logic: collection, de-duplication, scoring,
+  résumés, send policy and the audit trail. It works, and is tested, without a network and without a model.
+- **Claude Code commands, skills and subagents**, which do the language work (screening, drafting answers, classifying
+  email) and call the CLI for everything that must be exact.
+- **A local panel** in your browser to see openings, the application queue, pending questions and career quadrants.
+
+Your data lives in a private folder outside the repository. The repository ships only code, documentation and a
 fictional example persona.
+
+## Highlights <!-- sec:destaques -->
+
+- **Nothing made up.** The model picks among claims you registered, each with a proof level. A résumé with a number that
+  has no evidence is blocked before it reaches you.
+- **You approve, the hook enforces.** Sending only happens after you type the exact batch phrase, and a Claude Code hook,
+  not the model's good will, blocks everything else.
+- **Two PDFs per opening.** One visual, one ATS-friendly (single column), rendered by your own browser.
+- **Auditable.** Everything becomes an event in an append-only log; the panel and reports are projections of it and can
+  be rebuilt.
+- **Private by construction.** Personal data lives in `DATA_ROOT`, outside git, with a privacy scan on commit and in CI.
+- **Safe by default.** Automatic sending off, LinkedIn guest off, daily limit, kill switch and a lock on attempts with an
+  uncertain outcome.
+- **No npm dependencies.** Only Node 20+ and the Chrome or Edge you already have.
+
+## Demo <!-- sec:demo -->
+
+Two commands, without touching your data, open the panel with a fictional persona (Ana Exemplo) and six sample
+openings:
+
+```sh
+node bin/career-bounty.mjs demo
+```
+
+```text
+Demonstração pronta em /tmp/career-bounty-demo (6 vagas de exemplo, persona fictícia).
+Experimente:
+  DATA_ROOT="/tmp/career-bounty-demo" node bin/career-bounty.mjs panel
+  DATA_ROOT="/tmp/career-bounty-demo" node bin/career-bounty.mjs doctor
+```
+
+Run the first printed command (on PowerShell the line already carries `$env:DATA_ROOT`) and open the address it shows,
+`http://127.0.0.1:8880` by default. The demo lives in its own temporary folder and refuses to use your `DATA_ROOT`.
+Delete the folder when you are done.
+
+## How it works <!-- sec:como-funciona -->
+
+```text
+ job sources ──► radar ──► screening and score ──► panel (Vagas)
+                                    │
+ career base (kb) ──────────────────┼──► résumé per opening (2 PDFs + gates)
+                                    │
+                                    ▼
+                         application queue ──► prepare in browser ──► you approve the batch ──► send
+                                                       │                                          │
+                                   new questions ──► panel (Perguntas)                        receipt
+                                                                                                  │
+ Gmail (read only) ──► email classification ──► process stage ◄───────────────────────────────────┘
+```
+
+1. **Radar.** Collects openings from public portals and alerts, removes duplicates and applies hard filters (location,
+   work model, seniority). A failing source shows as "not checked", never as "no openings".
+2. **Screening.** A subagent compares the opening with your claim base and returns a score and reasons as validated
+   JSON. The model chooses among existing claims; it does not invent facts.
+3. **Résumé.** For each opening it renders a visual PDF and an ATS PDF from your claims, with gates that block unproven
+   numbers, facts outside the base and text over the limit.
+4. **Application.** Opens the opening in a new Chrome tab, fills the form from your answer bank and stops before
+   sending. Questions without an answer go to the panel. Sending only happens after you type the exact batch phrase in
+   the chat.
+5. **Follow-up.** Reads hiring-process email through the Gmail connector, without write permission, and updates each
+   application's stage.
+
+Everything becomes an event in an append-only log (`DATA_ROOT/events`). The panel and reports are projections of that
+log, so any state can be rebuilt and audited.
+
+## Requirements <!-- sec:requisitos -->
+
+- Node 20 or later. There are no npm dependencies.
+- Claude Code, with the Claude in Chrome extension for applications and portal profiles.
+- Google Chrome or Microsoft Edge installed: PDFs come from the browser's own headless mode.
+- Optional: the Gmail connector in Claude Code, for email follow-up.
 
 ## Installation <!-- sec:instalacao -->
 
-Requires Node 20 or newer. No npm dependencies.
-
 ```sh
-git clone <this repository's address>
+git clone https://github.com/soulrocha/career-bounty.git
 cd career-bounty
-npm install
 npm test
 ```
 
-In Claude Code: `/plugin install career-bounty --marketplace soulrocha/career-bounty`.
+`npm test` runs the whole suite, with no network and no model, and should finish with no failures. To call the CLI from
+any folder run `npm link` (it creates the `career-bounty` command); otherwise use `node bin/career-bounty.mjs` inside
+the repository.
 
-## Quick start <!-- sec:inicio-rapido -->
+To use the commands, skills and hooks inside Claude Code, install the plugin from the repository's own marketplace:
 
-```sh
-node bin/career-bounty.mjs setup
-node bin/career-bounty.mjs doctor
+```text
+/plugin marketplace add soulrocha/career-bounty
+/plugin install career-bounty@career-bounty
 ```
 
-`setup` creates the private folder skeleton; `doctor` reports what is missing without changing anything.
+## Getting started <!-- sec:primeiros-passos -->
+
+About 30 minutes, in order:
+
+1. **Create the private folder.** `node bin/career-bounty.mjs setup` builds the `DATA_ROOT` skeleton (default
+   `~/.career-bounty`) and leaves the panel and collection ready. Use `setup --com-legado` only if you will migrate an
+   older pipeline (see [docs/PRONTIDAO.md](docs/PRONTIDAO.md)).
+2. **Say who you are (for privacy).** Fill in `DATA_ROOT/identity.yml` with name, email, phone and tax ID. They never
+   leave your computer: they let the pre-commit hook and the scan reject any leak of them into git.
+3. **Configure the radar.** Create `DATA_ROOT/config.yml` (plain JSON) with what you are looking for. Minimal example:
+
+   ```json
+   {
+     "perfil": { "nome": "Your Name", "especialidade": "Product and operations", "regiao": "Brazil" },
+     "radar": {
+       "termos": ["product manager", "product lead"],
+       "criterios": { "titulos_alvo": ["manager", "lead"], "palavras_negativas": ["intern", "junior"] }
+     },
+     "fontes": { "gupy": {} }
+   }
+   ```
+
+   Every source listed under `fontes` joins the collection. All keys are in [Configuration](#configuration).
+4. **Feed the career base.** Put your achievements in `DATA_ROOT/kb` (one claim per file, with a proof level) and run
+   `node bin/career-bounty.mjs kb sync`. Use `examples/persona-ficticia/` as a template. Gaps become questions through
+   `/entrevista`. Details in [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md).
+5. **Build the résumé profile.** Create `DATA_ROOT/cv/perfil.json` (contact, header, optional photo, cards and
+   experiences, each tied to your claims). The format is in [docs/CV.md](docs/CV.md).
+6. **Check.** `node bin/career-bounty.mjs doctor` lists what is missing without changing anything. Its warnings are your
+   to-do list.
+7. **Run the first radar.** `node bin/career-bounty.mjs collect --dry-run` shows what is new without saving. If the
+   result makes sense, run `collect` and open the panel (`panel`).
+
+## Your data stays separate <!-- sec:dados -->
+
+The repository is code only. Everything that is yours lives in `DATA_ROOT`, a folder of its own that **never** enters
+git:
+
+| Folder or file | What it holds |
+|---|---|
+| `config.yml` | Your configuration (what to look for, limits, consents) |
+| `identity.yml` | Name, email, phone and tax ID, used only to block leaks |
+| `kb/` | Your claims, evidence, stories and career profile |
+| `cv/` | `perfil.json`, photo and the portal profile proposal |
+| `events/`, `projections/`, `state/` | The event log and what is derived from it |
+| `artifacts/` | Generated PDFs and receipts |
+| `secrets/` | Tokens, for you only |
+| `outbox/` | Proposals waiting for your review |
+
+The separation is deliberate: the code evolves with no risk of carrying personal data along, you can version, publish and
+update the program freely, and fixing a behavior never touches your data. To change machines, copy only the `DATA_ROOT`
+folder. A pre-commit hook and CI block tax IDs, phone numbers, user paths and the values in your `identity.yml`.
+
+## Everyday use <!-- sec:uso -->
+
+### Job radar <!-- sec:uso-radar -->
+
+`/radar` runs collection, de-duplication and filters and shows the round summary. On the CLI: `collect --dry-run` shows
+what is new without saving, `collect` saves and `digest` summarizes. `schedule` generates the Windows scheduled task
+that runs the radar once a day. Sources are described in [docs/SOURCES.md](docs/SOURCES.md).
+
+### Panel <!-- sec:uso-painel -->
+
+`/painel` (or `panel`) opens the panel at `http://127.0.0.1:8880`. It only accepts access from your own machine and
+requires a token for writes. Tabs:
+
+| Tab | What for |
+|---|---|
+| Vagas | List, score, reasons, generated résumés and status marks |
+| Fila | Openings eligible for application, with route (ATS driver, Gupy or assisted) and attempt state |
+| Perguntas | New application questions: you answer or approve the draft, and the answer enters the bank |
+| Quadrantes | Fit between what the market asks and what your résumé proves |
+
+### Résumés <!-- sec:uso-cv -->
+
+`cv gerar --vaga <id>` produces the opening's two PDFs under `DATA_ROOT/artifacts/cv/<vaga>/<hash>/` and runs the
+gates. `cv gate --vaga <id>` re-evaluates an existing version. A blocked version is never offered for attachment. For
+portals that use the profile as the résumé, `cv perfil-portal` proposes the profile text.
+
+### Applications <!-- sec:uso-candidaturas -->
+
+`/aplicar` works the queue in short batches:
+
+1. `apply plan` picks the eligible openings and the route of each.
+2. For each opening the agent opens a new tab, runs the field extractor and `apply preparar`, which matches every field
+   to the answer bank. Sensitive data (salary, documents, disability) is left for you to fill.
+3. `apply lote` builds the batch phrase. Only when you type it in the chat does the hook allow the send click, one
+   opening at a time, with an approval good for 2 hours and for a single use.
+4. `apply comprovante` and `apply desfecho` record the outcome and the receipt.
+
+Login, captcha and two-step verification stop the opening and hand the tab back to you.
+
+### Gupy <!-- sec:uso-gupy -->
+
+On Gupy the profile is the résumé. Two skills handle it:
+
+- **`gupy-perfil`** reads your profile, proposes changes item by item and only writes the item you approve with
+  "aprovar perfil <hash>". See [docs/GUPY-PERFIL.md](docs/GUPY-PERFIL.md).
+- **`gupy-candidatar`** answers the opening's questions and stops before tests, videos and scheduling.
+
+The Gupy route requires `"gupy": { "aceite_termos": true }` in `config.yml` and respects the daily limit
+`gupy.max_por_dia` (default 5).
+
+### Email and follow-up <!-- sec:uso-email -->
+
+`/email` reads hiring-process messages through the Gmail connector and updates each application's stage (applied, new
+stage, interview, offer or closed). A hook denies any Gmail write tool.
+
+### Career: quadrants, interview and mentor <!-- sec:uso-carreira -->
+
+- `/quadrantes` computes the fit between what openings ask and what you prove, and writes the report.
+- `/entrevista` asks about the gaps in your base. Each answer becomes a claim you approve.
+- `/mentor` talks about funnel, positioning and next steps, read-only.
+
+## Commands <!-- sec:comandos -->
+
+Claude Code commands:
+
+| Command | What it does |
+|---|---|
+| `/setup` | Creates the `DATA_ROOT` skeleton |
+| `/doctor` | Diagnoses the environment without changing anything |
+| `/radar` | Collects, de-duplicates, filters and summarizes openings |
+| `/painel` | Opens the local panel |
+| `/aplicar` | Assisted application over the eligible queue |
+| `/email` | Follows the hiring process through Gmail |
+| `/quadrantes` | Fit report |
+| `/entrevista` | Interview about gaps in the career base |
+| `/mentor` | Career conversation |
+
+CLI subcommands (`node bin/career-bounty.mjs <command> [--json]`):
+
+| Group | Subcommands |
+|---|---|
+| Environment | `setup`, `demo`, `doctor`, `help`, `plugin validate`, `privacy scan` |
+| Openings | `collect`, `digest`, `daily-run`, `schedule`, `destinos`, `compare-radar` |
+| Career base | `kb`, `quadrantes`, `entrevista`, `mentor`, `report`, `vault plan` |
+| Résumés | `cv gerar`, `cv gate`, `cv perfil-portal` |
+| Applications | `apply plan`, `apply preparar`, `apply lote`, `apply envio`, `apply comprovante`, `apply desfecho` |
+| Gupy | `gupy perfil iniciar`, `propor`, `confirmar`, `encerrar` |
+| Automatic sending | `envio pausar`, `envio retomar`, `envio audit [--dia YYYY-MM-DD]` |
+| Email | `mail` |
+| Data | `migrate`, `project`, `verify`, `panel`, `eval` |
+
+With `--json`, output, errors included, goes to stdout as JSON. A usage error exits with code 2.
 
 ## Configuration <!-- sec:configuracao -->
 
-`DATA_ROOT` points to the private folder (default `~/.career-bounty`). Personal configuration
-lives only in `DATA_ROOT/config.yml` (well-formed JSON). See `config.example.yml`. Safe defaults:
-manual sending and the LinkedIn guest collector turned off.
+Personal configuration lives only in `DATA_ROOT/config.yml` (plain JSON). See `config.example.yml`. Defaults are safe:
+
+| Key | Default | Effect |
+|---|---|---|
+| `perfil.nome`, `.especialidade`, `.regiao` | empty | Identification shown in the panel |
+| `radar.termos` | `[]` | Search terms for the sources |
+| `radar.criterios` | `{}` | `titulos_alvo`, `palavras_chave`, `palavras_negativas`, `regiao_presencial`, `corte_prescore` and salary floors (`clt`, `pj`) |
+| `radar.janela_dias` | `7` | How many days back each collection looks |
+| `fontes.<id>` | none | Every source with a block joins the collection: `gupy`, `freehire`, `inhire`, `solides`, `jobspy`, `careerops`, `linkedin_alertas` |
+| `envio.padrao` | `parar_antes_de_enviar` | Every application stops before the final click |
+| `envio.regras` | `[]` | Automatic-send rules per portal (see [Project status](#project-status)) |
+| `gupy.aceite_termos` | `false` | Without consent, the Gupy route refuses |
+| `gupy.max_por_dia` | `5` | Daily cap of Gupy submissions |
+| `cv_skip_portals` | `["gupy"]` | Portals that do not receive an attached PDF |
+| `fontes.linkedin_guest.ativo` | `false` | LinkedIn guest collector off; turning it on requires `aceite_termos: true` |
+| `mail.ativo` | `false` | Email follow-up |
+| `panel.port` | `8880` | Local panel port |
+
+## Architecture <!-- sec:arquitetura -->
+
+| Layer | Where | Role |
+|---|---|---|
+| Interface | `commands/`, `skills/`, `panel/`, `hooks/` | Thin entry points: call the CLI or delegate to subagents |
+| Subagents | `agents/` | Language work with explicit model and tools; return checked JSON |
+| Core | `core/` | Deterministic logic, testable without a network or a model |
+| Data | `DATA_ROOT` | Configuration, base, events, projections and artifacts, outside git |
+
+Core modules:
+
+| Module | Responsibility |
+|---|---|
+| `store` | Event log, locks and projections |
+| `sources`, `radar`, `dedup`, `score` | Collection, de-duplication, filters and score |
+| `kb` | Knowledge sources and claims |
+| `cv` | Claim selection, rendering, PDFs and gates |
+| `apply` | Queue, answer bank, filling, approval, policy and drivers |
+| `browser` | Minimal CDP client for Chrome or Edge, no Playwright |
+| `mail` | Email contract, classification and effects |
+| `llm` | Subagent execution in fake, replay and live modes |
+| `hooks` | Claude Code hook decisions |
+| `privacy`, `plugin`, `doctor` | Privacy scan, package validation and diagnostics |
+| `migration`, `schedule`, `eval` | Legacy import, daily routine and agent evaluation |
+
+Hooks are the safety barrier. They do not depend on the model obeying:
+
+- **PreToolUse:** denies Gmail writes. On an application tab it denies coordinate clicks, Enter and any script that is
+  not CareerBounty's, and allows sending only with a current approval. On a profile tab it allows only the approved item.
+- **PostToolUse:** records what the page actually showed (Gupy stage, profile reading). The model does not declare
+  those states.
+- **UserPromptSubmit:** recognizes the batch phrase and the profile approval, typed by you.
+- **SessionStart:** summarizes what is pending when a session opens.
+
+Design decisions are in [docs/adr/](docs/adr/), and the layer detail and test boundaries are in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Security and limits <!-- sec:seguranca -->
+
+- Assisted sending never happens without the batch phrase you typed. The approval covers one opening, for 2 hours,
+  once.
+- An attempt with an uncertain outcome is not repeated: it stays pending until the email or you confirm, and it uses up
+  the day's limit.
+- Automatic sending, when enabled, only acts on public Greenhouse, Lever and Ashby forms, in a browser with no login or
+  cookies, on those portals' `https` origins, with a daily limit, a kill switch re-checked right before the click and an
+  approval tied to the hash of the PDF and of the answers. `envio pausar` stops it instantly.
+- Tests, videos and scheduling are always left to you.
+- The panel only listens on loopback, with a strict CSP and an ephemeral token.
+- The model never runs in `npm test`; tests use fabricated outputs and reproducible recordings.
+
+To report a security flaw, see [SECURITY.md](SECURITY.md).
 
 ## Privacy <!-- sec:privacidade -->
 
-Nothing personal enters git. See [PRIVACY.md](PRIVACY.md). A pre-commit hook blocks CPF numbers,
-phone numbers, user paths, your identity values and companies on your denylist.
+Nothing personal enters git. A pre-commit hook blocks tax IDs, phone numbers, user paths, your identity values and
+companies on your denylist, and `privacy scan --all` sweeps the whole repository. See [PRIVACY.md](PRIVACY.md).
+
+## Project status <!-- sec:estado -->
+
+Version **0.2.0**, the first for real use. See the [CHANGELOG](CHANGELOG.md).
+
+| Part | Status |
+|---|---|
+| Foundation, panel, radar, career base and email | Ready |
+| Résumés with gates | Ready |
+| Assisted application, panel questions and Gupy profile and application | Ready |
+| Automatic sending by policy (Greenhouse, Lever, Ashby) | Engine, drivers and kill switch ready and tested; no command triggers it yet, and it is off by default |
+| Fresh install and demo | Ready |
+| Migration from an older pipeline (shadow mode and cutover) | Ready, for people coming from a previous tool |
+
+Promotion to 1.0 depends on a cycle of real use. If something does not match what you see, open an issue.
 
 ## Development <!-- sec:desenvolvimento -->
 
-`npm test` runs the suite (`node --test`). See [CONTRIBUTING.md](CONTRIBUTING.md),
-[SECURITY.md](SECURITY.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+`npm test` runs the suite with `node --test`. Every slice starts with the test that proves its acceptance criterion. CI
+runs on Ubuntu and Windows, with privacy and secret scans. See [CONTRIBUTING.md](CONTRIBUTING.md),
+[SECURITY.md](SECURITY.md) and [docs/SETUP.md](docs/SETUP.md).
 
 ## License <!-- sec:licenca -->
 

@@ -40,7 +40,7 @@ if (command.length === 1 && command[0] === '--version') {
 } else if (legacyCommands.includes(command[0])) {
   try {
     const name = command[0];
-    const allowed = name === 'migrate' ? ['--dry-run', '--diff', '--rollback', '--out', '--from', '--inventory', '--shadow', '--confirmo-vault', '--aceitar-ausentes'] : name === 'panel' ? ['--port'] : [];
+    const allowed = name === 'migrate' ? ['--dry-run', '--diff', '--rollback', '--out', '--from', '--inventory', '--shadow', '--confirmo-vault', '--aceitar-ausentes', '--corte', '--confirmar-corte'] : name === 'panel' ? ['--port'] : [];
     const values = parseFlags(command.slice(1), { allowed, withValue: ['--out', '--port', '--from'] });
     if ((values['--shadow'] && (values['--dry-run'] || values['--rollback'] || values['--from'])) || (values['--confirmo-vault'] && !values['--rollback'])) {
       throw new Error('--shadow não combina com --dry-run/--rollback/--from, e --confirmo-vault só vale com --rollback.');
@@ -58,7 +58,10 @@ if (command.length === 1 && command[0] === '--version') {
       result = buildInventory(pipeline);
       if (values['--out']) { await writeFile(values['--out'], `${JSON.stringify(result, null, 2)}${String.fromCharCode(10)}`, { flag: 'wx' }); result = { inventario: values['--out'], campos: Object.keys(result.vaga).length }; }
     } else if (name === 'migrate' && values['--from']) result = await importFromFile({ dataRoot: settings.dataRoot, from: values['--from'] });
-    else if (name === 'migrate') result = values['--rollback']
+    else if (name === 'migrate' && values['--corte']) {
+      const { cutoverMigration } = await import('../core/migration/cutover.mjs');
+      result = await cutoverMigration({ dataRoot: config.dataRoot, careerRoot: config.careerRoot, confirmo: Boolean(values['--confirmar-corte']) });
+    } else if (name === 'migrate') result = values['--rollback']
       ? await exportRollback({ ...config, destination: values['--out'], confirmoVault: Boolean(values['--confirmo-vault']) })
       : values['--shadow'] ? await runShadow({ ...config, aceitarAusentes: Boolean(values['--aceitar-ausentes']) })
       : await migrateLegacy({ ...config, dryRun: Boolean(values['--dry-run']), diff: Boolean(values['--diff']), aceitarAusentes: Boolean(values['--aceitar-ausentes']) });

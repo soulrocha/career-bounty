@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "atualizado": "2026-10-17",
+  "vagas": [
+    {
+      "id": "empresa-alfa-0000000001",
+      "empresa": "Empresa Alfa",
+      "cargo": "Gerente de Produto",
+      "url": "https://vagas.exemplo.test/1",
+      "consultado_em": "2026-10-17",
+      "modalidade": "remoto",
+      "local": "Brasil",
+      "regime": "CLT",
+      "salario": "R$ 18.000 a R$ 22.000",
+      "status": "avaliada-sem-envio",
+      "aderencia": "alta",
+      "url_status": "aberta",
+      "portal_candidatura": "greenhouse",
+      "curriculo_necessario": true,
+      "descricao": "Lidera o roadmap de um produto de atendimento com foco em métricas de operação.",
+      "requisitos": [
+        "Gestão de produto digital",
+        "Métricas de operação"
+      ],
+      "motivos": [
+        "Experiência comprovada em redesenho de fluxos de atendimento",
+        "Resultado mensurável em redução de tempo de triagem"
+      ],
+      "lacunas": []
+    },
+    {
+      "id": "empresa-beta-0000000002",
+      "empresa": "Empresa Beta",
+      "cargo": "Líder de Engenharia",
+      "url": "https://vagas.exemplo.test/2",
+      "consultado_em": "2026-10-17",
+      "modalidade": "híbrido",
+      "local": "Cidade Exemplo",
+      "regime": "CLT",
+      "salario": "R$ 20.000 a R$ 26.000",
+      "status": "avaliada-sem-envio",
+      "aderencia": "alta",
+      "url_status": "aberta",
+      "portal_candidatura": "lever",
+      "curriculo_necessario": true,
+      "descricao": "Conduz um time de engenharia em uma plataforma de pagamentos.",
+      "requisitos": [
+        "Liderança técnica",
+        "Arquitetura de sistemas"
+      ],
+      "motivos": [
+        "Liderança de equipes técnicas com entrega recorrente",
+        "Histórico de melhoria de processo"
+      ],
+      "lacunas": [
+        "Experiência com mobile"
+      ]
+    },
+    {
+      "id": "empresa-gama-0000000003",
+      "empresa": "Empresa Gama",
+      "cargo": "Gerente de Operações",
+      "url": "https://vagas.exemplo.test/3",
+      "consultado_em": "2026-10-17",
+      "modalidade": "remoto",
+      "local": "Brasil",
+      "regime": "PJ",
+      "salario": "R$ 15.000 a R$ 19.000",
+      "status": "avaliada-sem-envio",
+      "aderencia": "boa",
+      "url_status": "aberta",
+      "portal_candidatura": "gupy",
+      "curriculo_necessario": true,
+      "descricao": "Responsável pelas operações de suporte de um produto SaaS.",
+      "requisitos": [
+        "Gestão de operações",
+        "SLA"
+      ],
+      "motivos": [
+        "Operações com indicadores de nível de serviço"
+      ],
+      "lacunas": [
+        "Certificação ITIL"
+      ]
+    },
+    {
+      "id": "empresa-delta-0000000004",
+      "empresa": "Empresa Delta",
+      "cargo": "Coordenador de Dados",
+      "url": "https://vagas.exemplo.test/4",
+      "consultado_em": "2026-10-17",
+      "modalidade": "presencial",
+      "local": "Outra Cidade",
+      "regime": "CLT",
+      "salario": "R$ 12.000 a R$ 14.000",
+      "status": "avaliada-sem-envio",
+      "aderencia": "condicional",
+      "url_status": "aberta",
+      "portal_candidatura": "ashby",
+      "curriculo_necessario": true,
+      "descricao": "Coordena a equipe de análise de dados de uma rede de varejo.",
+      "requisitos": [
+        "Análise de dados",
+        "SQL"
+      ],
+      "motivos": [
+        "Boa aderência técnica, mas exige presença cinco dias por semana"
+      ],
+      "lacunas": [
+        "Mudança de cidade"
+      ]
+    },
+    {
+      "id": "empresa-epsilon-0000000005",
+      "empresa": "Empresa Épsilon",
+      "cargo": "Diretor de Tecnologia",
+      "url": "https://vagas.exemplo.test/5",
+      "consultado_em": "2026-10-17",
+      "modalidade": "remoto",
+      "local": "Brasil",
+      "regime": "CLT",
+      "salario": "R$ 30.000 a R$ 38.000",
+      "status": "avaliada-sem-envio",
+      "aderencia": "incompativel",
+      "url_status": "aberta",
+      "portal_candidatura": "outro",
+      "curriculo_necessario": true,
+      "descricao": "Direção de tecnologia de um grupo com várias unidades.",
+      "requisitos": [
+        "Gestão executiva",
+        "Orçamento de TI"
+      ],
+      "motivos": [
+        "Senioridade acima do perfil atual"
+      ],
+      "lacunas": [
+        "Experiência de diretoria"
+      ]
+    },
+    {
+      "id": "empresa-01-0000000006",
+      "empresa": "Empresa 01",
+      "cargo": "Gerente de Projetos",
+      "url": "https://vagas.exemplo.test/6",
+      "consultado_em": "2026-10-17",
+      "modalidade": "remoto",
+      "local": "Brasil",
+      "regime": "CLT",
+      "salario": "R$ 14.000 a R$ 17.000",
+      "status": "avaliada-sem-envio",
+      "aderencia": "boa",
+      "url_status": "aberta",
+      "portal_candidatura": "gupy",
+      "curriculo_necessario": true,
+      "descricao": "Gerencia um portfólio de projetos de transformação digital.",
+      "requisitos": [
+        "Gestão de projetos",
+        "Comunicação com stakeholders"
+      ],
+      "motivos": [
+        "Gestão de portfólio com entrega no prazo"
+      ],
+      "lacunas": []
+    }
+  ]
+}
