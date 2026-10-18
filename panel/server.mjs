@@ -16,6 +16,9 @@ import { injetarAbas } from './abas.mjs';
 import { responderPergunta } from '../core/apply/perguntas.mjs';
 import { createMaterials, namedMaterialsOf, privateFile, validateBaseFiles } from './materials.mjs';
 import { arquivosServiveis, congelarCvEnviado, lerManifesto } from '../core/cv/artifacts.mjs';
+import { localDay } from '../core/store/schema.mjs';
+import { projectContatos } from '../core/store/projections/contatos.mjs';
+import { mascararContato, mascararTexto } from '../core/privacy/mask.mjs';
 
 const ABAS = [ABA_QUADRANTES, ABA_PERGUNTAS, ABA_FILA];
 
@@ -132,6 +135,51 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
         if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
         const { status, corpo } = await respostaQuadrantes({ dataRoot });
         return send(status, corpo);
+      }
+      if (path === '/api/contatos') {
+        if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
+        const { eventos } = await readEvents(dataRoot);
+        const nowTs = now?.() ?? new Date();
+        const projecao = projectContatos(eventos, { now: nowTs });
+        const query = new URL(req.url, 'http://127.0.0.1').searchParams;
+        const vagaFiltro = query.get('vaga');
+        const ativosFiltro = query.get('ativos') === '1';
+
+        let contatos = projecao.contatos;
+        if (vagaFiltro) {
+          contatos = contatos.filter(c => c.vaga_id === vagaFiltro);
+        }
+        if (ativosFiltro) {
+          const hoje = localDay(nowTs);
+          contatos = contatos.filter(c => c.dias_desde_ultimo_contato <= 30 || (c.proxima_etapa?.data && c.proxima_etapa.data >= hoje));
+        }
+
+        const contatosMascarados = contatos.map(mascararContato);
+        const porVagaMascarado = {};
+        for (const [vagaId, grupo] of Object.entries(projecao.por_vaga)) {
+          if (vagaFiltro && vagaId !== vagaFiltro) continue;
+          porVagaMascarado[vagaId] = {
+            ...grupo,
+            contatos: grupo.contatos.map(mascararContato),
+          };
+        }
+
+        const porPessoaMascarado = {};
+        for (const [chave, grupo] of Object.entries(projecao.por_pessoa)) {
+          const chaveMascarada = mascararTexto(chave);
+          porPessoaMascarado[chaveMascarada] = {
+            ...grupo,
+            nome: mascararTexto(grupo.nome),
+            papel: grupo.papel ? mascararTexto(grupo.papel) : null,
+          };
+        }
+
+        return send(200, {
+          contatos: contatosMascarados,
+          por_vaga: porVagaMascarado,
+          por_pessoa: porPessoaMascarado,
+          total: contatosMascarados.length,
+        });
       }
       if (['/', '/carreira/busca-vagas/painel-vagas.html'].includes(path)) {
         const init = `<script>window.PAINEL_API=${JSON.stringify({ token })};</script>`;

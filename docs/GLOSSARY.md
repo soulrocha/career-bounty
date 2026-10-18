@@ -75,3 +75,23 @@ Soma de eventos `llm.uso` vinculados ao `tentativa_id` de uma reserva e à `vaga
 `resultado: aprovada` exige também todos os campos conhecidos e no máximo 15.000 tokens. Falta de dados é
 `nao_verificada`; desconhecido em qualquer etapa permanece desconhecido para essa medição, mesmo após resposta humana.
 `medicao_id` identifica um incremento de contadores da sessão informado pelo operador; não identifica a pessoa ou a vaga.
+
+## Contato com recrutador
+
+Registro factual e pontual de uma interação com pessoa de recrutamento por e-mail, WhatsApp, LinkedIn,
+telefone ou outro canal. Pode existir de forma avulsa (antes de haver uma vaga cadastrada) ou vinculado
+a uma vaga canônica. O sistema nunca envia mensagens automaticamente; no máximo gera rascunhos de resposta
+em `outbox/contatos/` com base nas afirmações comprovadas da base de conhecimento.
+
+## Evento contato.registrado
+
+Evento no log append-only (`events/`) que registra uma interação com recrutador (`tipo: contato.registrado`).
+Contém canal (`email`, `whatsapp`, `linkedin`, `telefone`, `outro`), direção (`recebido`, `enviado`), data,
+resumo factual curto e, opcionalmente, pessoa de contato (`nome`, `papel`), identificador da vaga (`vaga_id`),
+pergunta formulada e próxima etapa prevista. Telefones e e-mails são estritamente mascarados antes de serem
+expostos na API do painel.
+
+## Evento contato.vinculado
+
+Evento que associa um contato previamente avulso ou existente a uma vaga canônica específica pelo seu `vaga_id`.
+
