@@ -3,15 +3,15 @@ import http from 'node:http';
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
-import { repoRoot, run, tempDir } from '../../../../../../../Projetos/career-bounty-backend/tests/helpers/cli.mjs';
-import { startPanel } from '../../../../../../../Projetos/career-bounty-backend/panel/server.mjs';
-import { readEvents } from '../../../../../../../Projetos/career-bounty-backend/core/store/events.mjs';
+import { repoRoot, run, tempDir } from '../helpers/cli.mjs';
+import { startPanel } from '../../panel/server.mjs';
+import { readEvents } from '../../core/store/events.mjs';
 import {
   validarAfirmacaoIncluida,
   validarItemMarcado,
   validarLacunaEntrevista,
   STATUS_ITEM_ANALISE,
-} from '../../../../../../../Projetos/career-bounty-backend/core/store/rules.mjs';
+} from '../../core/store/rules.mjs';
 
 const kbDir = path.join(repoRoot, 'tests', 'fixtures', 'kb-quadrantes');
 const NOW = '2026-10-18T15:00:00.000-03:00';
