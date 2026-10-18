@@ -400,6 +400,245 @@ a { color: var(--t-condicional); text-underline-offset: 3px; }
 
 footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0; border-top: 1px solid var(--borda); text-align: center; }
 
+/* ==========================================================================
+   Aba Histórico & Linha do Tempo (Design Misto / Metrô)
+   ========================================================================== */
+
+.painel-historico {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.painel-historico[hidden] {
+  display: none !important;
+}
+
+.ferramentas-hist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 8px;
+  align-items: center;
+  padding: 14px 20px;
+}
+
+.grupo-filtro-data {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-xs);
+  color: var(--tx2);
+  font-weight: 500;
+}
+
+.campo-data {
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r);
+  background: var(--sup);
+  color: var(--tx);
+  font-size: var(--t-xs);
+}
+
+.busca-hist {
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+
+.hist-conteudo {
+  flex: 1;
+  min-height: 0;
+  padding: 0 20px 40px;
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+/* Card da Vaga no Histórico */
+.hist-card {
+  background: var(--sup);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-lg);
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: border-color var(--dur) var(--saida);
+}
+.hist-card:hover {
+  border-color: var(--borda2);
+}
+
+.hist-card-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--borda);
+  margin-bottom: 16px;
+}
+
+.hist-card-titulo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.hist-card-empresa {
+  font-size: var(--t-sm);
+  color: var(--tx2);
+  font-weight: 500;
+}
+.hist-card-cargo {
+  margin: 0;
+  font-size: var(--t-xl);
+  font-weight: 700;
+  color: var(--tx);
+  letter-spacing: -.01em;
+}
+
+.hist-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hist-badge-sit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 12px;
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+.hist-badge-sit[data-sit="ativo"] { background: var(--sup3); color: var(--tx); border: 1px solid var(--borda); }
+.hist-badge-sit[data-sit="aguardando_retorno"] { background: var(--atencao-fundo); color: var(--atencao); }
+.hist-badge-sit[data-sit="aguardando_voce"] { background: var(--perigo-fundo); color: var(--perigo); }
+.hist-badge-sit[data-sit="encerrado"] { background: var(--sup3); color: var(--tx3); }
+
+.hist-ultimo-mov {
+  font-size: var(--t-xs);
+  color: var(--tx3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Linha do Tempo (Metrô) */
+.hist-timeline {
+  position: relative;
+  margin-left: 14px;
+  padding: 6px 0 6px 26px;
+}
+.hist-timeline::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 14px;
+  bottom: 14px;
+  width: 2px;
+  background: var(--borda);
+}
+
+.hist-evento,
+.hist-estacao {
+  position: relative;
+  margin-bottom: 18px;
+}
+.hist-evento:last-child,
+.hist-estacao:last-child {
+  margin-bottom: 0;
+}
+
+/* Marcador da estação */
+.hist-marcador {
+  position: absolute;
+  left: -26px;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--sup);
+  border: 3px solid var(--tx3);
+  z-index: 2;
+  transition: transform var(--dur) var(--saida);
+}
+.hist-evento:hover .hist-marcador,
+.hist-estacao:hover .hist-marcador {
+  transform: scale(1.15);
+}
+
+/* Cores dos Marcadores por Tipo */
+.hist-evento[data-tipo="descoberta"] .hist-marcador { border-color: var(--l-condicional); }
+.hist-evento[data-tipo="candidatura"] .hist-marcador { border-color: var(--ouro); background: var(--ouro); }
+.hist-evento[data-tipo="etapa"] .hist-marcador { border-color: var(--l-boa); }
+.hist-evento[data-tipo="contato"] .hist-marcador { border-color: #008F85; }
+.hist-evento[data-cor="desfecho-aprovado"] .hist-marcador { border-color: var(--ok); background: var(--ok); }
+.hist-evento[data-cor="desfecho-encerrado"] .hist-marcador { border-color: var(--tx3); }
+.hist-evento[data-tipo="descarte"] .hist-marcador { border-color: var(--perigo); }
+
+.hist-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hist-pill-origem {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--r-sm);
+  background: var(--sup3);
+  color: var(--tx2);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+
+.hist-item-data {
+  font-size: var(--t-xs);
+  color: var(--tx3);
+  font-variant-numeric: tabular-nums;
+}
+
+.hist-item-titulo {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--tx);
+  margin-top: 3px;
+}
+
+.hist-item-detalhe {
+  font-size: var(--t-xs);
+  color: var(--tx2);
+  margin-top: 2px;
+  max-width: 70ch;
+  text-wrap: pretty;
+}
+
+.hist-box-destaque {
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: var(--sup2);
+  border-left: 3px solid var(--ouro);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  font-size: var(--t-xs);
+  color: var(--tx);
+}
+.hist-box-destaque strong {
+  display: block;
+  color: var(--tx);
+  margin-bottom: 2px;
+}
+
 /* Responsividade móvel (375px a 900px) */
 @media (max-width: 900px) {
   .placa { padding: 0 12px; gap: 10px; }
@@ -414,6 +653,15 @@ footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0;
   .ferramentas select { flex: 1 1 45%; }
   .cvs { grid-template-columns: 1fr; }
   .fatos { grid-template-columns: 1fr 1fr; }
+  .ferramentas-hist { padding: 12px; }
+  .grupo-filtro-data { flex: 1 1 45%; }
+  .grupo-filtro-data input { width: 100%; }
+  .ferramentas-hist select { flex: 1 1 45%; }
+  .busca-hist { flex: 1 1 100%; }
+  .hist-conteudo { padding: 0 12px 60px; }
+  .hist-card { padding: 16px; }
+  .hist-card-topo { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .hist-card-meta { width: 100%; justify-content: space-between; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -575,6 +823,48 @@ footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0;
           Voltar à lista
         </button>
         <div id="detalhe-conteudo"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Painel Histórico (F10.2) -->
+  <main class="A-tela painel-historico" id="painel-historico" hidden>
+    <div class="ferramentas ferramentas-hist" role="region" aria-label="Filtros do histórico">
+      <div class="grupo-filtro-data">
+        <label for="filtro-hist-inicio">De</label>
+        <input type="date" id="filtro-hist-inicio" class="campo-data" aria-label="Data inicial do histórico">
+      </div>
+      <div class="grupo-filtro-data">
+        <label for="filtro-hist-fim">Até</label>
+        <input type="date" id="filtro-hist-fim" class="campo-data" aria-label="Data final do histórico">
+      </div>
+
+      <select id="filtro-hist-situacao" class="campo" aria-label="Filtrar por situação do processo">
+        <option value="">Toda situação</option>
+        <option value="ativo">Ativo</option>
+        <option value="aguardando_retorno">Aguardando retorno</option>
+        <option value="aguardando_voce">Aguardando você</option>
+        <option value="encerrado">Encerrado</option>
+      </select>
+
+      <select id="filtro-hist-portal" class="campo" aria-label="Filtrar por portal de candidatura">
+        <option value="">Todo portal</option>
+      </select>
+
+      <label class="busca busca-hist">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span class="sr">Pesquisar histórico</span>
+        <input class="campo" id="filtro-hist-busca" aria-label="Pesquisar histórico" placeholder="Empresa, cargo, etapa, contato...">
+      </label>
+
+      <button type="button" class="btn discreto peq" id="btn-limpar-filtros-hist">Limpar filtros</button>
+      <span class="total" id="total-historico" role="status">0 oportunidades</span>
+    </div>
+
+    <div class="hist-conteudo" id="hist-lista-vagas" role="feed" aria-label="Linha do tempo das vagas e processos">
+      <div class="vazio" id="hist-estado">
+        <strong>Carregando histórico...</strong>
+        Consolidando eventos cronológicos.
       </div>
     </div>
   </main>
@@ -928,7 +1218,7 @@ function atualizarContadores() {
   document.getElementById('n-incompativel').textContent = incomp;
 
   document.getElementById('badge-vagas').textContent = vagas.filter(v => ['alta', 'boa'].includes(v.aderencia) && !descartada(v) && !aplicada(v)).length;
-  document.getElementById('badge-historico').textContent = (DATA.historico || []).length;
+  document.getElementById('badge-historico').textContent = cacheHistoricoTotal ?? (DATA.historico || []).length;
   document.getElementById('badge-processos').textContent = 0;
   document.getElementById('badge-curriculo').textContent = 0;
 
@@ -1145,6 +1435,7 @@ btnCoruja.addEventListener('click', () => {
 
 // Atalhos de teclado J/K/A/D/O
 document.addEventListener('keydown', e => {
+  if (document.getElementById('painel-vagas')?.hidden) return;
   const tag = (e.target.tagName || '').toUpperCase();
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag) || e.target.isContentEditable || e.ctrlKey || e.altKey || e.metaKey) {
     return;
@@ -1300,6 +1591,346 @@ if (api) {
       }
     })
     .catch(() => {});
+
+  fetch('/api/historico', { headers: { 'X-Painel-Token': api.token } })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      if (d) {
+        cacheHistoricoTotal = d.totais?.total ?? (d.historico || []).length;
+        const b = document.getElementById('badge-historico');
+        if (b) b.textContent = cacheHistoricoTotal;
+      }
+    })
+    .catch(() => {});
+}
+
+// ==========================================================================
+// Aba Histórico (F10.2)
+// ==========================================================================
+const TIPOS_EVENTO_HIST = ['descoberta', 'candidatura', 'etapa', 'contato', 'desfecho', 'descarte'];
+const ROTULOS_TIPO_HIST = {
+  descoberta: 'Descoberta',
+  candidatura: 'Candidatura',
+  etapa: 'Etapa',
+  contato: 'Contato',
+  desfecho: 'Desfecho',
+  descarte: 'Descarte',
+};
+const ROTULOS_ORIGEM_HIST = {
+  radar: 'Radar',
+  painel: 'Painel',
+  email: 'E-mail',
+  cli: 'CLI',
+  recrutador: 'Recrutador',
+  candidato: 'Você',
+};
+const ROTULOS_SITUACAO_HIST = {
+  ativo: 'Ativo',
+  aguardando_retorno: 'Aguardando retorno',
+  aguardando_voce: 'Aguardando você',
+  encerrado: 'Encerrado',
+};
+
+function formatarDataPtBr(dataStr) {
+  if (!dataStr || typeof dataStr !== 'string') return '';
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dataStr);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+  return dataStr;
+}
+
+function obterClasseCorEvento(tipo, desfecho = null) {
+  if (tipo === 'desfecho') {
+    return desfecho === 'aprovado' ? 'desfecho-aprovado' : 'desfecho-encerrado';
+  }
+  return tipo;
+}
+
+function obterIconeSvg(tipo, { desfecho = null } = {}) {
+  switch (tipo) {
+    case 'descoberta':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+    case 'candidatura':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+    case 'etapa':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7"/></svg>';
+    case 'contato':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+    case 'desfecho':
+      if (desfecho === 'aprovado') {
+        return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M12 2v2M12 14v8M8 22h8"/></svg>';
+      }
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>';
+    case 'descarte':
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></svg>';
+    default:
+      return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/></svg>';
+  }
+}
+
+function filtrarHistorico(historico = [], filtros = {}) {
+  const lista = Array.isArray(historico) ? historico : [];
+  const b = norm(filtros.busca);
+  const portalNorm = filtros.portal ? norm(filtros.portal) : null;
+
+  return lista.filter(v => {
+    if (filtros.inicio && (v.ultimo_movimento || '') < filtros.inicio) return false;
+    if (filtros.fim && (v.ultimo_movimento || '') > filtros.fim) return false;
+    if (filtros.situacao && v.situacao_processo !== filtros.situacao) return false;
+    if (portalNorm && norm(v.portal) !== portalNorm) return false;
+
+    if (b) {
+      const eventos = v.linha_do_tempo || v.itens || [];
+      const textoVaga = norm([
+        v.empresa,
+        v.cargo,
+        v.portal,
+        v.situacao_processo,
+        v.desfecho,
+        ...eventos.flatMap(it => [it.titulo, it.detalhe, it.resumo, it.motivo, it.origem]),
+      ].join(' '));
+      if (!textoVaga.includes(b)) return false;
+    }
+    return true;
+  }).sort((a, b) => (b.ultimo_movimento || '').localeCompare(a.ultimo_movimento || '') || (b.vaga_id || '').localeCompare(a.vaga_id || ''));
+}
+
+function extrairPortaisHistorico(historico = []) {
+  if (!Array.isArray(historico)) return [];
+  const portais = new Set();
+  for (const v of historico) {
+    if (v && v.portal && typeof v.portal === 'string' && v.portal.trim()) {
+      portais.add(v.portal.trim().toLowerCase());
+    }
+  }
+  return [...portais].sort();
+}
+
+function calcularTotaisHistorico(historico = []) {
+  const lista = Array.isArray(historico) ? historico : [];
+  return {
+    total: lista.length,
+    ativos: lista.filter(v => v.situacao_processo === 'ativo').length,
+    aguardando_retorno: lista.filter(v => v.situacao_processo === 'aguardando_retorno').length,
+    aguardando_voce: lista.filter(v => v.situacao_processo === 'aguardando_voce').length,
+    encerrados: lista.filter(v => v.situacao_processo === 'encerrado').length,
+  };
+}
+
+let cacheHistoricoBruto = [];
+let portaisHistoricoCarregados = false;
+let cacheHistoricoTotal = null;
+
+const filtrosHistorico = {
+  inicio: '',
+  fim: '',
+  situacao: '',
+  portal: '',
+  busca: '',
+};
+
+async function carregarHistorico() {
+  const container = document.getElementById('hist-lista-vagas') || document.getElementById('hist-conteudo');
+  const contador = document.getElementById('total-historico');
+
+  const params = new URLSearchParams();
+  if (filtrosHistorico.inicio) params.set('inicio', filtrosHistorico.inicio);
+  if (filtrosHistorico.fim) params.set('fim', filtrosHistorico.fim);
+  if (filtrosHistorico.situacao) params.set('situacao', filtrosHistorico.situacao);
+  if (filtrosHistorico.portal) params.set('portal', filtrosHistorico.portal);
+
+  const queryStr = params.toString() ? `?${params.toString()}` : '';
+
+  if (api && api.token) {
+    if (container) {
+      container.innerHTML = '<div class="vazio" id="hist-estado"><strong>Carregando histórico...</strong>Consultando linha do tempo das oportunidades.</div>';
+    }
+    try {
+      const res = await fetch(`/api/historico${queryStr}`, {
+        headers: { 'X-Painel-Token': api.token },
+        cache: 'no-store',
+      });
+      if (!res.ok) throw new Error('Falha ao obter dados.');
+      const data = await res.json();
+      cacheHistoricoBruto = data.historico || [];
+      cacheHistoricoTotal = data.totais?.total ?? cacheHistoricoBruto.length;
+      const badge = document.getElementById('badge-historico');
+      if (badge) badge.textContent = cacheHistoricoTotal;
+    } catch {
+      if (container) {
+        container.innerHTML = '<div class="vazio" id="hist-estado"><strong>Não foi possível carregar o histórico.</strong>Painel local indisponível ou conexão interrompida.</div>';
+      }
+      return;
+    }
+  } else {
+    cacheHistoricoBruto = (DATA.historico || []).map(v => ({
+      vaga_id: v.id || v.vaga_id,
+      empresa: v.empresa,
+      cargo: v.cargo,
+      portal: v.portal_candidatura || v.portal,
+      situacao_processo: v.status === 'candidatada' ? 'aguardando_retorno' : (v.situacao_processo || 'ativo'),
+      desfecho: v.desfecho || null,
+      ultimo_movimento: v.consultado_em || (v.ultimo_movimento || new Date().toISOString().slice(0, 10)),
+      linha_do_tempo: v.linha_do_tempo || [
+        {
+          id: `desc-${v.id || v.vaga_id}`,
+          tipo: 'descoberta',
+          origem: 'radar',
+          data: v.consultado_em || 'hoje',
+          titulo: `Vaga descoberta: ${v.cargo}`,
+          detalhe: v.url || null,
+        }
+      ],
+    }));
+    cacheHistoricoTotal = cacheHistoricoBruto.length;
+    const badge = document.getElementById('badge-historico');
+    if (badge) badge.textContent = cacheHistoricoTotal;
+  }
+
+  if (!portaisHistoricoCarregados) {
+    const portais = extrairPortaisHistorico(cacheHistoricoBruto);
+    const selectPortalHist = document.getElementById('filtro-hist-portal');
+    if (selectPortalHist) {
+      portais.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = PORTAL_NOMES[p] || p.toUpperCase();
+        selectPortalHist.appendChild(opt);
+      });
+      if (portais.length > 0) {
+        portaisHistoricoCarregados = true;
+      }
+    }
+  }
+
+  renderizarHistorico();
+}
+
+function renderizarHistorico() {
+  const container = document.getElementById('hist-lista-vagas') || document.getElementById('hist-conteudo');
+  const contador = document.getElementById('total-historico');
+  if (!container) return;
+
+  const filtrados = filtrarHistorico(cacheHistoricoBruto, { busca: filtrosHistorico.busca });
+  if (contador) {
+    contador.textContent = `${filtrados.length} ${filtrados.length === 1 ? 'oportunidade' : 'oportunidades'}`;
+  }
+
+  if (!filtrados.length) {
+    container.innerHTML = '<div class="vazio" id="hist-estado"><strong>Nenhum registro encontrado.</strong>Ajuste os filtros ou selecione "Limpar filtros".</div>';
+    return;
+  }
+
+  container.innerHTML = filtrados.map(v => {
+    const situacaoLabel = ROTULOS_SITUACAO_HIST[v.situacao_processo] || v.situacao_processo;
+    const portalLabel = PORTAL_NOMES[v.portal] || v.portal || 'Direto';
+    const ultimoMovFmt = formatarDataPtBr(v.ultimo_movimento);
+
+    const eventosHtml = (v.linha_do_tempo || v.itens || []).map(ev => {
+      const corClasse = obterClasseCorEvento(ev.tipo, ev.desfecho);
+      const origemLabel = ROTULOS_ORIGEM_HIST[ev.origem] || ev.origem || 'Origem';
+      const dataFmt = formatarDataPtBr(ev.data);
+
+      let boxExtra = '';
+      if (ev.pergunta) {
+        boxExtra += `<div class="hist-box-destaque"><strong>Pergunta do recrutador:</strong>${esc(ev.pergunta)}</div>`;
+      }
+      if (ev.proxima_etapa) {
+        const textoProx = typeof ev.proxima_etapa === 'object' ? `${ev.proxima_etapa.texto || ''}${ev.proxima_etapa.data ? ` (${formatarDataPtBr(ev.proxima_etapa.data)})` : ''}` : ev.proxima_etapa;
+        boxExtra += `<div class="hist-box-destaque"><strong>Próxima etapa:</strong>${esc(textoProx)}</div>`;
+      }
+
+      return `<div class="hist-evento" data-tipo="${esc(ev.tipo)}" data-cor="${esc(corClasse)}">
+        <span class="hist-marcador" aria-hidden="true"></span>
+        <div class="hist-item-header">
+          <span class="hist-pill-origem">${esc(origemLabel)}</span>
+          <span class="hist-item-data">${esc(dataFmt)}</span>
+        </div>
+        <div class="hist-item-titulo">${esc(ev.titulo)}</div>
+        ${ev.detalhe ? `<div class="hist-item-detalhe">${esc(ev.detalhe)}</div>` : ''}
+        ${boxExtra}
+      </div>`;
+    }).join('');
+
+    return `<article class="hist-card" data-vaga-id="${esc(v.vaga_id || '')}">
+      <div class="hist-card-topo">
+        <div class="hist-card-titulo">
+          <span class="hist-card-empresa">${esc(v.empresa || 'Empresa não informada')}</span>
+          <h3 class="hist-card-cargo">${esc(v.cargo || 'Cargo')}</h3>
+        </div>
+        <div class="hist-card-meta">
+          <span class="hist-badge-sit" data-sit="${esc(v.situacao_processo || '')}">${esc(situacaoLabel)}</span>
+          <span class="plaqueta" data-a="condicional">${esc(portalLabel)}</span>
+          <span class="hist-ultimo-mov">Último movimento: ${esc(ultimoMovFmt)}</span>
+        </div>
+      </div>
+      <div class="hist-timeline" role="list">
+        ${eventosHtml}
+      </div>
+    </article>`;
+  }).join('');
+}
+
+// Gerenciamento de abas da Placa
+const botoesAba = document.querySelectorAll('.nav .aba-btn');
+const telas = {
+  vagas: document.getElementById('painel-vagas'),
+  historico: document.getElementById('painel-historico'),
+};
+
+function alternarAba(nomeAba) {
+  botoesAba.forEach(btn => {
+    if (btn.dataset.aba === nomeAba) {
+      btn.setAttribute('aria-current', 'page');
+    } else {
+      btn.removeAttribute('aria-current');
+    }
+  });
+
+  Object.entries(telas).forEach(([nome, el]) => {
+    if (el) el.hidden = (nome !== nomeAba);
+  });
+
+  if (nomeAba === 'historico') {
+    carregarHistorico();
+  }
+}
+
+botoesAba.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const nome = btn.dataset.aba;
+    if (telas[nome]) alternarAba(nome);
+  });
+});
+
+// Listeners dos filtros do histórico
+const elHistInicio = document.getElementById('filtro-hist-inicio');
+const elHistFim = document.getElementById('filtro-hist-fim');
+const elHistSituacao = document.getElementById('filtro-hist-situacao');
+const elHistPortal = document.getElementById('filtro-hist-portal');
+const elHistBusca = document.getElementById('filtro-hist-busca');
+const elBtnLimparHist = document.getElementById('btn-limpar-filtros-hist');
+
+if (elHistInicio) elHistInicio.addEventListener('change', e => { filtrosHistorico.inicio = e.target.value; carregarHistorico(); });
+if (elHistFim) elHistFim.addEventListener('change', e => { filtrosHistorico.fim = e.target.value; carregarHistorico(); });
+if (elHistSituacao) elHistSituacao.addEventListener('change', e => { filtrosHistorico.situacao = e.target.value; carregarHistorico(); });
+if (elHistPortal) elHistPortal.addEventListener('change', e => { filtrosHistorico.portal = e.target.value; carregarHistorico(); });
+if (elHistBusca) elHistBusca.addEventListener('input', e => { filtrosHistorico.busca = e.target.value; renderizarHistorico(); });
+if (elBtnLimparHist) {
+  elBtnLimparHist.addEventListener('click', () => {
+    filtrosHistorico.inicio = '';
+    filtrosHistorico.fim = '';
+    filtrosHistorico.situacao = '';
+    filtrosHistorico.portal = '';
+    filtrosHistorico.busca = '';
+    if (elHistInicio) elHistInicio.value = '';
+    if (elHistFim) elHistFim.value = '';
+    if (elHistSituacao) elHistSituacao.value = '';
+    if (elHistPortal) elHistPortal.value = '';
+    if (elHistBusca) elHistBusca.value = '';
+    carregarHistorico();
+  });
 }
 
 render();
