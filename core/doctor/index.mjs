@@ -84,7 +84,7 @@ export async function runDoctor({
     if (migracao.mode === 'ativo') {
       add('migracao', 'ok', 'Modo ativo: migração concluída (corte realizado).');
     } else {
-      add('migracao', 'aviso', 'Modo sombra ativo: use migrate --verify para conferir paridade e migrate --corte para ativar.');
+      add('migracao', 'aviso', 'Modo sombra: confira com verify e passe ao modo ativo com migrate --corte --confirmar-corte (veja docs/PRONTIDAO.md).');
     }
   } catch {
     add('migracao', 'ok', 'Sem migração do legado (instalação nova): a gravação já é a definitiva.');
