@@ -7,6 +7,13 @@ mudanças de comportamento podem acontecer entre versões menores.
 
 ### Adicionado
 
+- **F9.5 — Análise do Currículo contra a Base (`analise-curriculo`):**
+  - Modernização e padronização da matriz de 2x2 com identificadores semânticos estáveis nos quatro grupos: `confere`, `sem_prova`, `fora_do_cv` e `lacuna`.
+  - Modelo de dados uniforme determinístico com 9 campos (`id`, `grupo`, `tipo_origem`, `texto`, `afirmacoes`, `evidencias`, `nivel_prova`, `motivo`, `pergunta`, `peso`, `status`).
+  - Projeção pura em `core/store/projections/analiseCurriculo.mjs` com mapa inverso de evidências e totalizadores determinísticos.
+  - Novos eventos append-only auditáveis: `analise.afirmacao_incluida`, `analise.item_marcado` e `analise.lacuna_entrevista`.
+  - Comandos de CLI em `core/cli/analise.mjs`: `analise listar`, `analise incluir`, `analise marcar` e `analise lacuna` (geração de rascunho em `outbox/lacunas/`).
+  - Endpoints HTTP autenticados no servidor local do painel (`panel/server.mjs`): `GET /api/analise-curriculo` com mascaramento estrito de PII e redação de identidade, e `POST /api/analise-curriculo/incluir`, `POST /api/analise-curriculo/marcar` e `POST /api/analise-curriculo/entrevista` com estrita proteção contra CSRF e modo sombra.
 - **F9.1 — Contatos com Recrutadores:**
   - Registro de interações e contatos avulsos (`contato registrar`).
   - Projeção pura com ordenação cronológica e agrupamento por vaga e pessoa (`projectContatos`).

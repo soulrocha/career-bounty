@@ -46,6 +46,7 @@ import { contatoCommands } from './contato.mjs';
 import { processoCommands } from './processo.mjs';
 import { acompanhamentoCommands } from './acompanhamento.mjs';
 import { empresaCommands } from './empresa.mjs';
+import { analiseCommands } from './analise.mjs';
 import { relogio } from './relogio.mjs';
 export { relogio } from './relogio.mjs';
 
@@ -85,6 +86,7 @@ export const commands = {
   ...processoCommands,
   ...acompanhamentoCommands,
   ...empresaCommands,
+  ...analiseCommands,
   async doctor(rest, { parseFlags }) {
     parseFlags(rest, { allowed: [] });
     const report = await runDoctor();
