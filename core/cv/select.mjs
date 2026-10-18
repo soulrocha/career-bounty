@@ -3,7 +3,7 @@
 // Cabeçalho, foto, os 4 cards e as seções fixas do perfil passam intactos; o texto de cada bullet é sempre o da afirmação.
 import { curriculoNecessario } from '../apply/portal.mjs';
 import { elegiveis } from './elegibilidade.mjs';
-import { agruparPorExperiencia } from './experiencias.mjs';
+import { DESTAQUES, agruparPorExperiencia } from './experiencias.mjs';
 import { ITENS_MAX_PADRAO, textoDoItem } from './redator.mjs';
 
 const ADERENCIAS_ADAPTADAS = new Set(['alta', 'boa']);
@@ -50,6 +50,14 @@ function selecaoDeterministica({ perfil, liberadas, requisitos, maxItens }) {
   return { resumo: perfil.resumo_base, palavras_chave: [], experiencias, origem: 'perfil' };
 }
 
+// Todas as experiências do perfil, na ordem do perfil, e "destaques" no fim. A que não tem afirmação liberada entra sem
+// bullet (cargo, período e intro): o histórico não some, e nenhum fato sem prova entra no CV.
+function comHistorico(perfil, selecionadas) {
+  const porId = new Map(selecionadas.map(exp => [exp.id, exp]));
+  const destaques = porId.get(DESTAQUES);
+  return [...perfil.experiencias.map(exp => porId.get(exp.id) ?? { id: exp.id, itens: [] }), ...(destaques ? [destaques] : [])];
+}
+
 // Payload que o render consome. selecao tem o formato do redator ({ resumo, palavras_chave, experiencias }), já validada.
 export function montarPayload({ perfil, afirmacoes, selecao, vaga, tipo, requisitos_atendidos = [] }) {
   const porId = new Map(afirmacoes.map(af => [af.id, af]));
@@ -67,7 +75,7 @@ export function montarPayload({ perfil, afirmacoes, selecao, vaga, tipo, requisi
     // Quem escreveu o resumo: 'perfil' (resumo-base da pessoa) ou 'redator' (modelo). O gate só confere extenso no do modelo.
     resumo_origem: selecao.origem ?? 'redator',
     palavras_chave: selecao.palavras_chave,
-    experiencias: selecao.experiencias.map(exp => {
+    experiencias: comHistorico(perfil, selecao.experiencias).map(exp => {
       const dados = dadosExp.get(exp.id);
       return {
         id: exp.id,

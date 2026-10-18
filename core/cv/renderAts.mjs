@@ -5,7 +5,7 @@ import { DESTAQUES } from './experiencias.mjs';
 
 export const SECOES_ATS = ['Resumo', 'Experiência', 'Destaques', 'Formação', 'Cursos', 'Competências', 'Idiomas'];
 
-const lista = itens => `<ul>${itens.map(texto => `<li>${esc(texto)}</li>`).join('')}</ul>`;
+const lista = itens => (itens.length ? `<ul>${itens.map(texto => `<li>${esc(texto)}</li>`).join('')}</ul>` : '');
 
 export async function renderAts(payload) {
   const trabalho = payload.experiencias.filter(exp => exp.id !== DESTAQUES);
