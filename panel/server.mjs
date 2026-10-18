@@ -1,7 +1,9 @@
 import { createServer } from 'node:http';
 import { randomBytes } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { noLinks } from '../core/migration/paths.mjs';
-import { resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { publicMarker } from '../core/store/rules.mjs';
 import { marcarCandidatura } from '../core/store/commands/marcarCandidatura.mjs';
@@ -21,6 +23,14 @@ import { projectContatos } from '../core/store/projections/contatos.mjs';
 import { mascararContato, mascararTexto } from '../core/privacy/mask.mjs';
 
 const ABAS = [ABA_QUADRANTES, ABA_PERGUNTAS, ABA_FILA];
+const PANEL_DIR = dirname(fileURLToPath(import.meta.url));
+const FONTES_PERMITIDAS = new Set([
+  'schibsted-grotesk-400.woff2',
+  'schibsted-grotesk-500.woff2',
+  'schibsted-grotesk-600.woff2',
+  'schibsted-grotesk-700.woff2',
+  'pixelify-sans-500.woff2',
+]);
 
 // Painel sem recurso externo: nada carrega nem envia dado para fora de 127.0.0.1. Script e estilo inline vêm do template local.
 const CSP = ["default-src 'none'", "script-src 'unsafe-inline'", "style-src 'unsafe-inline'", "img-src 'self' data:", "font-src 'self' data:", "connect-src 'self'", "base-uri 'self'", "form-action 'none'", "frame-ancestors 'none'", "object-src 'none'"].join('; ');
@@ -180,6 +190,19 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
           por_pessoa: porPessoaMascarado,
           total: contatosMascarados.length,
         });
+      }
+      if (['/icone.svg', '/favicon.ico'].includes(path)) {
+        const iconePath = join(PANEL_DIR, 'icone.svg');
+        const bytes = await readFile(iconePath).catch(() => null);
+        return bytes ? send(200, bytes, 'image/svg+xml') : send(404, { erro: 'Ícone indisponível.' });
+      }
+      const matchFonte = /^\/fontes\/([a-z0-9-]+\.woff2)$/.exec(path);
+      if (matchFonte) {
+        const nome = matchFonte[1];
+        if (!FONTES_PERMITIDAS.has(nome)) return send(404, { erro: 'Fonte indisponível.' });
+        const fontePath = join(PANEL_DIR, 'fontes', nome);
+        const bytes = await readFile(fontePath).catch(() => null);
+        return bytes ? send(200, bytes, 'font/woff2') : send(404, { erro: 'Fonte indisponível.' });
       }
       if (['/', '/carreira/busca-vagas/painel-vagas.html'].includes(path)) {
         const init = `<script>window.PAINEL_API=${JSON.stringify({ token })};</script>`;
