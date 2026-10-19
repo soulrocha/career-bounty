@@ -87,6 +87,7 @@ export const commands = {
   ...acompanhamentoCommands,
   ...empresaCommands,
   ...analiseCommands,
+  'preparar-entrevista': async (rest, opts) => commands.entrevista(['preparar', ...rest], opts),
   async doctor(rest, { parseFlags }) {
     parseFlags(rest, { allowed: [] });
     const report = await runDoctor();

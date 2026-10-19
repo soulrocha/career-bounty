@@ -383,6 +383,30 @@ export function validarLacunaEntrevista(dados, nowTs = new Date().toISOString())
   return null;
 }
 
-
-
-
+export function validarEntrevistaPreparada(dados, nowTs = new Date().toISOString()) {
+  if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
+    return 'Dados da preparação de entrevista inválidos.';
+  }
+  if (typeof dados.vaga_id !== 'string' || !dados.vaga_id.trim()) {
+    return 'ID da vaga é obrigatório.';
+  }
+  if (typeof dados.arquivo !== 'string' || !dados.arquivo.trim()) {
+    return 'Caminho do arquivo de preparação é obrigatório.';
+  }
+  if (dados.arquivo.includes('\0') || dados.arquivo.split(/[\\/]/).some(p => p === '..')) {
+    return 'Caminho do arquivo de preparação inválido (não pode conter ".." ou caracteres nulos).';
+  }
+  if (!isoDate(dados.data)) {
+    return 'Data da preparação inválida; use AAAA-MM-DD.';
+  }
+  if (dados.data > localDay(nowTs)) {
+    return 'A preparação de entrevista não pode ter data futura.';
+  }
+  if (!Number.isInteger(dados.pontos_fortes_count) || dados.pontos_fortes_count < 0) {
+    return 'Contagem de pontos fortes deve ser um número inteiro >= 0.';
+  }
+  if (!Number.isInteger(dados.lacunas_count) || dados.lacunas_count < 0) {
+    return 'Contagem de lacunas deve ser um número inteiro >= 0.';
+  }
+  return null;
+}

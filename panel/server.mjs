@@ -28,6 +28,10 @@ import { gravarProposta, slug } from '../core/kb/outbox.mjs';
 import { mascararContato, mascararProcesso, mascararTexto, mascararVagaHistorico, mascararHistorico } from '../core/privacy/mask.mjs';
 import { loadIdentityValues, redact } from '../core/privacy/redact.mjs';
 import { loadSettings } from '../core/config.mjs';
+import { projectEntrevistas } from '../core/store/projections/entrevistas.mjs';
+import { gerarPreparacaoEntrevista, formatarPreparacaoMarkdown } from '../core/interview/preparation.mjs';
+import { carregarFontes } from '../core/kb/fontes.mjs';
+import { lerBase } from '../core/kb/base.mjs';
 
 const ABAS = [ABA_QUADRANTES, ABA_PERGUNTAS, ABA_FILA];
 const PANEL_DIR = dirname(fileURLToPath(import.meta.url));
@@ -445,6 +449,74 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
           totais: projecao.totais,
           total: historicoMascarado.length,
         });
+      }
+      if (path === '/api/entrevistas/preparacao') {
+        if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
+        const query = new URL(req.url, 'http://127.0.0.1').searchParams;
+        const vagaId = query.get('vaga');
+        if (!vagaId || !vagaId.trim()) return send(400, { erro: 'Parâmetro "vaga" é obrigatório.' });
+
+        const { eventos } = await readEvents(dataRoot);
+        const nowTs = typeof now === 'function' ? now() : (now ?? new Date().toISOString());
+        const projecaoVagas = projectEvents(eventos);
+        const vaga = projecaoVagas.vagas.find(v => v.id === vagaId);
+        if (!vaga) return send(404, { erro: `Vaga não encontrada: ${vagaId}` });
+
+        if (!vaga.requisitos || vaga.requisitos.length === 0) {
+          return send(422, { erro: 'Vaga ainda não avaliada. Execute "entrevista preparar --vaga <id>" na CLI para gerar a avaliação antes da preparação.' });
+        }
+
+        const settings = await loadSettings({ dataRoot }).catch(() => ({}));
+        const { fontes } = await carregarFontes({ dataRoot, settings });
+        const base = await lerBase(fontes);
+
+        const prep = gerarPreparacaoEntrevista({
+          vaga,
+          avaliacao: vaga,
+          base,
+          now: nowTs,
+        });
+
+        const markdownBruto = formatarPreparacaoMarkdown(prep);
+
+        const projEntrevistas = projectEntrevistas(eventos);
+        const regExistente = projEntrevistas.por_vaga[vagaId];
+        const dataHoje = localDay(nowTs);
+        const arquivo = regExistente?.arquivo ?? `outbox/entrevistas/entrevista-${slug(vagaId)}-${dataHoje}.md`;
+
+        function mascararObjeto(obj) {
+          if (typeof obj === 'string') return mascararTexto(obj);
+          if (Array.isArray(obj)) return obj.map(mascararObjeto);
+          if (obj && typeof obj === 'object') {
+            const out = {};
+            for (const [k, v] of Object.entries(obj)) {
+              out[k] = mascararObjeto(v);
+            }
+            return out;
+          }
+          return obj;
+        }
+
+        const corpo = {
+          vaga_id: prep.vaga_id,
+          cargo: mascararTexto(prep.cargo),
+          empresa: mascararTexto(prep.empresa),
+          data: prep.data,
+          aderencia: prep.aderencia,
+          contadores: prep.contadores,
+          pontos_fortes: mascararObjeto(prep.pontos_fortes),
+          pontos_fracos_e_lacunas: mascararObjeto(prep.pontos_fracos_e_lacunas),
+          perguntas_star: mascararObjeto(prep.perguntas_star),
+          o_que_nao_alegar: mascararObjeto(prep.o_que_nao_alegar),
+          resumo_estrategico: mascararTexto(prep.resumo_estrategico),
+          markdown: mascararTexto(markdownBruto),
+          arquivo,
+        };
+
+        const identidade = await loadIdentityValues({ env: { IDENTITY_FILE: join(dataRoot, 'identity.yml') } });
+        const redigido = redact(corpo, identidade).valor;
+
+        return send(200, redigido);
       }
       if (['/icone.svg', '/favicon.ico'].includes(path)) {
         const iconePath = join(PANEL_DIR, 'icone.svg');
