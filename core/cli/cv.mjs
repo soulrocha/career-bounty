@@ -4,7 +4,7 @@ import { gerarCvDaVaga, proporPerfilDoPortal, reavaliarCv } from '../cv/gerar.mj
 import { runnerDasOpcoes } from './llm.mjs';
 
 const NL = String.fromCharCode(10);
-const USO = 'Uso: cv gerar --vaga <id> [--live | --replay <pasta>] | cv gate --vaga <id> | cv perfil-portal [--portal gupy] (--live | --replay <pasta>)';
+const USO = 'Uso: cv gerar --vaga <id> [--live | --replay <pasta>] | cv gate --vaga <id> | cv perfil-portal [--portal gupy|linkedin] (--live | --replay <pasta>)';
 
 const linhasGate = gate => (gate.status === 'ok' ? ['gate: ok'] : ['gate: bloqueado', ...gate.motivos.map(m => `  - ${m.motivo}`)]);
 
