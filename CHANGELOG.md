@@ -7,6 +7,13 @@ mudanças de comportamento podem acontecer entre versões menores.
 
 ### Adicionado
 
+- **F9.6 — Preparação para Entrevista (`preparar-entrevista`):**
+  - Implementação da infraestrutura técnica e de contratos para geração do dossiê estratégico de preparação para entrevista de emprego para vagas específicas.
+  - Quatro pilares centrais: (1) Pontos Fortes comprovados com evidências documentais factuais (`verificado`, `entregue`), (2) Pontos Fracos e Lacunas com estratégias de defesa honesta e postura de transparência, (3) Perguntas Prováveis & Histórias estruturadas no padrão STAR (Situação, Tarefa, Ação, Resultado), e (4) Limites de credibilidade com alertas explícitos de "O que NÃO alegar" (relatos não comprovados, itens não publicáveis, termos confidenciais a anonimizar e lacunas críticas).
+  - Evento append-only auditável `entrevista.preparada` com validação estrita em `core/store/rules.mjs` e projeção pura em `core/store/projections/entrevistas.mjs`.
+  - Módulo puro `core/interview/preparation.mjs` para geração determinística, formatação em Markdown estruturado persistido em `outbox/entrevistas/` e roteiro interativo de simulação de treino com Claude (`gerarRoteiroSimulacao`).
+  - Comandos CLI em `core/cli/entrevista.mjs`: `entrevista preparar --vaga <id>` (com avaliação sob demanda caso a vaga ainda não possua requisitos) e `entrevista simular --vaga <id>`, com alias de topo `preparar-entrevista` em `core/cli/commands.mjs`. Preservação integral de 100% dos subcomandos legados da entrevista investigativa de lacunas.
+  - Endpoint HTTP local autenticado `GET /api/entrevistas/preparacao?vaga=<id>` em `panel/server.mjs` com proteção anti-CSRF, checagem de avaliação prévia (422) e mascaramento estrito de PII e redação de identidade.
 - **F9.5 — Análise do Currículo contra a Base (`analise-curriculo`):**
   - Modernização e padronização da matriz de 2x2 com identificadores semânticos estáveis nos quatro grupos: `confere`, `sem_prova`, `fora_do_cv` e `lacuna`.
   - Modelo de dados uniforme determinístico com 9 campos (`id`, `grupo`, `tipo_origem`, `texto`, `afirmacoes`, `evidencias`, `nivel_prova`, `motivo`, `pergunta`, `peso`, `status`).

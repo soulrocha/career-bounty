@@ -414,7 +414,7 @@ A rota `GET /api/vagas` (e as listagens de vagas no painel local) expõe o campo
     "data": "2026-10-18",
     "fontes": [
       {
-        "url": "https://example.com/avaliacoes/empresa-alfa",
+        "url": "https://example.test/avaliacoes/empresa-alfa",
         "plataforma": "Glassdoor"
       }
     ],
@@ -639,6 +639,126 @@ Item de lacuna não localizado na análise.
 
 ###### `403 Forbidden` / `409 Conflict`
 Token ou Origin inválidos / Modo sombra ativo.
+
+---
+
+### 8. `GET /api/entrevistas/preparacao`
+
+Retorna o dossiê estratégico estruturado de preparação para entrevista de emprego para uma vaga específica, contendo os 4 pilares: pontos fortes comprovados, pontos fracos e lacunas com plano de defesa, perguntas prováveis e histórias no padrão STAR, e lista de itens que NÃO devem ser alegados. Também inclui o documento completo em Markdown renderizável.
+
+#### Requisição
+- **Método:** `GET`
+- **Caminho:** `/api/entrevistas/preparacao`
+- **Cabeçalhos:**
+  - `X-Painel-Token: <token-de-64-caracteres>`
+- **Parâmetros de Consulta (Query Strings):**
+  - `vaga=<id>` (**obrigatório**): identificador canônico da vaga no pipeline.
+
+#### Respostas
+
+##### `200 OK`
+```json
+{
+  "vaga_id": "vaga-corp-tech-01",
+  "cargo": "Engenheiro de Software Sênior",
+  "empresa": "Empresa Alfa",
+  "data": "2026-10-18",
+  "aderencia": "alta",
+  "contadores": {
+    "pontos_fortes": 1,
+    "pontos_fracos_e_lacunas": 1,
+    "perguntas_star": 1,
+    "itens_nao_alegar": 1
+  },
+  "pontos_fortes": [
+    {
+      "requisito": "Experiência em arquitetura de microsserviços Node.js",
+      "tipo": "obrigatorio",
+      "afirmacoes": [
+        {
+          "id": "AF-001",
+          "texto": "Projetou arquitetura orientada a eventos para microsserviços Node.js",
+          "nivel_prova": "verificado",
+          "empresa": "Empresa Alfa",
+          "periodo": "2022-2024",
+          "evidencias": [
+            {
+              "id": "EV-001",
+              "fonte": "docs/arquitetura.md",
+              "texto": "Documento técnico de arquitetura aprovado"
+            }
+          ]
+        }
+      ],
+      "orientacao_resposta": "Destaque a transição para microsserviços e métricas de latência obtidas."
+    }
+  ],
+  "pontos_fracos_e_lacunas": [
+    {
+      "requisito": "Domínio avançado de Kubernetes e orquestração em nuvem",
+      "tipo": "obrigatorio",
+      "status_avaliacao": "lacuna",
+      "afirmacoes_relacionadas": [],
+      "estrategia_defesa": "Admitir que o gerenciamento de clusters ficava a cargo da equipe de DevOps; enfatizar a capacidade comprovada de escrita de manifests e deploys.",
+      "postura_recomendada": "Transparência total; direcionar para solidez no ciclo de vida de contêineres."
+    }
+  ],
+  "perguntas_star": [
+    {
+      "id": "pergunta-star-1",
+      "pergunta": "Conte sobre uma situação em que você precisou otimizar o desempenho de um microsserviço crítico.",
+      "categoria": "tecnica",
+      "requisito_associado": "Experiência em arquitetura de microsserviços Node.js",
+      "historia_id": "historia-otimizacao-cache",
+      "historia_titulo": "Refatoração do pipeline de dados com Redis",
+      "star": {
+        "situacao": "Latência no checkout atingindo 800ms em horários de pico.",
+        "tarefa": "Reduzir o tempo de resposta p95 para menos de 150ms sem elevar custos de infraestrutura.",
+        "acao": "Implementou camada de cache semântico em Node.js com invalidação por eventos.",
+        "resultado": "Queda da latência p95 para 92ms e suporte a 3x mais requisições por segundo."
+      },
+      "afirmacoes_referenciadas": ["AF-001"],
+      "dica_articulacao": "Quantifique a melhoria com os números exatos e mencione a estabilidade após a entrega."
+    }
+  ],
+  "o_que_nao_alegar": [
+    {
+      "topico": "Administração de clusters Kubernetes em produção",
+      "motivo_bloqueio": "lacuna_critica",
+      "detalhe": "Requisito identificado como lacuna técnica na avaliação da vaga.",
+      "recomendacao_humana": "Nunca afirme que administrou clusters produtivos. Limite-se a manifestos e uso de contêineres."
+    }
+  ],
+  "resumo_estrategico": "Vaga com forte aderência técnica em backend. O foco central da entrevista deve ser a experiência sólida em microsserviços, adotando postura de humildade quanto a infraestrutura e DevOps.",
+  "markdown": "# Preparação para Entrevista: Engenheiro de Software Sênior na TechCorp Soluções\n\n...",
+  "arquivo": "outbox/entrevistas/entrevista-vaga-corp-tech-01-2026-10-18.md"
+}
+```
+
+##### `400 Bad Request`
+```json
+{
+  "erro": "Parâmetro \"vaga\" é obrigatório."
+}
+```
+
+##### `403 Forbidden`
+Token ausente ou inválido no cabeçalho `X-Painel-Token`.
+
+##### `404 Not Found`
+```json
+{
+  "erro": "Vaga não encontrada: vaga-inexistente"
+}
+```
+
+##### `422 Unprocessable Entity`
+```json
+{
+  "erro": "Vaga ainda não avaliada. Execute \"entrevista preparar --vaga <id>\" na CLI para gerar a avaliação antes da preparação."
+}
+```
+
 
 
 
