@@ -48,4 +48,7 @@ test('depois do corte, o painel monta a interface atual e não a página antiga 
   assert.doesNotMatch(html, /Painel antigo da Empresa Alfa/);
   assert.match(html, /data-mundo="misto"/);
   assert.match(html, /Gerente de Engenharia/);
+  // A navegação antiga (injetada para a página do snapshot) não pode aparecer por cima da placa nova.
+  assert.doesNotMatch(html, /Quadrantes/);
+  assert.doesNotMatch(html, />\s*Fila\s*</);
 });
