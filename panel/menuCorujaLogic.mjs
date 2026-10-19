@@ -108,8 +108,9 @@ export function calcularRecadoCoruja({
   // Aba Currículo e provas: avalia lacunas e itens sem prova
   if (aba === 'curriculo') {
     if (!analiseCurriculo) return { texto: 'Carregando a análise do currículo.', temNovidade: false, contagem: 0, aba: 'curriculo' };
-    const contadores = analiseCurriculo?.contadores || {};
-    const grupos = analiseCurriculo?.grupos || {};
+    // Aceita a resposta bruta da API ({ contadores, grupos }) e a análise já normalizada pela tela ({ contagem, ...grupos }).
+    const contadores = analiseCurriculo?.contagem || analiseCurriculo?.contadores || {};
+    const grupos = analiseCurriculo?.grupos || analiseCurriculo || {};
 
     const lacunas = contadores.lacuna ?? contadores.lacunas ?? grupos.lacuna?.length ?? grupos.lacunas?.length ?? 0;
     const semProva = contadores.sem_prova ?? grupos.sem_prova?.length ?? 0;
