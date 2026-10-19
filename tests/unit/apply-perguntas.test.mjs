@@ -87,7 +87,9 @@ test('GET e POST /api/perguntas exigem token; a pergunta respondida some da aba;
   const panel = await startPanel({ dataRoot, port: 0, now: () => TS, hostId: 'pc-a' });
   t.after(panel.close);
   const pagina = await (await fetch(panel.url)).text();
-  assert.match(pagina, /role="tab"[^>]*>Perguntas</);
+  // Interface nova: as pendentes ficam no modal Respostas de formulário, sem a barra de abas antiga.
+  assert.match(pagina, /id="perguntas-conteudo"/);
+  assert.doesNotMatch(pagina, /id="abas-painel"/);
   const token = JSON.parse(pagina.match(/window\.PAINEL_API=(\{[^;]+\});/)[1]).token;
   assert.equal((await fetch(`${panel.url}/api/perguntas`)).status, 403);
   const lista = await (await fetch(`${panel.url}/api/perguntas`, { headers: { 'X-Painel-Token': token } })).json();

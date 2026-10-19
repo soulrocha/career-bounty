@@ -16,8 +16,8 @@ const ESTILO = `<style>
 #perguntas-painel .p-linha>*{min-width:0;max-width:100%;box-sizing:border-box}
 #perguntas-painel input[type=text],#perguntas-painel textarea,#perguntas-painel select{font:inherit;padding:7px 9px;border:1px solid var(--line,#c9d3dd);border-radius:4px;min-width:0;max-width:100%;box-sizing:border-box}
 #perguntas-painel textarea{min-height:70px;width:100%}
-#perguntas-painel .p-estado{background:#fff;border:1px solid var(--line,#dce3e9);border-radius:5px;padding:24px;text-align:center;font-size:14px}
-#perguntas-painel .p-erro{color:#b42318;font-size:13px}
+#perguntas-painel .p-estado{background:var(--sup,#fff);color:var(--tx,inherit);border:1px solid var(--line,#dce3e9);border-radius:5px;padding:24px;text-align:center;font-size:14px}
+#perguntas-painel .p-erro{color:var(--perigo,#b42318);font-size:13px}
 </style>`;
 
 const PAINEL = '<section id="perguntas-painel" role="tabpanel" aria-labelledby="aba-perguntas" data-aba-painel="perguntas" hidden><div id="perguntas-conteudo" aria-live="polite"></div></section>';
@@ -54,3 +54,7 @@ window.CB_ABAS=window.CB_ABAS||{};window.CB_ABAS.perguntas=carregar;
 })();</script>`;
 
 export const ABA_PERGUNTAS = { id: 'perguntas', titulo: 'Perguntas', estilo: ESTILO, html: `${PAINEL}${SCRIPT}` };
+
+// Na interface nova as perguntas pendentes ficam no modal "Respostas de formulário" (menu ⋯), sem a barra de abas
+// antiga: o mesmo painel e o mesmo script, num contêiner visível dentro do modal.
+export const BLOCO_PERGUNTAS_MODAL = `${ESTILO}<div id="perguntas-painel"><div id="perguntas-conteudo" aria-live="polite"></div></div>${SCRIPT}`;

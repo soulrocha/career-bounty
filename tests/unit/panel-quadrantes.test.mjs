@@ -4,6 +4,10 @@ import path from 'node:path';
 import test from 'node:test';
 import { repoRoot, tempDir } from '../helpers/cli.mjs';
 import { startPanel } from '../../panel/server.mjs';
+import { injetarAbas } from '../../panel/abas.mjs';
+import { ABA_QUADRANTES } from '../../panel/quadrantes.mjs';
+import { ABA_PERGUNTAS } from '../../panel/perguntas.mjs';
+import { ABA_FILA } from '../../panel/fila.mjs';
 
 const kbDir = path.join(repoRoot, 'tests', 'fixtures', 'kb-quadrantes');
 const IDENTIDADE = { nome: 'Ana Quadrantes', email: 'ana.quadrantes@exemplo.test', telefone: '+55 00 90000-0000', cpf: '000.000.000-00' };
@@ -90,19 +94,20 @@ function tags(html) {
   assert.deepEqual(pilha, []);
 }
 
-test('a aba Quadrantes renderiza no HTML gerado, com estados e sem recurso externo', async t => {
+test('a interface nova não recebe a barra antiga; a página antiga (sem placa) ainda recebe Quadrantes, sem recurso externo', async t => {
   for (const modo of ['ativo', 'shadow']) {
     const a = await ambiente(t, { modo });
-    const pagina = a.pagina;
-    const abas = [...pagina.matchAll(/<button[^>]*role="tab"[^>]*>([^<]*)<\/button>/g)].map(m => m[1]);
-    assert.deepEqual(abas, ['Vagas', 'Quadrantes', 'Perguntas', 'Fila'], modo);
-    assert.match(pagina, /<nav id="abas-painel" aria-label="Abas do painel">/);
-    assert.match(pagina, /<section id="quadrantes-painel" role="tabpanel" aria-labelledby="aba-quadrantes" data-aba-painel="quadrantes" hidden>/);
-    assert.match(pagina, /fetch\('\/api\/quadrantes'/);
-    for (const texto of ['Carregando quadrantes', 'Não foi possível carregar', 'Nada para mostrar ainda', 'Sem permissão', 'Tentar de novo']) assert.ok(pagina.includes(texto), texto);
-    const injetado = pagina.slice(pagina.indexOf('<nav id="abas-painel"'), pagina.indexOf('</nav>') + 6) + pagina.slice(pagina.indexOf('<section id="quadrantes-painel"'), pagina.indexOf('</section>', pagina.indexOf('<section id="quadrantes-painel"')) + 10);
-    tags(injetado);
-    assert.ok(!/https?:\/\//.test(injetado), 'sem URL externa');
-    assert.ok(!/innerHTML/.test(pagina.slice(pagina.indexOf('quadrantes-painel-script'))), 'dados entram por textContent');
+    assert.doesNotMatch(a.pagina, /<nav id="abas-painel"/, modo);
+    assert.doesNotMatch(a.pagina, /id="quadrantes-painel"/, modo);
   }
+  const antiga = injetarAbas('<html><head></head><body><main>Painel antigo</main></body></html>', [ABA_QUADRANTES, ABA_PERGUNTAS, ABA_FILA]);
+  const abas = [...antiga.matchAll(/<button[^>]*role="tab"[^>]*>([^<]*)<\/button>/g)].map(m => m[1]);
+  assert.deepEqual(abas, ['Vagas', 'Quadrantes', 'Perguntas', 'Fila']);
+  assert.match(antiga, /<section id="quadrantes-painel" role="tabpanel" aria-labelledby="aba-quadrantes" data-aba-painel="quadrantes" hidden>/);
+  assert.match(antiga, /fetch\('\/api\/quadrantes'/);
+  for (const texto of ['Carregando quadrantes', 'Não foi possível carregar', 'Nada para mostrar ainda', 'Sem permissão', 'Tentar de novo']) assert.ok(antiga.includes(texto), texto);
+  const injetado = antiga.slice(antiga.indexOf('<nav id="abas-painel"'), antiga.indexOf('</nav>') + 6) + antiga.slice(antiga.indexOf('<section id="quadrantes-painel"'), antiga.indexOf('</section>', antiga.indexOf('<section id="quadrantes-painel"')) + 10);
+  tags(injetado);
+  assert.ok(!/https?:\/\//.test(injetado), 'sem URL externa');
+  assert.ok(!/innerHTML/.test(antiga.slice(antiga.indexOf('quadrantes-painel-script'))), 'dados entram por textContent');
 });

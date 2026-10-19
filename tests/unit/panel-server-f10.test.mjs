@@ -99,3 +99,73 @@ test('GET / retorna HTML sem qualquer tag <img> e com CSP restritiva', async t =
   assert.equal(html.match(/<img\b[^>]*>/gi), null, 'HTML não deve conter tags <img>');
 });
 
+test('GET /api/respostas exige x-painel-token e retorna respostas mascaradas', async t => {
+  const env = await setupAmbiente(t);
+
+  const emailFake = ['segredo', 'empresa.com'].join('@');
+  const telFake = ['+55 11 9', '8888-7777'].join('');
+
+  // identity.yml para mascarar
+  const identityData = {
+    nome: 'Nome Secreto do Candidato',
+    email: emailFake,
+    telefone: telFake,
+  };
+  await writeFile(path.join(env.dataRoot, 'identity.yml'), JSON.stringify(identityData));
+
+  // answers.yml
+  const answersData = {
+    respostas: [
+      {
+        id: 'pretensao-salarial',
+        variantes_label: ['Pretensão Salarial'],
+        resposta: 'R$ 20.000 PJ',
+        escopo: { tipo: 'global' },
+        sensivel: true,
+        proveniencia: { origem: 'usuario', registrado_em: '2026-10-18T10:00:00.000Z' },
+        validade: '2027-01-01',
+      },
+      {
+        id: 'contato-candidato',
+        variantes_label: ['Dados de contato'],
+        resposta: `Falar com Nome Secreto do Candidato no email ${emailFake} ou ${telFake}`,
+        escopo: { tipo: 'global' },
+        sensivel: false,
+        proveniencia: { origem: 'usuario', registrado_em: '2026-10-18T10:00:00.000Z' },
+        validade: null,
+      },
+    ],
+  };
+  await mkdir(path.join(env.dataRoot, 'kb'), { recursive: true });
+  await writeFile(path.join(env.dataRoot, 'kb', 'answers.yml'), JSON.stringify(answersData));
+
+  // Extrai o token efêmero da página inicial
+  const pagina = await (await env.get('/')).text();
+  const token = JSON.parse(/window\.PAINEL_API=(\{[^;]+\});/.exec(pagina)[1]).token;
+
+  // Sem token -> 403
+  const semToken = await fetch(`${env.panel.url}/api/respostas`);
+  assert.equal(semToken.status, 403);
+
+  // Com token inválido -> 403
+  const tokenErrado = await fetch(`${env.panel.url}/api/respostas`, {
+    headers: { 'x-painel-token': 'token-invalido' },
+  });
+  assert.equal(tokenErrado.status, 403);
+
+  // Com token correto -> 200 e mascaramento de PII
+  const ok = await fetch(`${env.panel.url}/api/respostas`, {
+    headers: { 'x-painel-token': token },
+  });
+  assert.equal(ok.status, 200);
+  const data = await ok.json();
+  assert.equal(data.total, 2);
+  assert.equal(data.respostas.length, 2);
+
+  const respostaContato = data.respostas.find(r => r.id === 'contato-candidato');
+  assert.ok(respostaContato);
+  assert.ok(!respostaContato.resposta.includes(emailFake), 'E-mail não pode vazar');
+  assert.ok(!respostaContato.resposta.includes(telFake), 'Telefone não pode vazar');
+  assert.ok(!respostaContato.resposta.includes('Nome Secreto do Candidato'), 'Nome da identidade não pode vazar');
+  assert.ok(respostaContato.resposta.includes('[REDIGIDO]'), 'PII deve ser substituída por [REDIGIDO]');
+});
