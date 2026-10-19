@@ -311,3 +311,10 @@ test('menuCorujaLogic: formatarCoberturaFontes sintetiza portais e fontes config
   assert.equal(cobertura.fontesConfiguradas[0].fonte, 'gupy');
   assert.equal(cobertura.fontesConfiguradas[0].consulta, 'Frontend');
 });
+
+test('menuCorujaLogic: aceita também a análise normalizada pela tela (contagem e grupos no topo)', () => {
+  const normalizada = { confere: [], sem_prova: [{ id: 'a' }, { id: 'b' }], fora_do_cv: [], lacunas: [{ id: 'c' }], contagem: { confere: 0, sem_prova: 2, fora_do_cv: 0, lacunas: 1 } };
+  const r = calcularRecadoCoruja({ aba: 'curriculo', analiseCurriculo: normalizada });
+  assert.equal(r.texto, '1 lacuna e 2 itens sem prova identificados.');
+  assert.equal(r.contagem, 3);
+});

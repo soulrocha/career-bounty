@@ -5,6 +5,24 @@ mudanças de comportamento podem acontecer entre versões menores.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-18
+
+Correções do painel encontradas no primeiro uso real.
+
+### Corrigido
+
+- **Fichas de aderência ignoravam os filtros.** Alta, Boa, Condicional, Baixa e Incompatível mostravam o total de todas as
+  vagas. Agora cada ficha conta as vagas que passam nos outros filtros (candidatura, descartadas, modalidade, regime,
+  portal e busca), pela mesma regra da lista. Com "Ainda não me candidatei", os números caem para o que ainda resta.
+- **Currículo e provas não listava os itens.** O painel mostrava "23 sem prova, 30 fora do CV, 6 lacunas" e, ao abrir o
+  grupo, caía em "Painel desconectado". A causa era um erro de JavaScript ao desenhar cada item (`badgesHtml is not
+  defined`), escondido por uma mensagem de conexão. Os itens aparecem, com os selos de prova (nível, peso, afirmação e
+  evidência).
+- **Erro de tela e falha de rede não se confundem mais.** "Painel desconectado" aparece só quando a rede falha; um erro ao
+  desenhar a lista aparece como "Erro ao exibir os itens", e o detalhe vai para o console.
+- **Recado da coruja contraditório.** Na aba Currículo e provas ela dizia "Ainda não há currículo e base para comparar"
+  ao lado de itens pendentes, porque lia a análise com os nomes da resposta bruta da API e não com os da tela. Agora diz
+  quantas lacunas e itens sem prova existem.
 ## [0.3.0] - 2026-10-18
 
 Painel novo e acompanhamento dos processos seletivos.
