@@ -115,3 +115,11 @@ campo igual ao atual sai da proposta. Nada é aplicado no portal: a pessoa revis
 `DATA_ROOT/cv/perfil-gupy.json` (`sobre`, `experiencias` com `id`, `empresa`, `cargo` e `descricao`, e `habilidades`) e grava a
 proposta em `DATA_ROOT/outbox/cv/perfil-gupy-<data>.md` e `.json`.
 Os limites de caracteres por campo ficam em `LIMITES_PORTAL` e devem ser conferidos no portal.
+
+## Perfil do LinkedIn
+
+O mesmo fluxo vale para o LinkedIn: `cv perfil-portal --portal linkedin (--live | --replay <pasta>)` lê o perfil atual que a
+pessoa copiou do LinkedIn em `DATA_ROOT/cv/perfil-linkedin.json` (`titulo`, `sobre`, `experiencias` com `id`, `empresa`,
+`cargo` e `descricao`, e `habilidades`) e grava a proposta campo a campo em `DATA_ROOT/outbox/cv/perfil-linkedin-<data>.md`.
+O título (a linha abaixo do nome) só existe no LinkedIn e passa pela mesma conferência de números. Limites usados: título
+220, Sobre 2.600, experiência 2.000 e competências de até 80 caracteres. Nada é aplicado no site: a pessoa revisa e copia.

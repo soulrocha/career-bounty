@@ -1,4 +1,4 @@
-// Proposta de perfil de portal (Gupy primeiro): o portal não recebe CV por vaga, o perfil dele é o documento.
+// Proposta de perfil de portal (Gupy e LinkedIn): o portal não recebe CV por vaga, o perfil dele é o documento.
 // O modelo propõe texto por campo ligado a afirmações; o validador barra afirmação não liberada ou de outra experiência,
 // número sem prova, habilidade que não está nas afirmações e campo acima do limite. Nada é aplicado: a saída é só o diff proposto.
 import { fold } from '../dedup/keys.mjs';
@@ -11,6 +11,8 @@ import { quantidadesPorExtenso } from './extenso.mjs';
 // Limites por portal (caracteres por campo de texto, quantidade e tamanho de habilidade). Conferir no portal ao revisar a proposta.
 export const LIMITES_PORTAL = {
   gupy: { sobre: 1000, experiencia: 2000, habilidades: 30, habilidade: 40 },
+  // LinkedIn: título (headline) de 220, Sobre de 2.600, descrição de experiência de 2.000 e competências curtas.
+  linkedin: { titulo: 220, sobre: 2600, experiencia: 2000, habilidades: 50, habilidade: 80 },
 };
 
 const so = (objeto, permitidos, onde) => {
@@ -47,6 +49,7 @@ function validarSecao(secao, i, ctx) {
   if (typeof secao.proposto !== 'string' || !secao.proposto.trim()) throw new Error(`${onde}: proposto deve ser texto não vazio`);
   let limite;
   if (secao.campo === 'sobre') limite = limites.sobre;
+  else if (secao.campo === 'titulo' && limites.titulo) limite = limites.titulo;
   else if (/^experiencia:/.test(secao.campo)) {
     const exp = atual.experiencias.find(e => `experiencia:${e.id}` === secao.campo);
     if (!exp) throw new Error(`${onde}: experiência desconhecida no perfil do portal`);
@@ -74,6 +77,7 @@ export function validarProposta(json, ctx) {
 
 const valorAtual = (atual, campo) => {
   if (campo === 'sobre') return atual.sobre ?? '';
+  if (campo === 'titulo') return atual.titulo ?? '';
   if (campo === 'habilidades') return atual.habilidades ?? [];
   return atual.experiencias.find(e => `experiencia:${e.id}` === campo)?.descricao ?? '';
 };
@@ -91,6 +95,7 @@ export async function proporPerfilPortal({ runner, portal = 'gupy', perfilAtual,
   const entrada = {
     portal,
     perfil_atual: {
+      ...(limites.titulo ? { titulo: curto(perfilAtual.titulo, limites.titulo * 2) } : {}),
       sobre: curto(perfilAtual.sobre, limites.sobre * 2),
       experiencias: perfilAtual.experiencias.map(e => ({ id: e.id, empresa: e.empresa, cargo: e.cargo, descricao: curto(e.descricao, limites.experiencia * 2) })),
       habilidades: (perfilAtual.habilidades ?? []).slice(0, limites.habilidades * 2),
