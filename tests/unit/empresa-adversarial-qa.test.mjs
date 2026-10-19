@@ -261,6 +261,7 @@ test('ADVERSARIAL: core/company/evaluator.mjs NÃO faz chamadas HTTP diretas ao 
         empresa: 'Empresa Alfa',
         dataRoot,
         runner: runnerFalha,
+        searchImpl: async () => [{ titulo: 'Empresa Alfa: avaliações', url: 'https://avaliacoes.exemplo.test/empresa-alfa', trecho: 'Nota 4,0' }],
         now: NOW_DATE
       });
     },
@@ -290,6 +291,7 @@ test('ADVERSARIAL: core/company/evaluator.mjs NÃO faz chamadas HTTP diretas ao 
         empresa: 'Empresa Alfa',
         dataRoot,
         runner: runnerSemFontes,
+        searchImpl: async () => [{ titulo: 'Empresa Alfa: avaliações', url: 'https://avaliacoes.exemplo.test/empresa-alfa', trecho: 'Nota 4,0' }],
         now: NOW_DATE
       });
     },
@@ -319,6 +321,7 @@ test('ADVERSARIAL: core/company/evaluator.mjs NÃO faz chamadas HTTP diretas ao 
         empresa: 'Empresa Alfa',
         dataRoot,
         runner: runnerUrlInvalida,
+        searchImpl: async () => [{ titulo: 'Empresa Alfa: avaliações', url: 'https://avaliacoes.exemplo.test/empresa-alfa', trecho: 'Nota 4,0' }],
         now: NOW_DATE
       });
     },
@@ -465,7 +468,8 @@ test('ADVERSARIAL: migrarAvaliacoesLegadas é rigorosamente idempotente e tolera
         id: 'v1',
         empresa: 'Empresa Alfa',
         cargo: 'Eng 1',
-        empresa_avaliacao: { nota: 4.1, quantidade: 30, plataforma: 'glassdoor', data: '2026-10-15' }
+        url: 'https://vagas.exemplo.test/alfa-1',
+        empresa_avaliacao: { nota: 4.1, quantidade: 30, plataforma: 'glassdoor', data: '2026-10-15', fontes: ['https://avaliacoes.exemplo.test/empresa-alfa'] }
       },
       {
         id: 'v2',
@@ -477,7 +481,14 @@ test('ADVERSARIAL: migrarAvaliacoesLegadas é rigorosamente idempotente e tolera
         id: 'v3',
         empresa: 'Empresa Beta',
         cargo: 'Eng 3',
-        empresa_avaliacao: { nota: 3.9, avaliacoes: 45, plataforma: 'indeed', data: '2026-10-16' }
+        empresa_avaliacao: { nota: 3.9, avaliacoes: 45, plataforma: 'indeed', data: '2026-10-16', fontes: [{ url: 'https://avaliacoes.exemplo.test/empresa-beta', plataforma: 'indeed' }] }
+      },
+      {
+        id: 'v7',
+        empresa: 'Empresa Zeta',
+        cargo: 'Eng 7',
+        url: 'https://vagas.exemplo.test/zeta-7',
+        empresa_avaliacao: { nota: 4.5, quantidade: 12, plataforma: 'glassdoor', data: '2026-10-16' } // sem fonte: não migra
       },
       {
         id: 'v4',
@@ -506,10 +517,17 @@ test('ADVERSARIAL: migrarAvaliacoesLegadas é rigorosamente idempotente e tolera
   // Primeira execução
   const r1 = await migrarAvaliacoesLegadas({ dataRoot, host: 'adv-host', now: NOW_SP });
   assert.equal(r1.empresas_migradas, 2); // Alfa e Beta
+  assert.equal(r1.empresas_sem_fonte, 1); // Zeta: sem fonte, não inventa procedência
   assert.equal(r1.novos_eventos, 2);
 
   const { eventos: evs1 } = await readEvents(dataRoot);
   const doc1 = projectEvents(evs1, { now: NOW_DATE });
+  const migrados = evs1.filter(e => e.tipo === 'empresa.avaliada');
+  const fontesDe = nome => migrados.find(e => e.dados.empresa === nome)?.dados.fontes.map(f => f.url);
+  assert.deepEqual(fontesDe('Empresa Alfa'), ['https://avaliacoes.exemplo.test/empresa-alfa'], 'URL em texto do legado é preservada');
+  assert.deepEqual(fontesDe('Empresa Beta'), ['https://avaliacoes.exemplo.test/empresa-beta']);
+  assert.equal(fontesDe('Empresa Zeta'), undefined, 'sem fonte não vira evento');
+  assert.ok(!migrados.some(e => e.dados.fontes.some(f => f.url.includes('vagas.exemplo.test'))), 'o link da vaga nunca vira fonte da nota');
 
   // Segunda execução consecutiva
   const r2 = await migrarAvaliacoesLegadas({ dataRoot, host: 'adv-host', now: NOW_SP });

@@ -21,7 +21,8 @@ function makePipelineLegado() {
           quantidade: 150,
           plataforma: 'glassdoor',
           data: '2026-10-18',
-          resumo: 'Excelente empresa para se trabalhar.'
+          resumo: 'Excelente empresa para se trabalhar.',
+          fontes: ['https://example.com/avaliacoes/empresa-alfa'] // formato do legado: URL em texto
         }
       },
       {
@@ -84,7 +85,7 @@ test('migrarAvaliacoesLegadas converte avaliações embutidas em eventos empresa
   assert.equal(evAlfa.dados.plataforma, 'Glassdoor'); // normalizado
   assert.equal(evAlfa.dados.data, '2026-10-18');
   assert.equal(evAlfa.dados.resumo, 'Excelente empresa para se trabalhar.');
-  assert.ok(Array.isArray(evAlfa.dados.fontes) && evAlfa.dados.fontes.length > 0);
+  assert.deepEqual(evAlfa.dados.fontes.map(f => f.url), ['https://example.com/avaliacoes/empresa-alfa']); // nunca o link da vaga
 
   const evBeta = eventosAvaliacao.find(e => e.entidade_id === 'empresabeta');
   assert.ok(evBeta);
