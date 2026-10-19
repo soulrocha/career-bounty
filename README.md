@@ -12,7 +12,13 @@ o que sai em seu nome.
 Leia antes o [aviso legal](LEGAL_DISCLAIMER.md): você responde pelos termos de uso de cada site, e o envio
 automático vem desligado. English: [README.en.md](README.en.md).
 
-![Painel do CareerBounty com a persona fictícia de demonstração](docs/img/painel.png)
+<p align="center"><img src="panel/icone.svg" width="88" alt="Ícone do CareerBounty: moeda de ouro com a coruja batedora em pixel"></p>
+
+| Tema claro | Tema escuro |
+|---|---|
+| ![Aba Vagas no tema claro: vagas agrupadas por aderência e o detalhe da vaga ao lado](docs/img/painel-claro.png) | ![Aba Vagas no tema escuro](docs/img/painel-escuro.png) |
+
+<sub>Capturas da demonstração com a persona fictícia, geradas por `node scripts/capturas-readme.mjs`.</sub>
 
 ## O que é <!-- sec:o-que-e -->
 
@@ -22,8 +28,8 @@ O CareerBounty junta três peças:
   currículos, política de envio e trilha de auditoria. Funciona, e é testada, sem rede e sem modelo.
 - **Comandos, skills e subagentes do Claude Code**, que fazem o trabalho de linguagem (triagem, redação de
   respostas, classificação de e-mail) e chamam a CLI para tudo o que precisa ser exato.
-- **Um painel local** no navegador, para ver vagas, a fila de candidaturas, as perguntas pendentes e os quadrantes
-  de carreira.
+- **Um painel local** no navegador: vagas por aderência, processos seletivos com lembretes, histórico das candidaturas e
+  a comparação entre o seu currículo e o que a sua base prova.
 
 Seus dados ficam numa pasta privada fora do repositório. O repositório traz só código, documentação e uma persona
 fictícia de exemplo.
@@ -40,6 +46,10 @@ fictícia de exemplo.
   na CI.
 - **Seguro por padrão.** Envio automático desligado, LinkedIn guest desligado, limite diário, kill switch e trava para
   tentativa de resultado incerto.
+- **Acompanhamento de processos.** Contatos com recrutadores (e-mail, WhatsApp, LinkedIn), etapas, devolutivas do Gmail
+  e lembrete quando um processo passa de 5 a 7 dias sem resposta.
+- **Preparação para entrevista.** Para cada vaga: pontos fortes com prova, lacunas, perguntas prováveis com as suas
+  histórias STAR e o que não alegar.
 - **Sem dependências npm.** Só Node 20+ e o Chrome ou Edge que você já tem.
 
 ## Demonstração <!-- sec:demo -->
@@ -184,10 +194,15 @@ exige token nas gravações. Abas:
 
 | Aba | Para quê |
 |---|---|
-| Vagas | Lista, nota, motivos, currículos gerados e marcações de status |
-| Fila | Vagas elegíveis para candidatura, com rota (driver de ATS, Gupy ou assistida) e estado da tentativa |
-| Perguntas | Perguntas novas das candidaturas: você responde ou aprova o rascunho, e a resposta entra no banco |
-| Quadrantes | Encaixe entre o que o mercado pede e o que o seu currículo prova |
+| Vagas | Vagas agrupadas por aderência, detalhe ao lado, nota da empresa, currículos da vaga (visual e ATS, ou o perfil Gupy) e atalhos J/K/A/D/O |
+| Histórico | Todas as candidaturas e como terminaram, com a linha do tempo de cada vaga |
+| Processos | Processos em andamento como uma linha de quatro estações, contatos, o que pede acompanhamento e a preparação para entrevista |
+| Currículo e provas | Matriz "está no CV / fora do CV" × "tem dado / não tem dado", com ações que movem cada item |
+
+No menu ⋯ ficam as respostas de formulário (perguntas pendentes da candidatura assistida e as já salvas), as fontes da rodada,
+o perfil do LinkedIn e a pausa da animação do fundo.
+
+![Aba Processos no tema escuro](docs/img/painel-processos.png)
 
 ### Currículos <!-- sec:uso-cv -->
 
@@ -224,9 +239,37 @@ A rota Gupy exige `"gupy": { "aceite_termos": true }` no `config.yml` e respeita
 `/email` lê as mensagens de processo seletivo pelo conector do Gmail e atualiza a etapa de cada candidatura
 (inscrita, nova etapa, entrevista, oferta ou encerramento). Um hook nega qualquer ferramenta de escrita do Gmail.
 
-### Carreira: quadrantes, entrevista e mentor <!-- sec:uso-carreira -->
+### Processos, contatos e lembretes <!-- sec:uso-processos -->
 
-- `/quadrantes` calcula o encaixe entre o que as vagas pedem e o que você prova, e grava o relatório.
+- `contato registrar` guarda um contato de recrutador (e-mail, WhatsApp, LinkedIn ou telefone), com resumo, pergunta e
+  próxima etapa. `contato sugerir` gera o rascunho de resposta a partir das suas afirmações, em `outbox/`, e nunca envia.
+- `processo etapa` e `processo encerrar` registram o andamento e o desfecho de cada vaga.
+- `acompanhamento pendentes` lista o que está há 5 dias ou mais sem movimento (aviso) e 7 ou mais (lembrete). O resumo
+  do dia (`digest`) inclui essa lista.
+- O telefone e o e-mail de quem você registra são mascarados antes de qualquer tela.
+
+### Empresas <!-- sec:uso-empresas -->
+
+`/empresa <nome>` faz a pesquisa na web pela nota de avaliação de funcionários e grava nota, quantidade, plataforma, data
+e fonte (`empresa avaliar --resultados`). O CareerBounty não raspa o Glassdoor. Sem fonte com link, a nota é recusada. Para
+registrar à mão: `empresa registrar --empresa --nota --quantidade --fonte <url>`. A nota é um retrato datado e vale 90 dias.
+
+### Preparação para entrevista <!-- sec:uso-preparacao -->
+
+`entrevista preparar --vaga <id>` (ou `preparar-entrevista`) grava em `outbox/entrevistas/` os pontos fortes com prova, as
+lacunas e como tratá-las, as perguntas prováveis com as suas histórias STAR e o que não alegar. A parte de uma história que
+não está registrada aparece marcada para você completar, nunca inventada. `entrevista simular` gera o roteiro para treinar.
+
+### Perfil do LinkedIn <!-- sec:uso-linkedin -->
+
+Copie o perfil atual para `DATA_ROOT/cv/perfil-linkedin.json` e rode `cv perfil-portal --portal linkedin --live`: sai uma
+proposta campo a campo (título, sobre, experiências e competências), com o texto atual, o proposto e as afirmações que
+sustentam cada mudança. Nada é aplicado no site.
+
+### Currículo e provas, entrevista de lacunas e mentor <!-- sec:uso-carreira -->
+
+- `/quadrantes` calcula a comparação entre o seu currículo e o que a sua base prova, e grava o relatório. No painel, a aba
+  Currículo e provas mostra o mesmo, com ações (`analise incluir`, `analise marcar`, `analise lacuna`).
 - `/entrevista` pergunta sobre as lacunas da sua base. Cada resposta vira uma afirmação que você aprova.
 - `/mentor` conversa sobre funil, posicionamento e próximos passos, só com leitura.
 
@@ -242,7 +285,8 @@ Comandos do Claude Code:
 | `/painel` | Abre o painel local |
 | `/aplicar` | Candidatura assistida na fila elegível |
 | `/email` | Acompanha o processo seletivo pelo Gmail |
-| `/quadrantes` | Relatório de encaixe |
+| `/empresa` | Pesquisa e grava a nota da empresa, com fonte |
+| `/quadrantes` | Relatório de currículo e provas |
 | `/entrevista` | Entrevista de lacunas da base de carreira |
 | `/mentor` | Conversa de carreira |
 
@@ -252,8 +296,9 @@ Subcomandos da CLI (`node bin/career-bounty.mjs <comando> [--json]`):
 |---|---|
 | Ambiente | `setup`, `demo`, `doctor`, `help`, `plugin validate`, `privacy scan` |
 | Vagas | `collect`, `digest`, `daily-run`, `schedule`, `destinos`, `compare-radar`, `preferencias` |
-| Base de carreira | `kb`, `quadrantes`, `entrevista`, `mentor`, `report`, `vault plan` |
-| Currículos | `cv gerar`, `cv gate`, `cv perfil-portal` |
+| Base de carreira | `kb`, `quadrantes`, `analise`, `entrevista`, `preparar-entrevista`, `mentor`, `report`, `vault plan` |
+| Processos | `contato`, `processo`, `acompanhamento`, `empresa` |
+| Currículos | `cv gerar`, `cv gate`, `cv perfil-portal [--portal gupy\|linkedin]` |
 | Candidaturas | `apply plan`, `apply preparar`, `apply lote`, `apply envio`, `apply comprovante`, `apply desfecho` |
 | Gupy | `gupy perfil iniciar`, `propor`, `confirmar`, `encerrar` |
 | Envio automático | `envio pausar`, `envio retomar`, `envio audit [--dia AAAA-MM-DD]` |
@@ -261,6 +306,17 @@ Subcomandos da CLI (`node bin/career-bounty.mjs <comando> [--json]`):
 | Dados | `migrate`, `project`, `verify`, `panel`, `eval` |
 
 Com `--json`, a saída, inclusive erro, sai como JSON no stdout. Erro de uso termina com código 2.
+
+## Uso com Codex e Antigravity <!-- sec:outros-agentes -->
+
+A CLI funciona em qualquer agente que rode comandos: o [`AGENTS.md`](AGENTS.md) explica ao Codex e ao Antigravity como
+rodar radar, currículos, processos e painel, e as regras de segurança. Comandos, skills e hooks são do Claude Code. Os hooks
+que protegem a candidatura assistida (frase do lote, uma vaga por vez, Gmail só leitura) só rodam no Claude Code: em outro
+agente, use o CareerBounty para busca, currículo, processos e painel, e faça a candidatura assistida no Claude Code.
+
+Busca no LinkedIn: o caminho seguro são os alertas de vaga do LinkedIn que chegam ao seu e-mail (fonte
+`linkedin_alertas`). O coletor guest vem desligado e exige `aceite_termos: true`, porque pode violar os termos de uso do
+site. Nenhum agente deve automatizar o LinkedIn logado em seu nome.
 
 ## Configuração <!-- sec:configuracao -->
 

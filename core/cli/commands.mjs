@@ -45,6 +45,7 @@ import { demoCommands } from './demo.mjs';
 import { contatoCommands } from './contato.mjs';
 import { processoCommands } from './processo.mjs';
 import { acompanhamentoCommands } from './acompanhamento.mjs';
+import { projectProcessos } from '../store/projections/processos.mjs';
 import { empresaCommands } from './empresa.mjs';
 import { analiseCommands } from './analise.mjs';
 import { relogio } from './relogio.mjs';
@@ -137,7 +138,9 @@ export const commands = {
     const rodadas = eventos.filter(evento => evento.tipo === 'radar.rodada').map(evento => evento.dados);
     const aviso = await avisoEmailNaoConferido(settings.dataRoot, { ativo: settings.mail.ativo });
     if (!rodadas.length) return { result: { vazio: true, texto: 'Nenhuma rodada registrada.', ...(aviso ? { email_nao_conferido: true } : {}) }, text: ['Nenhuma rodada registrada.', aviso].filter(Boolean).join(String.fromCharCode(10)) };
-    const result = buildDigest({ rodada: rodadas.at(-1), projecao: projectEvents(eventos).vagas, historico: rodadas.slice(0, -1) });
+    // Processos que pedem acompanhamento (aviso e lembrete) entram no resumo do dia.
+    const acompanhamento = projectProcessos(eventos, { now: new Date(), config: settings }).pendentes;
+    const result = buildDigest({ rodada: rodadas.at(-1), projecao: projectEvents(eventos).vagas, historico: rodadas.slice(0, -1), acompanhamento });
     return { result: aviso ? { ...result, email_nao_conferido: true } : result, text: [result.texto, aviso].filter(Boolean).join(String.fromCharCode(10, 10)) };
   },
   async 'daily-run'(rest, { parseFlags }) {

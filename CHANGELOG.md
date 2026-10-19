@@ -5,39 +5,45 @@ mudanças de comportamento podem acontecer entre versões menores.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-18
+
+Painel novo e acompanhamento dos processos seletivos.
+
 ### Adicionado
 
-- **F9.6 — Preparação para Entrevista (`preparar-entrevista`):**
-  - Implementação da infraestrutura técnica e de contratos para geração do dossiê estratégico de preparação para entrevista de emprego para vagas específicas.
-  - Quatro pilares centrais: (1) Pontos Fortes comprovados com evidências documentais factuais (`verificado`, `entregue`), (2) Pontos Fracos e Lacunas com estratégias de defesa honesta e postura de transparência, (3) Perguntas Prováveis & Histórias estruturadas no padrão STAR (Situação, Tarefa, Ação, Resultado), e (4) Limites de credibilidade com alertas explícitos de "O que NÃO alegar" (relatos não comprovados, itens não publicáveis, termos confidenciais a anonimizar e lacunas críticas).
-  - Evento append-only auditável `entrevista.preparada` com validação estrita em `core/store/rules.mjs` e projeção pura em `core/store/projections/entrevistas.mjs`.
-  - Módulo puro `core/interview/preparation.mjs` para geração determinística, formatação em Markdown estruturado persistido em `outbox/entrevistas/` e roteiro interativo de simulação de treino com Claude (`gerarRoteiroSimulacao`).
-  - Comandos CLI em `core/cli/entrevista.mjs`: `entrevista preparar --vaga <id>` (com avaliação sob demanda caso a vaga ainda não possua requisitos) e `entrevista simular --vaga <id>`, com alias de topo `preparar-entrevista` em `core/cli/commands.mjs`. Preservação integral de 100% dos subcomandos legados da entrevista investigativa de lacunas.
-  - Endpoint HTTP local autenticado `GET /api/entrevistas/preparacao?vaga=<id>` em `panel/server.mjs` com proteção anti-CSRF, checagem de avaliação prévia (422) e mascaramento estrito de PII e redação de identidade.
-- **F9.5 — Análise do Currículo contra a Base (`analise-curriculo`):**
-  - Modernização e padronização da matriz de 2x2 com identificadores semânticos estáveis nos quatro grupos: `confere`, `sem_prova`, `fora_do_cv` e `lacuna`.
-  - Modelo de dados uniforme determinístico com 9 campos (`id`, `grupo`, `tipo_origem`, `texto`, `afirmacoes`, `evidencias`, `nivel_prova`, `motivo`, `pergunta`, `peso`, `status`).
-  - Projeção pura em `core/store/projections/analiseCurriculo.mjs` com mapa inverso de evidências e totalizadores determinísticos.
-  - Novos eventos append-only auditáveis: `analise.afirmacao_incluida`, `analise.item_marcado` e `analise.lacuna_entrevista`.
-  - Comandos de CLI em `core/cli/analise.mjs`: `analise listar`, `analise incluir`, `analise marcar` e `analise lacuna` (geração de rascunho em `outbox/lacunas/`).
-  - Endpoints HTTP autenticados no servidor local do painel (`panel/server.mjs`): `GET /api/analise-curriculo` com mascaramento estrito de PII e redação de identidade, e `POST /api/analise-curriculo/incluir`, `POST /api/analise-curriculo/marcar` e `POST /api/analise-curriculo/entrevista` com estrita proteção contra CSRF e modo sombra.
-- **F9.1 — Contatos com Recrutadores:**
-  - Registro de interações e contatos avulsos (`contato registrar`).
-  - Projeção pura com ordenação cronológica e agrupamento por vaga e pessoa (`projectContatos`).
-  - Associação de contatos avulsos a vagas (`contato vincular`).
-  - Listagem com filtros por vaga e por contatos ativos (`contato listar`).
-  - Sugestão de respostas seguras via LLM gravando rascunho em outbox sem envio automático (`contato sugerir`).
-  - Motor de mascaramento estrito de PII para telefones e e-mails (`core/privacy/mask.mjs`).
-  - Endpoint HTTP local autenticado: `GET /api/contatos` com mascaramento anti-vazamento.
-- **F9.4 — Avaliação da Empresa:**
-  - Registro de eventos `empresa.avaliada` no log append-only com schema estrito (`empresa registrar`).
-  - Projeção pura e determinística com cálculo de vigência temporal de 90 dias (`projectAvaliacoes`, `obterAvaliacaoVigente`).
-  - Enriquecimento dinâmico de vagas no `projectEvents` com remoção automática de notas expiradas (nunca exibe nota 0 ou traço).
-  - Migração idempotente e determinística das avaliações do snapshot legado (`core/migration/avaliacoes.mjs`).
-  - Coleta automatizada via subagente LLM com leitura exclusiva de busca pública e citação obrigatória de URL pública (`agents/avaliador-empresa.md`, `core/company/evaluator.mjs`, `empresa avaliar`). Zero scraping do Glassdoor.
-  - Seleção inteligente e execução diária no `daily-run` com teto configurável (`avaliacoes.teto_diario`, `avaliacoes.validade_dias`) e inclusão na seção de novidades do digest diário.
-  - Documentação da API com chave `empresa_avaliacao` em `GET /api/vagas`.
+- **Painel novo** (visual "Misto"): placa com abas e contadores, temas claro e escuro, fundo em pixel que para com
+  `prefers-reduced-motion`, coruja batedora com recado factual por aba e fontes servidas localmente.
+  - **Vagas:** agrupadas por aderência, com detalhe ao lado, nota da empresa, currículos da vaga e atalhos J/K/A/D/O.
+  - **Histórico:** linha do tempo de cada candidatura.
+  - **Processos:** quatro estações por processo, contatos, o que pede acompanhamento e preparação para entrevista.
+  - **Currículo e provas:** matriz com ações que movem cada item. Substitui Quadrantes.
+  - **Menu ⋯:** respostas de formulário (pendentes e salvas), fontes da rodada, perfil do LinkedIn e pausa do fundo.
+- **Contatos com recrutadores:** `contato registrar|listar|vincular|remover|sugerir`. O rascunho de resposta vai para
+  `outbox/` e nunca é enviado. Telefone e e-mail são mascarados antes de qualquer tela.
+- **Processos e lembretes:** `processo etapa|encerrar` e `acompanhamento pendentes`, com aviso aos 5 dias e lembrete aos 7
+  dias sem movimento. O resumo do dia (`digest`) inclui a lista.
+- **Avaliação da empresa:** evento `empresa.avaliada` por empresa, válido por 90 dias. Comandos `empresa registrar` e
+  `empresa avaliar --resultados`, e o comando `/empresa`, que pesquisa na web pelo Claude Code. Sem scraping e sem nota
+  sem fonte.
+- **Análise do currículo contra a base:** `analise listar|incluir|marcar|lacuna`, com as rotas do painel.
+- **Preparação para entrevista:** `entrevista preparar` (ou `preparar-entrevista`) e `entrevista simular`.
+- **Perfil do LinkedIn:** `cv perfil-portal --portal linkedin`, com campo título e limites do LinkedIn.
+- **Preferência de modalidade:** `radar.criterios.modalidades` e `modalidade_preferida`, perguntadas no `/setup` e gravadas
+  pelo comando `preferencias`.
+- **Outros agentes:** `AGENTS.md` para Codex e Antigravity e capturas do README geradas por `scripts/capturas-readme.mjs`.
 
+### Corrigido
+
+- **Interface antiga com dados migrados:** o painel mostrava a interface antiga para quem migrou de um pipeline antigo,
+  mesmo depois do corte.
+- **Fonte das avaliações migradas:** a migração trocava a fonte real (URL em texto do legado) pelo link da vaga. Agora
+  preserva a fonte e não migra avaliação sem ela.
+- **Avaliação sem busca:** chamava o modelo sem nenhum resultado de busca. Agora recusa antes da chamada.
+- **História STAR inventada:** a preparação para entrevista preenchia com texto pronto a parte da história que faltava, e
+  contava requisito sem avaliação como ponto forte.
+- **Recado da coruja:** "Currículo 100% comprovado" aparecia quando não havia nenhum item para comparar.
+- **Filtro de região:** vaga com a cidade da região no título ("RJ, SP ou BH") era descartada.
+- **Teste com relógio:** um teste do perfil Gupy passava a falhar quando o vínculo vencia pela hora real.
 ## [0.2.0] - 2026-10-18
 
 Primeira versão para uso real.
