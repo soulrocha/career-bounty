@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { run, tempDir } from '../helpers/cli.mjs';
 import { readEvents } from '../../core/store/events.mjs';
-import { avaliarEmpresa } from '../../core/company/evaluator.mjs';
+import { avaliarEmpresa, lerResultadosBusca } from '../../core/company/evaluator.mjs';
 
 const NOW = '2026-10-18T15:00:00.000-03:00';
 
@@ -188,4 +190,26 @@ test('avaliarEmpresa recusa avaliação quando o subagente não encontra fontes 
 
   const { eventos } = await readEvents(dataRoot);
   assert.equal(eventos.filter(e => e.tipo === 'empresa.avaliada').length, 0);
+});
+
+test('sem resultado de busca, avaliarEmpresa recusa antes de chamar o subagente (não gasta chamada)', async t => {
+  const dataRoot = await ambiente(t);
+  let chamadas = 0;
+  const runner = { async run() { chamadas += 1; return { json: { sucesso: false } }; } };
+  await assert.rejects(avaliarEmpresa({ empresa: 'Empresa Gama', dataRoot, runner, now: new Date(NOW) }), /Avaliação recusada: nenhum resultado de busca/);
+  await assert.rejects(avaliarEmpresa({ empresa: 'Empresa Gama', dataRoot, runner, searchImpl: async () => [], now: new Date(NOW) }), /nenhum resultado de busca/);
+  assert.equal(chamadas, 0);
+});
+
+test('lerResultadosBusca aceita a lista da pesquisa na web e recusa formato inválido', async t => {
+  const dataRoot = await ambiente(t);
+  const arquivo = path.join(dataRoot, 'busca.json');
+  await writeFile(arquivo, JSON.stringify([{ titulo: 'Empresa Alfa: avaliações', url: 'https://avaliacoes.exemplo.test/empresa-alfa', trecho: 'Nota 4,2 de 5 com 120 avaliações' }]));
+  const lidos = await lerResultadosBusca(arquivo);
+  assert.equal(lidos.length, 1);
+  assert.equal(lidos[0].url, 'https://avaliacoes.exemplo.test/empresa-alfa');
+  await writeFile(arquivo, JSON.stringify([{ titulo: 'sem url' }]));
+  await assert.rejects(lerResultadosBusca(arquivo), /url/);
+  await writeFile(arquivo, JSON.stringify({ nao: 'lista' }));
+  await assert.rejects(lerResultadosBusca(arquivo), /lista/);
 });

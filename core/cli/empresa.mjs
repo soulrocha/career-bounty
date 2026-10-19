@@ -6,7 +6,7 @@ import { companyKey } from '../dedup/keys.mjs';
 import { appendEvents } from '../store/events.mjs';
 import { localDay } from '../store/schema.mjs';
 import { validarEmpresaAvaliada } from '../store/rules.mjs';
-import { avaliarEmpresa } from '../company/evaluator.mjs';
+import { avaliarEmpresa, lerResultadosBusca } from '../company/evaluator.mjs';
 import { runnerDasOpcoes } from './llm.mjs';
 import { relogio } from './relogio.mjs';
 
@@ -102,8 +102,8 @@ export const empresaCommands = {
 
     if (sub === 'avaliar') {
       const values = parseFlags(flags, {
-        allowed: ['--empresa', '--live', '--replay', '--gravar', '--now', '--teste'],
-        withValue: ['--empresa', '--replay', '--now']
+        allowed: ['--empresa', '--resultados', '--live', '--replay', '--gravar', '--now', '--teste'],
+        withValue: ['--empresa', '--resultados', '--replay', '--now']
       });
 
       const empresa = values['--empresa'];
@@ -112,10 +112,13 @@ export const empresaCommands = {
       const now = relogio(values);
       const runner = options.runner ?? await runnerDasOpcoes(values, settings);
 
+      // Resultados da pesquisa na web feita fora do núcleo (comando /empresa); sem eles a avaliação é recusada antes da chamada.
+      const resultados = values['--resultados'] ? await lerResultadosBusca(values['--resultados']) : [];
       const dados = await avaliarEmpresa({
         empresa,
         dataRoot,
         runner,
+        searchImpl: async () => resultados,
         now
       });
 
