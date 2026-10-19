@@ -61,7 +61,9 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
   if (hasSnapshot) {
     const original = JSON.parse(await privateFile(dataRoot, `${state.snapshotRoot}/carreira/pipeline-vagas.json`));
     if (state.mode === 'shadow' && !isDeepStrictEqual(pipeline, original)) throw new Error('Projeção difere do snapshot.');
-    pageSource = (await privateFile(dataRoot, `${state.snapshotRoot}/carreira/busca-vagas/painel-vagas.html`)).toString('utf8');
+    // A página estática do snapshot só vale no modo sombra. Depois do corte o snapshot continua no estado (para os
+    // currículos antigos), mas a página é montada do log, com a interface atual.
+    if (state.mode === 'shadow') pageSource = (await privateFile(dataRoot, `${state.snapshotRoot}/carreira/busca-vagas/painel-vagas.html`)).toString('utf8');
     const materials = JSON.parse(await privateFile(dataRoot, `${state.snapshotRoot}/carreira/busca-vagas/curriculos-manifest.json`));
     namedMaterials = namedMaterialsOf(materials);
   }

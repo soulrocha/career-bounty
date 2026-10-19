@@ -15,25 +15,19 @@ function normalizarPlataforma(raw) {
   return PLATAFORMAS_AVALIACAO.has(raw) ? raw : 'Outro';
 }
 
-function normalizarFontes(avFontes, fallbackUrl, plataforma) {
+const URL_VALIDA = /^https?:\/\/[^\s]+$/i;
+
+// Fontes do legado: o pipeline antigo grava URLs em texto; versões mais novas, objetos { url, plataforma }.
+// Sem URL válida não há fonte, e a avaliação não é migrada: atribuir o link da vaga ou a página inicial do portal
+// como fonte de uma nota seria inventar a procedência.
+function normalizarFontes(avFontes, plataforma) {
   const fontesValidas = [];
-  if (Array.isArray(avFontes)) {
-    for (const f of avFontes) {
-      if (f && typeof f === 'object' && typeof f.url === 'string' && /^https?:\/\/[^\s]+$/i.test(f.url.trim())) {
-        fontesValidas.push({
-          url: f.url.trim(),
-          plataforma: normalizarPlataforma(f.plataforma || plataforma)
-        });
-      }
-    }
+  for (const f of Array.isArray(avFontes) ? avFontes : []) {
+    const url = typeof f === 'string' ? f.trim() : (f && typeof f === 'object' && typeof f.url === 'string' ? f.url.trim() : '');
+    if (!URL_VALIDA.test(url)) continue;
+    fontesValidas.push({ url, plataforma: normalizarPlataforma((typeof f === 'object' && f.plataforma) || plataforma) });
   }
-  if (fontesValidas.length > 0) return fontesValidas;
-
-  const url = typeof fallbackUrl === 'string' && /^https?:\/\/[^\s]+$/i.test(fallbackUrl.trim())
-    ? fallbackUrl.trim()
-    : 'https://www.glassdoor.com.br';
-
-  return [{ url, plataforma }];
+  return fontesValidas;
 }
 
 export async function migrarAvaliacoesLegadas({ dataRoot, host = defaultHost(), now = new Date().toISOString() }) {
@@ -55,13 +49,16 @@ export async function migrarAvaliacoesLegadas({ dataRoot, host = defaultHost(), 
     const chave = companyKey(vaga.empresa);
     if (!chave) continue;
 
-    // Guarda ou atualiza com a mais completa
-    if (!porEmpresa.has(chave)) {
+    // Por empresa, fica a primeira avaliação com fonte; sem nenhuma com fonte, a primeira (que será contada como sem fonte).
+    const atual = porEmpresa.get(chave);
+    if (!atual || (!normalizarFontes(atual.av.fontes).length && normalizarFontes(av.fontes).length)) {
       porEmpresa.set(chave, { vaga, av });
     }
   }
 
   const eventosNovos = [];
+  let migradas = 0;
+  let semFonte = 0;
 
   for (const [chave, { vaga, av }] of porEmpresa.entries()) {
     const nota = Math.min(5.0, Math.max(1.0, Math.round(Number(av.nota) * 10) / 10));
@@ -74,7 +71,9 @@ export async function migrarAvaliacoesLegadas({ dataRoot, host = defaultHost(), 
       data = hoje;
     }
 
-    const fontes = normalizarFontes(av.fontes, vaga.url, plataforma);
+    const fontes = normalizarFontes(av.fontes, plataforma);
+    if (!fontes.length) { semFonte += 1; continue; }
+    migradas += 1;
     const resumo = typeof av.resumo === 'string' && av.resumo.trim() ? av.resumo.trim().slice(0, 500) : null;
 
     const dados = {
@@ -110,7 +109,8 @@ export async function migrarAvaliacoesLegadas({ dataRoot, host = defaultHost(), 
   }
 
   return {
-    empresas_migradas: porEmpresa.size,
+    empresas_migradas: migradas,
+    empresas_sem_fonte: semFonte,
     novos_eventos: eventosNovos.length
   };
 }
