@@ -12,10 +12,11 @@ import { readEvents, appendEvents } from '../core/store/events.mjs';
 import { projectEvents } from '../core/store/project.mjs';
 import { renderPainelDe } from './render.mjs';
 import { ABA_QUADRANTES, respostaQuadrantes } from './quadrantes.mjs';
-import { ABA_PERGUNTAS, listarPerguntas } from './perguntas.mjs';
+import { ABA_PERGUNTAS, BLOCO_PERGUNTAS_MODAL, listarPerguntas } from './perguntas.mjs';
 import { ABA_FILA, listarFila } from './fila.mjs';
 import { injetarAbas } from './abas.mjs';
 import { responderPergunta } from '../core/apply/perguntas.mjs';
+import { lerRespostas } from '../core/apply/answers.mjs';
 import { createMaterials, namedMaterialsOf, privateFile, validateBaseFiles } from './materials.mjs';
 import { arquivosServiveis, congelarCvEnviado, lerManifesto } from '../core/cv/artifacts.mjs';
 import { localDay } from '../core/store/schema.mjs';
@@ -305,6 +306,16 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
         if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
         return send(200, await listarPerguntas({ dataRoot }));
       }
+      if (path === '/api/respostas') {
+        if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
+        const identidade = await loadIdentityValues({ env: { IDENTITY_FILE: join(dataRoot, 'identity.yml') } });
+        const respostas = await lerRespostas(dataRoot).catch(() => []);
+        const { valor: respostasMascaradas } = redact(respostas, identidade);
+        return send(200, {
+          respostas: respostasMascaradas,
+          total: respostasMascaradas.length,
+        });
+      }
       if (path === '/api/quadrantes') {
         if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
         const { status, corpo } = await respostaQuadrantes({ dataRoot });
@@ -540,7 +551,11 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
           .replaceAll('applicationApiReady=true', 'applicationApiReady=false')
           .replaceAll('Marcações salvas neste computador e consideradas nas próximas buscas.', 'SOMBRA — gravação desligada. Marcações importadas para consulta.')
           .replaceAll('Abra o painel interativo para salvar.', 'SOMBRA — gravação desligada.');
-        return send(200, Buffer.from(injetarAbas(page, ABAS)), 'text/html; charset=utf-8');
+        // A interface atual traz a própria navegação na placa; a barra injetada só serve às páginas antigas (snapshot do
+        // modo sombra ou template privado antigo), que não têm placa.
+        const comPlaca = /<header class="placa"/.test(page);
+        const final = comPlaca ? page.replace('<div data-cb="perguntas-pendentes"></div>', () => BLOCO_PERGUNTAS_MODAL) : injetarAbas(page, ABAS);
+        return send(200, Buffer.from(final), 'text/html; charset=utf-8');
       }
       // PDFs de CV (F5.8): só os listados no manifesto da vaga, lidos sem seguir link e sem sair do DATA_ROOT.
       const cv = /^\/artifacts\/cv\/([A-Za-z0-9][A-Za-z0-9._-]*)\/[0-9a-f]{64}\/cv-(?:ats|visual)\.pdf$/.exec(path);

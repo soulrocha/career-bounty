@@ -60,62 +60,49 @@ test('GET /api/fila recusa token ausente ou inválido e lista os sete estados se
   assert.equal(run(['verify', '--json'], { dataRoot: p.dataRoot }).status, 0);
 });
 
-test('abas reais: Fila escapa texto, Perguntas salva resposta e voltar à Fila atualiza o estado', { skip: semNavegador }, async t => {
+// Interface nova: as perguntas pendentes ficam no modal "Respostas de formulário" (menu ⋯). A antiga aba Fila foi
+// substituída pelo Histórico; a API /api/fila continua servindo a candidatura assistida (teste acima).
+const ABRIR_RESPOSTAS = "document.getElementById('opt-menu-respostas').click()";
+
+test('modal Respostas de formulário: escapa texto, exige resposta e salva no banco', { skip: semNavegador }, async t => {
   const server = await painel(t);
   const p = await pagina(t, server.url);
-  await p.avaliar("document.getElementById('aba-fila').click()");
-  await esperar(p, "document.querySelectorAll('#fila-conteudo td.f-estado').length===7");
-  assert.deepEqual(await p.avaliar("Array.from(document.querySelectorAll('#fila-conteudo .f-estado')).map(n=>n.textContent)"),
-    ['Pronta', 'Aguarda sua resposta', 'Bloqueada (precisa de você)', 'Pronta para enviar', 'Enviada', 'Enviada sem comprovante (confira)', 'Incerta (confira)']);
-  assert.equal(await p.avaliar("document.querySelector('#fila-conteudo').textContent.includes(" + JSON.stringify(TEXTO) + ')'), true);
-  assert.equal(await p.avaliar("document.querySelectorAll('#fila-conteudo img').length"), 0);
-  await p.avaliar("document.getElementById('aba-perguntas').click()");
+  assert.equal(await p.avaliar("document.getElementById('abas-painel')"), null);
+  await p.avaliar(ABRIR_RESPOSTAS);
   await esperar(p, "document.querySelectorAll('#perguntas-conteudo .p-item').length===1");
+  assert.equal(await p.avaliar("document.getElementById('modal-respostas-formulario').hidden"), false);
+  assert.equal(await p.avaliar("document.querySelector('#perguntas-conteudo').textContent.includes(" + JSON.stringify(TEXTO) + ')'), true);
   assert.equal(await p.avaliar("document.querySelectorAll('#perguntas-conteudo img').length"), 0);
-  assert.deepEqual(await p.avaliar("[document.getElementById('fila-painel').hidden,document.getElementById('perguntas-painel').hidden,document.getElementById('aba-perguntas').getAttribute('aria-selected')]"), [true, false, 'true']);
   await p.avaliar("document.querySelector('#perguntas-conteudo button').click()");
   assert.equal(await p.avaliar("document.querySelector('.p-erro').textContent"), 'Preencha a resposta.');
   await p.avaliar("document.querySelector('#perguntas-conteudo input').value='Imediata';document.querySelector('#perguntas-conteudo button').click()");
   await esperar(p, "document.getElementById('perguntas-conteudo').textContent==='Nenhuma pergunta pendente.'");
   assert.equal((await lerRespostas(server.dataRoot))[0].resposta, 'Imediata');
-  await p.avaliar("document.getElementById('aba-fila').click()");
-  await esperar(p, "document.querySelectorAll('#fila-conteudo .f-estado').length===7 && !document.getElementById('fila-conteudo').textContent.includes('Aguarda sua resposta')");
-  assert.equal(await p.avaliar("Array.from(document.querySelectorAll('#fila-conteudo .f-estado')).filter(n=>n.textContent==='Pronta').length"), 2);
   assert.equal(await p.avaliar('window.injetado===true'), false);
-  await p.avaliar("document.getElementById('aba-vagas').click()");
-  assert.deepEqual(await p.avaliar("[document.getElementById('fila-painel').hidden,document.getElementById('perguntas-painel').hidden,document.getElementById('aba-vagas').getAttribute('aria-selected')]"), [true, true, 'true']);
 });
 
-test('abas reais mostram vazio, recusa de autenticação e falha de rede sem deixar conteúdo antigo', { skip: semNavegador }, async t => {
+test('modal Respostas de formulário mostra vazio, recusa de autenticação e falha de rede sem deixar conteúdo antigo', { skip: semNavegador }, async t => {
   const server = await painel(t, 0);
   const p = await pagina(t, server.url);
-  for (const [aba, vazio] of [['fila', 'Nenhuma vaga na fila.'], ['perguntas', 'Nenhuma pergunta pendente.']]) {
-    await p.avaliar(`document.getElementById('aba-${aba}').click()`);
-    await esperar(p, `document.getElementById('${aba}-conteudo').textContent.startsWith(${JSON.stringify(vazio)})`);
-  }
+  await p.avaliar(ABRIR_RESPOSTAS);
+  await esperar(p, "document.getElementById('perguntas-conteudo').textContent.startsWith('Nenhuma pergunta pendente.')");
   await p.avaliar("window.PAINEL_API.token='invalido'");
-  for (const aba of ['fila', 'perguntas']) {
-    await p.avaliar(`document.getElementById('aba-${aba}').click()`);
-    await esperar(p, `!document.getElementById('${aba}-conteudo').textContent.startsWith('Carregando')`);
-    assert.match(await p.avaliar(`document.getElementById('${aba}-conteudo').textContent`), /token|autoriz|acesso/i);
-  }
+  await p.avaliar(ABRIR_RESPOSTAS);
+  await esperar(p, "!document.getElementById('perguntas-conteudo').textContent.startsWith('Carregando')");
+  assert.match(await p.avaliar("document.getElementById('perguntas-conteudo').textContent"), /token|autoriz|acesso/i);
   await p.avaliar("window.fetch=()=>Promise.reject(new Error('Falha sintética'))");
-  for (const aba of ['fila', 'perguntas']) {
-    await p.avaliar(`document.getElementById('aba-${aba}').click()`);
-    await esperar(p, `document.getElementById('${aba}-conteudo').textContent==='Painel local fora do ar.'`);
-  }
+  await p.avaliar(ABRIR_RESPOSTAS);
+  await esperar(p, "document.getElementById('perguntas-conteudo').textContent==='Painel local fora do ar.'");
 });
 
-test('abas contêm texto longo e controles de Perguntas têm nome acessível', { skip: semNavegador }, async t => {
+test('perguntas com texto longo cabem no modal e os controles têm nome acessível', { skip: semNavegador }, async t => {
   const server = await painel(t, 0);
   const p = await pagina(t, server.url);
   await p.comando('Emulation.setDeviceMetricsOverride', { width: 960, height: 720, deviceScaleFactor: 1, mobile: false });
-  await p.avaliar(`window.fetch=async url=>({ok:true,json:async()=>url.includes('/api/fila')?{fila:[{estado:'pronta',empresa:'Empresa 01',cargo:'X'.repeat(500),motivo:'Y'.repeat(500)}]}:{perguntas:[{id:'pq-teste',label:'Z'.repeat(500),tipo:'text',categoria:'factual',vagas:[{empresa:'Empresa 01',cargo:'Cargo',portal:'Portal'}]}]}})`);
-  for (const aba of ['fila', 'perguntas']) {
-    await p.avaliar(`document.getElementById('aba-${aba}').click()`);
-    await esperar(p, `document.getElementById('${aba}-conteudo').textContent.includes('${aba === 'fila' ? 'X' : 'Z'}'.repeat(500))`);
-    const medida = await p.avaliar(`({largura:document.documentElement.clientWidth,conteudo:document.getElementById('${aba}-painel').scrollWidth})`);
-    assert.ok(medida.conteudo <= medida.largura, `${aba}: ${JSON.stringify(medida)}`);
-  }
+  await p.avaliar(`window.fetch=async url=>({ok:true,json:async()=>url.includes('/api/perguntas')?{perguntas:[{id:'pq-teste',label:'Z'.repeat(500),tipo:'text',categoria:'factual',vagas:[{empresa:'Empresa 01',portal:'Portal fictício'}]}]}:{respostas:[],total:0}})`);
+  await p.avaliar(ABRIR_RESPOSTAS);
+  await esperar(p, "document.getElementById('perguntas-conteudo').textContent.includes('Z'.repeat(500))");
+  const medida = await p.avaliar("({largura:document.documentElement.clientWidth,conteudo:document.getElementById('perguntas-painel').scrollWidth})");
+  assert.ok(medida.conteudo <= medida.largura, JSON.stringify(medida));
   assert.equal(await p.avaliar(`Array.from(document.querySelectorAll('#perguntas-conteudo input,#perguntas-conteudo textarea,#perguntas-conteudo select')).every(e=>e.getAttribute('aria-label')||document.getElementById(e.getAttribute('aria-labelledby'))?.textContent)`), true);
 });
