@@ -3093,14 +3093,20 @@ function calcularRecadoCorujaClient(aba) {
 
   if (aba === 'curriculo') {
     const cur = (typeof cacheCurriculo !== 'undefined' && cacheCurriculo) ? cacheCurriculo : null;
+    if (!cur) return { texto: 'Carregando a análise do currículo.', temNovidade: false, contagem: 0, aba: 'curriculo' };
     const contadores = cur?.contadores || {};
     const grupos = cur?.grupos || {};
 
     const lacunas = contadores.lacuna ?? contadores.lacunas ?? grupos.lacuna?.length ?? grupos.lacunas?.length ?? 0;
     const semProva = contadores.sem_prova ?? grupos.sem_prova?.length ?? 0;
 
+    const confere = contadores.confere ?? grupos.confere?.length ?? 0;
+    const foraDoCv = contadores.fora_do_cv ?? grupos.fora_do_cv?.length ?? 0;
+    if (confere + foraDoCv + lacunas + semProva === 0) {
+      return { texto: 'Ainda não há currículo e base para comparar.', temNovidade: false, contagem: 0, aba: 'curriculo' };
+    }
     if (lacunas === 0 && semProva === 0) {
-      return { texto: 'Currículo 100% comprovado pela base de dados.', temNovidade: false, contagem: 0, aba: 'curriculo' };
+      return { texto: 'Tudo o que está no currículo tem prova na base.', temNovidade: false, contagem: 0, aba: 'curriculo' };
     }
     return { texto: `${lacunas} lacuna${lacunas > 1 ? 's' : ''} e ${semProva} ite${semProva > 1 ? 'ns' : 'm'} sem prova identificados.`, temNovidade: true, contagem: lacunas + semProva, aba: 'curriculo' };
   }

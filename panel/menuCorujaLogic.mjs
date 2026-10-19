@@ -107,15 +107,22 @@ export function calcularRecadoCoruja({
 
   // Aba Currículo e provas: avalia lacunas e itens sem prova
   if (aba === 'curriculo') {
+    if (!analiseCurriculo) return { texto: 'Carregando a análise do currículo.', temNovidade: false, contagem: 0, aba: 'curriculo' };
     const contadores = analiseCurriculo?.contadores || {};
     const grupos = analiseCurriculo?.grupos || {};
 
     const lacunas = contadores.lacuna ?? contadores.lacunas ?? grupos.lacuna?.length ?? grupos.lacunas?.length ?? 0;
     const semProva = contadores.sem_prova ?? grupos.sem_prova?.length ?? 0;
 
+    const confere = contadores.confere ?? grupos.confere?.length ?? 0;
+    const foraDoCv = contadores.fora_do_cv ?? grupos.fora_do_cv?.length ?? 0;
+    // Zero itens não é currículo comprovado: é falta de currículo ou de base para comparar.
+    if (confere + foraDoCv + lacunas + semProva === 0) {
+      return { texto: 'Ainda não há currículo e base para comparar.', temNovidade: false, contagem: 0, aba: 'curriculo' };
+    }
     if (lacunas === 0 && semProva === 0) {
       return {
-        texto: 'Currículo 100% comprovado pela base de dados.',
+        texto: 'Tudo o que está no currículo tem prova na base.',
         temNovidade: false,
         contagem: 0,
         aba: 'curriculo',

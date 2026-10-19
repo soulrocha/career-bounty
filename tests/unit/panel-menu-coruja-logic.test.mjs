@@ -123,14 +123,22 @@ test('menuCorujaLogic: calcularRecadoCoruja na aba processos', () => {
 });
 
 test('menuCorujaLogic: calcularRecadoCoruja na aba curriculo', () => {
-  // 100% comprovado
+  // Tudo o que está no CV tem prova (há itens em Confere)
   const comprovado = calcularRecadoCoruja({
     aba: 'curriculo',
     analiseCurriculo: {
-      contadores: { lacuna: 0, sem_prova: 0 },
+      contadores: { confere: 4, lacuna: 0, sem_prova: 0, fora_do_cv: 0 },
     },
   });
-  assert.equal(comprovado.texto, 'Currículo 100% comprovado pela base de dados.');
+  assert.equal(comprovado.texto, 'Tudo o que está no currículo tem prova na base.');
+
+  // Nada para comparar: zero itens não é "100% comprovado"
+  for (const analiseCurriculo of [{ contadores: { confere: 0, lacuna: 0, sem_prova: 0, fora_do_cv: 0 } }, {}]) {
+    const vazio = calcularRecadoCoruja({ aba: 'curriculo', analiseCurriculo });
+    assert.equal(vazio.texto, 'Ainda não há currículo e base para comparar.');
+    assert.equal(vazio.temNovidade, false);
+  }
+  assert.equal(calcularRecadoCoruja({ aba: 'curriculo', analiseCurriculo: null }).texto, 'Carregando a análise do currículo.');
   assert.equal(comprovado.temNovidade, false);
   assert.equal(comprovado.contagem, 0);
 
