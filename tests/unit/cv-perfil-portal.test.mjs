@@ -112,3 +112,39 @@ test('vaga na Gupy não gera PDF: o documento é o perfil', async () => {
   assert.equal(decidirCv(vagaGupy(), {}).gerar, false);
   assert.equal(selecionarCv({ vaga: vagaGupy(), perfil, afirmacoes: base.claims, config: {} }), null);
 });
+
+// ---- F9.7 LinkedIn: mesmo validador, com título (headline) e limites do LinkedIn ----
+
+const perfilLinkedin = async () => ({ titulo: 'Analista de Produto', ...(await perfilGupy()) });
+
+test('LinkedIn: o título entra com limite próprio, conferência de número e texto atual ao lado', async () => {
+  const base = await baseCv();
+  const atual = await perfilLinkedin();
+  const titulo = 'Analista de produto | painel de indicadores usado por 41 pessoas';
+  const { runner } = runnerFake(() => ({ secoes: [{ campo: 'titulo', proposto: titulo, afirmacoes: ['AF-202'] }] }));
+  const r = await proporPerfilPortal({ runner, portal: 'linkedin', perfilAtual: atual, afirmacoes: base.claims });
+  assert.deepEqual(r.secoes, [{ campo: 'titulo', atual: 'Analista de Produto', proposto: titulo, afirmacoes: ['AF-202'] }]);
+  const casos = [
+    [{ campo: 'titulo', proposto: 'x'.repeat(LIMITES_PORTAL.linkedin.titulo + 1), afirmacoes: ['AF-202'] }, /excede/],
+    [{ campo: 'titulo', proposto: 'Analista de produto com 15 anos de experiência', afirmacoes: ['AF-202'] }, /sem afirmação|número/],
+  ];
+  for (const [secao, erro] of casos) {
+    const { runner: r2 } = runnerFake(() => ({ secoes: [secao] }));
+    await assert.rejects(proporPerfilPortal({ runner: r2, portal: 'linkedin', perfilAtual: atual, afirmacoes: base.claims }), erro);
+  }
+});
+
+test('Gupy não tem título: a seção é recusada', async () => {
+  const { propor } = await ambiente(() => ({ secoes: [{ campo: 'titulo', proposto: 'Analista de produto', afirmacoes: ['AF-202'] }] }));
+  await assert.rejects(propor(), /campo desconhecido/);
+});
+
+test('LinkedIn aceita Sobre maior que o limite da Gupy', async () => {
+  assert.ok(LIMITES_PORTAL.linkedin.sobre > LIMITES_PORTAL.gupy.sobre);
+  const base = await baseCv();
+  const longo = `${SOBRE} `.repeat(Math.ceil((LIMITES_PORTAL.gupy.sobre + 10) / (SOBRE.length + 1))).trim();
+  assert.ok([...longo].length > LIMITES_PORTAL.gupy.sobre && [...longo].length <= LIMITES_PORTAL.linkedin.sobre);
+  const { runner } = runnerFake(() => ({ secoes: [{ campo: 'sobre', proposto: longo, afirmacoes: ['AF-202', 'AF-204'] }] }));
+  const r = await proporPerfilPortal({ runner, portal: 'linkedin', perfilAtual: await perfilLinkedin(), afirmacoes: base.claims });
+  assert.equal(r.secoes[0].campo, 'sobre');
+});
