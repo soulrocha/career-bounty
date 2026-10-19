@@ -1,8 +1,25 @@
 // /entrevista pela CLI: lacunas, perguntar (LLM), registrar, pendentes, aprovar, rejeitar.
+// F9.6: preparar (dossiê de entrevista para vaga), simular (roteiro interativo de treino com Claude).
+import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { loadSettings } from '../config.mjs';
 import { analisarBase } from '../kb/analise.mjs';
 import { aprovarPendente, listarPendentes, perguntarLacuna, registrarResposta, rejeitarPendente } from '../kb/interview.mjs';
 import { runnerDasOpcoes } from './llm.mjs';
+import { relogio } from './relogio.mjs';
+import { readEvents, appendEvents } from '../store/events.mjs';
+import { projectEvents } from '../store/project.mjs';
+import { validarEntrevistaPreparada } from '../store/rules.mjs';
+import { carregarFontes } from '../kb/fontes.mjs';
+import { lerBase } from '../kb/base.mjs';
+import { avaliar } from '../score/evaluate.mjs';
+import {
+  gerarPreparacaoEntrevista,
+  gerarRoteiroSimulacao,
+  salvarPreparacao,
+} from '../interview/preparation.mjs';
+import { gravarProposta, slug } from '../kb/outbox.mjs';
+import { localDay } from '../store/schema.mjs';
 
 const NL = String.fromCharCode(10);
 
@@ -18,6 +35,176 @@ export const entrevistaCommands = {
   async entrevista(rest, { parseFlags }) {
     const [sub, ...flags] = rest;
     const settings = await loadSettings();
+
+    // Subcomandos F9.6: Preparação e Simulação de Entrevista de Emprego
+    if (sub === 'preparar') {
+      const values = parseFlags(flags, {
+        allowed: ['--vaga', '--saida', '--live', '--replay', '--now', '--json', '--teste'],
+        withValue: ['--vaga', '--saida', '--replay', '--now'],
+      });
+      const vagaId = values['--vaga'];
+      if (!vagaId || !vagaId.trim()) throw new Error('Informe --vaga <id>.');
+
+      const nowTs = relogio(values).toISOString();
+
+      const { eventos } = await readEvents(settings.dataRoot);
+      const projecao = projectEvents(eventos);
+      const vaga = projecao.vagas.find(v => v.id === vagaId);
+      if (!vaga) throw new Error(`Vaga não encontrada: ${vagaId}`);
+
+      const { fontes } = await carregarFontes({ dataRoot: settings.dataRoot, settings });
+      const base = await lerBase(fontes);
+
+      // Se a vaga ainda não foi avaliada, executa o avaliador
+      if (!vaga.requisitos || vaga.requisitos.length === 0) {
+        const runner = await runnerDasOpcoes(values, settings);
+        const { avaliacao } = await avaliar({
+          runner,
+          vaga: {
+            id: vaga.id,
+            vaga: {
+              cargo: vaga.cargo,
+              empresa: vaga.empresa,
+              local: vaga.local,
+              modalidade: vaga.modalidade,
+              regime: vaga.regime,
+              descricao: vaga.descricao_completa || vaga.descricao || '',
+            },
+          },
+          afirmacoes: base.claims,
+        });
+
+        const evAvaliacao = {
+          id: `vaga.avaliada:${randomUUID()}`,
+          ts: nowTs,
+          ator: 'usuario',
+          tipo: 'vaga.avaliada',
+          entidade: 'vagas',
+          entidade_id: vaga.id,
+          dados: {
+            descricao_hash: vaga.descricao_hash,
+            avaliacao,
+          },
+          evidencia: [],
+        };
+        // Sem hash da descrição a avaliação não tem a que se ligar: usa só nesta preparação, sem gravar.
+        if (vaga.descricao_hash) {
+          await appendEvents(settings.dataRoot, [evAvaliacao], { now: nowTs });
+          const { eventos: eventosAtualizados } = await readEvents(settings.dataRoot);
+          const vagaAtualizada = projectEvents(eventosAtualizados).vagas.find(v => v.id === vagaId);
+          if (vagaAtualizada) Object.assign(vaga, vagaAtualizada);
+        } else {
+          Object.assign(vaga, { requisitos: avaliacao.requisitos ?? [], aderencia: avaliacao.aderencia ?? vaga.aderencia });
+        }
+      }
+
+      const prep = gerarPreparacaoEntrevista({
+        vaga,
+        avaliacao: vaga,
+        base,
+        now: nowTs,
+      });
+
+      const arquivoRelativo = await salvarPreparacao({
+        dataRoot: settings.dataRoot,
+        preparacao: prep,
+        vagaId: vaga.id,
+        saida: values['--saida'],
+        now: nowTs,
+      });
+
+      const dadosEvento = {
+        vaga_id: vaga.id,
+        arquivo: arquivoRelativo,
+        data: prep.data,
+        pontos_fortes_count: prep.contadores.pontos_fortes,
+        lacunas_count: prep.contadores.pontos_fracos_e_lacunas,
+      };
+
+      const erroRegra = validarEntrevistaPreparada(dadosEvento, nowTs);
+      if (erroRegra) throw new Error(erroRegra);
+
+      const evPreparada = {
+        id: `entrevista.preparada:${randomUUID()}`,
+        ts: nowTs,
+        ator: 'usuario',
+        tipo: 'entrevista.preparada',
+        entidade: 'entrevista',
+        entidade_id: vaga.id,
+        dados: dadosEvento,
+        evidencia: [],
+      };
+      await appendEvents(settings.dataRoot, [evPreparada], { now: nowTs });
+
+      const text = [
+        `# Preparação para Entrevista: ${prep.cargo} na ${prep.empresa}`,
+        `- Vaga: ${vaga.id}`,
+        `- Aderência: ${prep.aderencia}`,
+        `- Pontos Fortes Comprovados: ${prep.contadores.pontos_fortes}`,
+        `- Lacunas e Pontos Fracos: ${prep.contadores.pontos_fracos_e_lacunas}`,
+        `- Perguntas STAR: ${prep.contadores.perguntas_star}`,
+        `- O que NÃO alegar: ${prep.contadores.itens_nao_alegar}`,
+        `- Arquivo salvo em: ${arquivoRelativo}`,
+      ].join(NL);
+
+      return {
+        result: {
+          ok: true,
+          vaga_id: vaga.id,
+          arquivo: arquivoRelativo,
+          pontos_fortes_count: prep.contadores.pontos_fortes,
+          lacunas_count: prep.contadores.pontos_fracos_e_lacunas,
+          preparacao: prep,
+        },
+        text,
+      };
+    }
+
+    if (sub === 'simular') {
+      const values = parseFlags(flags, {
+        allowed: ['--vaga', '--saida', '--live', '--replay', '--now', '--json', '--teste'],
+        withValue: ['--vaga', '--saida', '--replay', '--now'],
+      });
+      const vagaId = values['--vaga'];
+      if (!vagaId || !vagaId.trim()) throw new Error('Informe --vaga <id>.');
+
+      const nowTs = relogio(values).toISOString();
+
+      const { eventos } = await readEvents(settings.dataRoot);
+      const projecao = projectEvents(eventos);
+      const vaga = projecao.vagas.find(v => v.id === vagaId);
+      if (!vaga) throw new Error(`Vaga não encontrada: ${vagaId}`);
+
+      const { fontes } = await carregarFontes({ dataRoot: settings.dataRoot, settings });
+      const base = await lerBase(fontes);
+
+      const prep = gerarPreparacaoEntrevista({
+        vaga,
+        avaliacao: vaga,
+        base,
+        now: nowTs,
+      });
+
+      const roteiro = gerarRoteiroSimulacao({ preparacao: prep, vaga });
+
+      const dataHoje = localDay(nowTs);
+      const nomePadrao = `simulacao-${slug(vaga.id)}-${dataHoje}.md`;
+      const nomeArquivo = values['--saida'] ? path.basename(values['--saida']) : nomePadrao;
+      const arquivoAbsoluto = await gravarProposta(settings.dataRoot, 'entrevistas', nomeArquivo, roteiro);
+      const arquivoRelativo = path.relative(settings.dataRoot, arquivoAbsoluto).replaceAll('\\', '/');
+
+      return {
+        result: {
+          ok: true,
+          vaga_id: vaga.id,
+          arquivo: arquivoRelativo,
+          roteiro,
+        },
+        text: roteiro,
+      };
+    }
+
+    // Subcomandos legados da entrevista investigativa de lacunas (preservados 100%)
     if (sub === 'lacunas') {
       const values = parseFlags(flags, { allowed: ['--limite'], withValue: ['--limite'] });
       const limite = values['--limite'] ? Number(values['--limite']) : 10;

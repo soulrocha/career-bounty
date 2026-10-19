@@ -159,3 +159,18 @@ Registro imutável no log append-only (`tipo: analise.item_marcado`, `entidade: 
 
 Registro imutável no log append-only (`tipo: analise.lacuna_entrevista`, `entidade: lacuna`) que documenta o encaminhamento de uma lacuna para o fluxo de entrevista investigativa, gerando pergunta sugerida e rascunho em `outbox/lacunas/`.
 
+## Preparação para entrevista
+
+Dossiê estratégico estruturado em quatro blocos (pontos fortes comprovados, pontos fracos e lacunas com plano de contingência, perguntas prováveis com histórias STAR e limites do que não alegar) gerado para uma vaga canônica específica.
+
+## História STAR
+
+Estrutura narrativa dividida em Situação, Tarefa, Ação e Resultado ancorada exclusivamente em afirmações comprovadas da base de conhecimento, formatada para articulação oral objetiva em entrevistas.
+
+## Evento entrevista.preparada
+
+Registro imutável no log append-only (`tipo: entrevista.preparada`, `entidade: entrevista`) que comprova a compilação e arquivamento do dossiê de preparação de entrevista para uma vaga.
+
+## Simulação de entrevista
+
+Roteiro estruturado de perguntas graduadas (quebra-gelo, técnica, lacuna e comportamental) para treinamento interativo da pessoa com assistente LLM.
