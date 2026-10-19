@@ -2324,27 +2324,31 @@ function formatarSalario(val) {
   return esc(val);
 }
 
+// Os filtros da barra, numa vaga. `semAderencia` é para os contadores das fichas: cada ficha mostra quantas vagas
+// haveria com ela ligada, dados todos os OUTROS filtros (candidatura, descartadas, modalidade, regime, portal e busca).
+function passaFiltros(v, b, { semAderencia = false } = {}) {
+  if (!semAderencia && !S.ader.has(v.aderencia)) return false;
+  if (S.modo && !norm(v.modalidade).startsWith(norm(S.modo))) return false;
+  if (S.regime) {
+    if (S.regime === 'pendente') {
+      if (['CLT', 'PJ'].includes(v.regime)) return false;
+    } else if (v.regime !== S.regime) {
+      return false;
+    }
+  }
+  if (S.portal && v.portal_candidatura !== S.portal) return false;
+  if (S.cand && (S.cand === 'sim') !== aplicada(v)) return false;
+  if (S.desc !== 'todas' && (S.desc === 'sim') !== descartada(v)) return false;
+  if (b) {
+    const texto = norm([v.empresa, v.cargo, v.descricao, ...(v.motivos || []), ...(v.lacunas || [])].join(' '));
+    if (!texto.includes(b)) return false;
+  }
+  return true;
+}
+
 function filtrar() {
   const b = norm(S.busca);
-  return (DATA.vagas || []).filter(v => {
-    if (!S.ader.has(v.aderencia)) return false;
-    if (S.modo && !norm(v.modalidade).startsWith(norm(S.modo))) return false;
-    if (S.regime) {
-      if (S.regime === 'pendente') {
-        if (['CLT', 'PJ'].includes(v.regime)) return false;
-      } else if (v.regime !== S.regime) {
-        return false;
-      }
-    }
-    if (S.portal && v.portal_candidatura !== S.portal) return false;
-    if (S.cand && (S.cand === 'sim') !== aplicada(v)) return false;
-    if (S.desc !== 'todas' && (S.desc === 'sim') !== descartada(v)) return false;
-    if (b) {
-      const texto = norm([v.empresa, v.cargo, v.descricao, ...(v.motivos || []), ...(v.lacunas || [])].join(' '));
-      if (!texto.includes(b)) return false;
-    }
-    return true;
-  }).sort((x, y) => {
+  return (DATA.vagas || []).filter(v => passaFiltros(v, b)).sort((x, y) => {
     const ox = ORDEM.indexOf(x.aderencia);
     const oy = ORDEM.indexOf(y.aderencia);
     if (ox !== oy) return ox - oy;
@@ -2553,11 +2557,14 @@ async function apiPost(endpoint, body) {
 
 function atualizarContadores() {
   const vagas = DATA.vagas || [];
-  const altas = vagas.filter(v => v.aderencia === 'alta').length;
-  const boas = vagas.filter(v => v.aderencia === 'boa').length;
-  const conds = vagas.filter(v => v.aderencia === 'condicional').length;
-  const baixas = vagas.filter(v => v.aderencia === 'baixa').length;
-  const incomp = vagas.filter(v => v.aderencia === 'incompativel').length;
+  // Fichas de aderência: contam as vagas que passam nos outros filtros, não o total da base.
+  const b = norm(S.busca);
+  const dosFiltros = vagas.filter(v => passaFiltros(v, b, { semAderencia: true }));
+  const altas = dosFiltros.filter(v => v.aderencia === 'alta').length;
+  const boas = dosFiltros.filter(v => v.aderencia === 'boa').length;
+  const conds = dosFiltros.filter(v => v.aderencia === 'condicional').length;
+  const baixas = dosFiltros.filter(v => v.aderencia === 'baixa').length;
+  const incomp = dosFiltros.filter(v => v.aderencia === 'incompativel').length;
 
   document.getElementById('n-alta').textContent = altas;
   document.getElementById('n-boa').textContent = boas;
@@ -3094,8 +3101,10 @@ function calcularRecadoCorujaClient(aba) {
   if (aba === 'curriculo') {
     const cur = (typeof cacheCurriculo !== 'undefined' && cacheCurriculo) ? cacheCurriculo : null;
     if (!cur) return { texto: 'Carregando a análise do currículo.', temNovidade: false, contagem: 0, aba: 'curriculo' };
-    const contadores = cur?.contadores || {};
-    const grupos = cur?.grupos || {};
+    // A análise guardada na tela já vem normalizada ({ confere, sem_prova, fora_do_cv, lacunas, contagem }); os nomes
+    // `contadores` e `grupos` são os da resposta bruta da API e valem como alternativa.
+    const contadores = cur?.contagem || cur?.contadores || {};
+    const grupos = cur?.grupos || cur || {};
 
     const lacunas = contadores.lacuna ?? contadores.lacunas ?? grupos.lacuna?.length ?? grupos.lacunas?.length ?? 0;
     const semProva = contadores.sem_prova ?? grupos.sem_prova?.length ?? 0;
@@ -4609,16 +4618,25 @@ async function carregarCurriculo() {
   const token = (window.PAINEL_API || {}).token || (api || {}).token || '';
 
   try {
-    let res = await fetch('/api/analise-curriculo', {
-      headers: { 'X-Painel-Token': token },
-      cache: 'no-store',
-    });
-
-    if (res.status === 404) {
-      res = await fetch('/api/quadrantes', {
+    let res;
+    try {
+      res = await fetch('/api/analise-curriculo', {
         headers: { 'X-Painel-Token': token },
         cache: 'no-store',
       });
+
+      if (res.status === 404) {
+        res = await fetch('/api/quadrantes', {
+          headers: { 'X-Painel-Token': token },
+          cache: 'no-store',
+        });
+      }
+    } catch (redeErro) {
+      // Só falha de rede é "painel desconectado".
+      if (container) {
+        container.innerHTML = '<div class="vazio" id="curriculo-estado"><strong>Painel desconectado.</strong> Verifique se o servidor local está ativo.</div>';
+      }
+      return;
     }
 
     if (res.status === 403) {
@@ -4639,8 +4657,9 @@ async function carregarCurriculo() {
     cacheCurriculo = normalizarRespostaAnalise(dados);
     renderizarCurriculo();
   } catch (err) {
+    console.error('Currículo e provas: resposta ou tela inválida', err);
     if (container) {
-      container.innerHTML = '<div class="vazio" id="curriculo-estado"><strong>Painel desconectado.</strong> Verifique se o servidor local está ativo.</div>';
+      container.innerHTML = '<div class="vazio" id="curriculo-estado"><strong>Erro ao exibir a análise.</strong> A resposta do painel veio em formato inesperado.</div>';
     }
   } finally {
     carregandoCurriculo = false;
@@ -4710,6 +4729,8 @@ function renderizarCurriculo() {
     return;
   }
 
+  // Erro ao desenhar os itens é erro de tela, não de conexão: mostra a mensagem certa em vez de deixar a lista vazia.
+  try {
   lista.innerHTML = ordenados.map(item => {
     const afirmacoesHtml = (item.afirmacoes || []).map(a =>
       `<span class="id af">${esc(a)}</span>`
@@ -4772,13 +4793,17 @@ function renderizarCurriculo() {
     return `
       <article class="it" data-item-id="${esc(item.id)}">
         <p class="it-texto">${esc(textoMascarado)}</p>
-        ${badgesHtml}
+        ${badges ? `<div class="ids">${badges}</div>` : ''}
         ${motivoHtml}
         ${perguntaHtml}
         ${acoesHtml}
       </article>
     `;
   }).join('');
+  } catch (erro) {
+    console.error('Currículo e provas: erro ao desenhar os itens', erro);
+    lista.innerHTML = '<div class="vazio" id="curriculo-estado"><strong>Erro ao exibir os itens.</strong> Recarregue a página; se continuar, avise quem mantém o painel.</div>';
+  }
 }
 
 async function executarAcaoCurriculo(tipo, itemId, params = {}) {
