@@ -18,7 +18,7 @@ import { injetarAbas } from './abas.mjs';
 import { responderPergunta } from '../core/apply/perguntas.mjs';
 import { lerRespostas } from '../core/apply/answers.mjs';
 import { createMaterials, namedMaterialsOf, privateFile, validateBaseFiles } from './materials.mjs';
-import { arquivosServiveis, congelarCvEnviado, lerManifesto } from '../core/cv/artifacts.mjs';
+import { arquivosServiveis, cabecalhoDownloadCv, congelarCvEnviado, lerManifesto, nomeArquivoCv } from '../core/cv/artifacts.mjs';
 import { localDay } from '../core/store/schema.mjs';
 import { projectContatos } from '../core/store/projections/contatos.mjs';
 import { projectProcessos } from '../core/store/projections/processos.mjs';
@@ -75,12 +75,18 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
   const materialsPolicy = createMaterials({ snapshot, namedMaterials, baseFiles: allowedBaseFiles });
   const writable = state.mode === 'ativo';
   let actualPort;
+  const nomeDoDownload = async (vagaId, tipo) => {
+    const vagas = (writable ? projectEvents((await readEvents(dataRoot)).eventos) : pipeline).vagas ?? [];
+    const vaga = vagas.find(v => v.id === vagaId) ?? {};
+    const perfilCv = JSON.parse(await privateFile(dataRoot, 'cv/perfil.json').catch(() => '{}'));
+    return nomeArquivoCv({ empresa: vaga.empresa, cargo: vaga.cargo, nome: perfilCv.nome_arquivo ?? perfilCv.cabecalho?.nome, tipo });
+  };
   const server = createServer(async (req, res) => {
-    const send = (code, body, type = 'application/json; charset=utf-8') => {
+    const send = (code, body, type = 'application/json; charset=utf-8', extra = {}) => {
       const bytes = Buffer.isBuffer(body) ? body : Buffer.from(JSON.stringify(body));
       res.writeHead(code, { 'Content-Type': type, 'Content-Length': bytes.length,
         'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY',
-        'Referrer-Policy': 'no-referrer', 'Content-Security-Policy': CSP });
+        'Referrer-Policy': 'no-referrer', 'Content-Security-Policy': CSP, ...extra });
       res.end(bytes);
     };
     try {
@@ -563,7 +569,10 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
         const permitido = arquivosServiveis(await lerManifesto(dataRoot, cv[1]).catch(() => null)).includes(path.slice(1));
         if (!permitido) return send(404, { erro: 'Arquivo indisponível.' });
         const bytes = await privateFile(dataRoot, path.slice(1)).catch(() => null);
-        return bytes ? send(200, bytes, 'application/pdf') : send(404, { erro: 'Arquivo indisponível.' });
+        if (!bytes) return send(404, { erro: 'Arquivo indisponível.' });
+        // Nome sugerido ao salvar: Empresa-Vaga-Nome; falha ao montar o nome nunca impede a entrega do PDF.
+        const nome = await nomeDoDownload(cv[1], path.endsWith('cv-visual.pdf') ? 'visual' : 'ats').catch(() => null);
+        return send(200, bytes, 'application/pdf', nome ? { 'Content-Disposition': cabecalhoDownloadCv(nome) } : {});
       }
       const material = await materialsPolicy.read(path);
       if (material) return send(200, material.bytes, material.type);

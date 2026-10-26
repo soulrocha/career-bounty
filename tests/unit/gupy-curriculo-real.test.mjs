@@ -62,6 +62,15 @@ test('o script do item abre a seção fechada, troca só aquela descrição e cl
   assert.deepEqual(await p.avaliar('({ menu: document.body.dataset.menu ?? null, removido: document.body.dataset.removido ?? null, outro: document.body.dataset.salvoHabilidades ?? null })'), { menu: null, removido: null, outro: null });
 });
 
+test('o "Salvar" desabilitado e visível de Habilidades (página de 26/10/2026) não bloqueia nem é clicado', { skip: semNavegador }, async t => {
+  const p = await pagina(t, portal('gupy-curriculo'));
+  const executar = await preparar(p);
+  await p.avaliar("(() => { const b = document.querySelector('[data-testid=\"candidate-skill\"]').parentElement.querySelector('div.fechado'); b.classList.remove('fechado'); b.querySelector('button').disabled = true; })()");
+  assert.deepEqual(await executar(), { estado: 'incerta', secao: 'experiencia:p0' });
+  assert.equal(await p.avaliar('document.body.dataset.salvo'), DESCRICAO);
+  assert.equal(await p.avaliar('document.body.dataset.salvoHabilidades ?? null'), null);
+});
+
 test('alvo ambíguo ou alterado: nada é salvo e o texto original volta', { skip: semNavegador }, async t => {
   const casos = [
     ["document.body.insertAdjacentHTML('beforeend','<button type=\"button\">Salvar</button>')", 'dois botões Salvar visíveis'],

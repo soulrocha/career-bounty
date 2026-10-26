@@ -54,6 +54,13 @@ test('os filtros do painel existem no template: aderência, modalidade, regime, 
   for (const id of ['fit', 'mode', 'contract', 'portal', 'applied', 'discard']) assert.match(html, new RegExp(`<select id="${id}"`), id);
 });
 
+test('o painel abre e limpa os filtros em "Ainda não me candidatei"', () => {
+  const html = renderPainel(projecao(), { template, perfil });
+  assert.match(html, /<option value="nao" selected>Ainda não me candidatei<\/option>/);
+  assert.match(html, /cand: 'nao',/);
+  assert.match(html, /S\.cand = 'nao';[\s\S]*?getElementById\('applied'\)\.value = 'nao';/);
+});
+
 test('dois renders da mesma projeção produzem bytes idênticos', () => {
   const p = projecao();
   const a = renderPainel(p, { template, perfil, hoje: '2026-10-14' });
