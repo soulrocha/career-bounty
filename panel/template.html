@@ -421,6 +421,8 @@ a { color: var(--t-condicional); text-underline-offset: 3px; }
 
 /* Organização A: Plataforma */
 .A-tela { display: flex; flex-direction: column; min-height: calc(100vh - 56px); }
+/* A lista e o detalhe rolam por dentro: sem altura fixa, crescem com o conteúdo e o overscroll contain trava a roda do mouse. */
+#painel-vagas { height: calc(100vh - 56px); }
 .ferramentas { display: flex; flex-wrap: wrap; gap: 10px 8px; align-items: center; padding: 14px 20px; }
 .ferramentas .total { margin-left: auto; font-size: var(--t-sm); color: var(--tx2); font-variant-numeric: tabular-nums; }
 
@@ -1624,6 +1626,7 @@ footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0;
   .placa { padding: 0 12px; gap: 10px; }
   .placa .nome, .placa .pet, .placa .estado { display: none; }
   .A-tela { height: auto; min-height: 0; }
+  #painel-vagas { height: auto; }
   .A-mesa { display: block; padding: 0 12px 60px; }
   .A-det { display: none; margin-top: 12px; }
   .A-mesa.abre-det .A-lista { display: none; }
@@ -1884,7 +1887,7 @@ footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0;
 
       <select id="applied" class="campo" aria-label="Filtrar candidatura">
         <option value="">Com e sem candidatura</option>
-        <option value="nao">Ainda não me candidatei</option>
+        <option value="nao" selected>Ainda não me candidatei</option>
         <option value="sim">Já me candidatei</option>
       </select>
 
@@ -2285,7 +2288,7 @@ const S = {
   modo: '',
   regime: '',
   portal: '',
-  cand: '',
+  cand: 'nao',
   desc: 'nao',
   sel: null,
   fundoParado: localStorage.getItem('cb-animacao-pausada') === '1' || localStorage.getItem('cb_fundo_parado') === '1',
@@ -2644,14 +2647,14 @@ document.getElementById('btn-limpar-filtros').addEventListener('click', () => {
   S.modo = '';
   S.regime = '';
   S.portal = '';
-  S.cand = '';
+  S.cand = 'nao';
   S.desc = 'nao';
   S.ader = new Set(['alta', 'boa', 'condicional', 'baixa']);
   document.getElementById('search').value = '';
   document.getElementById('mode').value = '';
   document.getElementById('contract').value = '';
   document.getElementById('portal').value = '';
-  document.getElementById('applied').value = '';
+  document.getElementById('applied').value = 'nao';
   document.getElementById('discard').value = 'nao';
   document.querySelectorAll('.chips .chip').forEach(c => c.setAttribute('aria-pressed', String(S.ader.has(c.dataset.ader))));
   render();

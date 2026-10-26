@@ -125,3 +125,20 @@ export async function cvsDoPainel(projecao, dataRoot) {
   }
   return cvs;
 }
+
+// Nome sugerido ao salvar o PDF: "Empresa-Vaga-Nome.pdf" (o visual leva " (visual)"). Tira o que o Windows recusa,
+// emoji e pontuação solta; mantém acentos. Parte vazia é omitida.
+const parteDoNome = texto => String(texto ?? '').normalize('NFC')
+  .replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, ' ')
+  .replace(/[\\/:*?"<>|\u0000-\u001F]/g, ' ')
+  .replace(/\s+/g, ' ').trim().replace(/^[.\s-]+|[.\s-]+$/g, '');
+
+export function nomeArquivoCv({ empresa, cargo, nome, tipo }) {
+  const base = [empresa, cargo, nome].map(parteDoNome).filter(Boolean).join('-').slice(0, 130).trim() || 'curriculo';
+  return `${base}${tipo === 'visual' ? ' (visual)' : ''}.pdf`;
+}
+
+export const cabecalhoDownloadCv = nome => {
+  const ascii = nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, '').replace(/["\\]/g, '');
+  return `inline; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(nome).replace(/['()]/g, c => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)}`;
+};

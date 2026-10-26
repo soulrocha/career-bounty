@@ -58,6 +58,8 @@ Requisito "atendido" sem afirmação ligada não conta como prova de aderência:
 ```
 
 - São exatamente 4 cards, cada um ligado a afirmações (`claim_ids`); número de card sem afirmação bloqueia o CV.
+- `nome_arquivo` (opcional) é o nome usado no arquivo baixado pelo painel, `Empresa-Vaga-<nome_arquivo>.pdf`; sem ele, vale
+  `cabecalho.nome`.
 - Cada afirmação vai para a experiência da mesma empresa (e do período que mais se sobrepõe). A que não casa com nenhuma
   vai para "Destaques". `afirmacoes` na experiência fixa a ordem da base; o resto vem depois, por ID.
 - Toda experiência do perfil aparece no CV, na ordem do perfil. A que não tem afirmação liberada sai com cargo, período e

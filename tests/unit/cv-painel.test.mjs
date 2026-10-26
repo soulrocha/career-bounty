@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -8,7 +8,7 @@ import test from 'node:test';
 import { run, tempDir } from '../helpers/cli.mjs';
 import { makeLegado } from '../fixtures/make-legado.mjs';
 import { encontrarNavegador } from '../../core/cv/navegador.mjs';
-import { gravarCv } from '../../core/cv/artifacts.mjs';
+import { cabecalhoDownloadCv, gravarCv, nomeArquivoCv } from '../../core/cv/artifacts.mjs';
 import { cvsDoPainel, renderPainel } from '../../panel/render.mjs';
 import { PUBLIC_TEMPLATE } from '../../panel/template.mjs';
 import { startPanel } from '../../panel/server.mjs';
@@ -103,6 +103,15 @@ test('o servidor só entrega PDFs de CV listados no manifesto (path traversal bl
   assert.equal(ok.headers.get('content-type'), 'application/pdf');
   assert.equal(await ok.text(), '%PDF-ats');
   assert.equal((await get(`/artifacts/cv/${vagaId}/${H1}/cv-visual.pdf`)).status, 200);
+
+  // Ao salvar, o nome sugerido é Empresa-Vaga-Nome, com o nome do perfil de CV privado.
+  await mkdir(path.join(dataRoot, 'cv'), { recursive: true });
+  await writeFile(path.join(dataRoot, 'cv/perfil.json'), JSON.stringify({ nome_arquivo: 'Ana Exemplo', cabecalho: { nome: 'Ana Maria Exemplo' } }));
+  const vaga = pipeline.vagas[0];
+  const esperado = nomeArquivoCv({ empresa: vaga.empresa, cargo: vaga.cargo, nome: 'Ana Exemplo', tipo: 'ats' });
+  assert.match(esperado, /-Ana Exemplo\.pdf$/);
+  assert.equal((await get(`/artifacts/cv/${vagaId}/${H1}/cv-ats.pdf`)).headers.get('content-disposition'), cabecalhoDownloadCv(esperado));
+  assert.match((await get(`/artifacts/cv/${vagaId}/${H1}/cv-visual.pdf`)).headers.get('content-disposition'), /Ana%20Exemplo%20%28visual%29\.pdf$/);
 
   for (const rota of [
     `/artifacts/cv/${vagaId}/${H2}/cv-ats.pdf`, // versão fora do manifesto

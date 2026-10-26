@@ -268,8 +268,9 @@ async function aplicarItem(extrair, vinculo) {
       }
       const campoOk = () => vis(campo) && campo.tagName === 'TEXTAREA' && document.querySelectorAll(`#activitiesPerformed-${n}`).length === 1 && !campo.disabled && !campo.readOnly;
       if (!campoOk()) return fail();
-      const salvarVisiveis = () => [...document.querySelectorAll('button')].filter(b => N(b.textContent) === 'Salvar' && vis(b));
-      // "Salvar" visível antes de alterar = outra seção com alteração não salva: clicar persistiria o que a pessoa não aprovou.
+      // Só conta "Salvar" que pode salvar: desde 26/10/2026 a seção Habilidades mostra o seu "Salvar" desabilitado sem alteração.
+      const salvarVisiveis = () => [...document.querySelectorAll('button')].filter(b => N(b.textContent) === 'Salvar' && vis(b) && !b.disabled && b.getAttribute('aria-disabled') !== 'true');
+      // "Salvar" habilitado antes de alterar = outra seção com alteração não salva: clicar persistiria o que a pessoa não aprovou.
       if (salvarVisiveis().length) return { erro: 'há alteração não salva na página (um "Salvar" já está visível); salve ou descarte antes; ação humana necessária' };
       // Seção Experiência: o maior ancestral do campo que não contém outras seções (habilidades, dados pessoais).
       const OUTRAS = '#skills-search-autocomplete,[data-testid="candidate-skill"],#identityCardNumber,#linkedinProfileUrl,#addressZipCode';
