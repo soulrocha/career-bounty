@@ -327,7 +327,7 @@ seguros:
 |---|---|---|
 | `perfil.nome`, `.especialidade`, `.regiao` | vazio | Identificação mostrada no painel |
 | `radar.termos` | `[]` | Termos de busca nas fontes |
-| `radar.criterios` | `{}` | `titulos_alvo`, `palavras_chave`, `palavras_negativas`, `regiao_presencial`, `corte_prescore` e faixas de salário (`clt`, `pj`) |
+| `radar.criterios` | `{}` | `titulos_alvo`, `palavras_chave`, `palavras_negativas`, `regiao_presencial`, `corte_prescore` e faixas de salário (`clt`, `pj`), só como referência de negociação: salário não descarta vaga |
 | `radar.criterios.modalidades` | as três | Modalidades aceitas (`remoto`, `hibrido`, `presencial`); vaga em outra é descartada. O `/setup` pergunta e grava pelo comando `preferencias` |
 | `radar.criterios.modalidade_preferida` | nenhuma | A preferida pontua mais na triagem |
 | `radar.janela_dias` | `7` | Quantos dias para trás cada coleta olha |
