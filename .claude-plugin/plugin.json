@@ -1,6 +1,6 @@
 {
   "name": "career-bounty",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Organiza a busca de vagas e as candidaturas dentro do Claude Code, com dados privados fora do repositório.",
   "license": "MIT"
 }

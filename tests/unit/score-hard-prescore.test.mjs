@@ -20,18 +20,28 @@ test('local fora do Brasil é descartado com motivo', () => {
   assert.equal(hardFilter(v({ local: 'Brasil' }), criterios).descartada, false);
 });
 
-test('presencial fora da região e teto abaixo do piso descartam; regime e modalidade seguem a configuração', () => {
+test('presencial fora da região descarta; regime e modalidade seguem a configuração', () => {
   assert.equal(hardFilter(v({ modalidade: 'presencial', local: 'Outra Cidade, SP' }), criterios).descartada, true);
   assert.equal(hardFilter(v({ modalidade: 'presencial', local: 'Cidade Exemplo, MG' }), criterios).descartada, false);
-  const baixo = hardFilter(v({ salario_min: 4000, salario_max: 6000 }), criterios);
-  assert.equal(baixo.descartada, true);
-  assert.match(baixo.motivos.join(' '), /abaixo do piso/);
   assert.equal(hardFilter(v({ regime: 'PJ', salario_min: 9000, salario_max: 20000 }), criterios).descartada, false);
 });
 
-test('salário desconhecido não elimina', () => {
-  const r = hardFilter(v({ salario_min: null, salario_max: null }), criterios);
-  assert.equal(r.descartada, false);
+// Decisão de 22/10/2026: a vaga quase nunca divulga salário (997 de 1030 no pipeline real),
+// então o piso deixou de ser portão. Ele continua no config.yml como referência de negociação.
+test('salário nunca descarta no portão, divulgado ou não', () => {
+  assert.equal(hardFilter(v({ salario_min: null, salario_max: null }), criterios).descartada, false);
+  const baixo = hardFilter(v({ salario_min: 4000, salario_max: 6000 }), criterios);
+  assert.equal(baixo.descartada, false);
+  assert.doesNotMatch(baixo.motivos.join(' '), /piso/i);
+  const fixo = hardFilter(v({ salario: 3000 }), criterios);
+  assert.equal(fixo.descartada, false);
+  assert.doesNotMatch(fixo.motivos.join(' '), /piso/i);
+});
+
+test('o portão não expõe piso nas condições, mesmo com piso configurado', () => {
+  const r = hardFilter(v({ salario_min: 4000, salario_max: 6000 }), criterios);
+  assert.equal(r.condicoes.piso, null);
+  assert.notEqual(r.condicoes.situacao, 'incompativel');
 });
 
 test('sem região presencial configurada, presencial não elimina', () => {
