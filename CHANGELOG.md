@@ -5,6 +5,27 @@ mudanças de comportamento podem acontecer entre versões menores.
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-10-26
+
+Correções do painel e do perfil da Gupy encontradas no uso real.
+
+### Corrigido
+
+- **Rolagem da aba Vagas.** A roda do mouse não rolava a lista nem o detalhe: os dois cresciam com o conteúdo e o
+  `overscroll-behavior: contain` impedia que a rolagem passasse para a página. A tela de vagas agora ocupa a altura da
+  janela, e a lista e o detalhe rolam por dentro. No celular, segue a rolagem da página.
+- **Perfil da Gupy com "Salvar" desabilitado.** A página "Meu currículo" passou a mostrar o "Salvar" da seção Habilidades
+  visível e desabilitado. A proteção tratava isso como alteração pendente e recusava editar a experiência. Agora só conta
+  "Salvar" habilitado.
+
+### Alterado
+
+- **Filtro padrão "Ainda não me candidatei".** O painel abre, e "Limpar filtros" volta, mostrando só as vagas em que você
+  ainda não se candidatou.
+- **Nome do PDF ao salvar.** O CV chega como `Empresa-Vaga-Nome.pdf` (o visual com " (visual)"), sem caracteres que o
+  Windows recusa nem emoji. O nome vem de `nome_arquivo` em `DATA_ROOT/cv/perfil.json` (ou de `cabecalho.nome`); o PDF
+  continua abrindo na aba.
+
 ## [0.3.1] - 2026-10-18
 
 Correções do painel encontradas no primeiro uso real.
