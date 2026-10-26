@@ -10,7 +10,9 @@ export const foraDoBrasil = local => {
   return texto !== '' && !BRASIL.test(texto) && EXTERIOR.test(texto);
 };
 
-// Devolve { descartada, motivos, condicoes }. Salário desconhecido nunca elimina.
+// Devolve { descartada, motivos, condicoes }. Salário nunca elimina, divulgado ou não:
+// a vaga quase nunca publica valor, então o piso ficou só como referência de negociação no config.yml
+// e o portão não o lê. Quem replica o legado é constraints()/merge(), que seguem com o piso intacto.
 export function hardFilter(vaga, criterios = {}) {
   const motivos = [];
   if (foraDoBrasil(vaga.local)) motivos.push('Local fora do Brasil');
@@ -21,7 +23,8 @@ export function hardFilter(vaga, criterios = {}) {
   }
   // Sem região configurada, presença física não elimina: o piso de região vira o próprio local da vaga.
   const regiao = criterios.regiao_presencial?.length ? criterios.regiao_presencial.map(fold) : [fold(vaga.local)];
-  const condicoes = constraints(vaga, { regiao_presencial: regiao, clt: { onsite_min: null, remote_hybrid_min: null, ...criterios.clt }, pj: { min: null, ...criterios.pj } });
-  if (condicoes.situacao === 'incompativel') motivos.push(...condicoes.motivos.filter(motivo => /fora d[ea]|abaixo do piso|não elegível/i.test(motivo)));
+  // Piso sempre nulo aqui: sem piso, constraints() não compara salário nem marca incompatível por valor.
+  const condicoes = constraints(vaga, { regiao_presencial: regiao, clt: { onsite_min: null, remote_hybrid_min: null }, pj: { min: null } });
+  if (condicoes.situacao === 'incompativel') motivos.push(...condicoes.motivos.filter(motivo => /fora d[ea]|não elegível/i.test(motivo)));
   return { descartada: motivos.length > 0, motivos, condicoes };
 }

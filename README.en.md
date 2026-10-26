@@ -329,7 +329,7 @@ Personal configuration lives only in `DATA_ROOT/config.yml` (plain JSON). See `c
 |---|---|---|
 | `perfil.nome`, `.especialidade`, `.regiao` | empty | Identification shown in the panel |
 | `radar.termos` | `[]` | Search terms for the sources |
-| `radar.criterios` | `{}` | `titulos_alvo`, `palavras_chave`, `palavras_negativas`, `regiao_presencial`, `corte_prescore` and salary floors (`clt`, `pj`) |
+| `radar.criterios` | `{}` | `titulos_alvo`, `palavras_chave`, `palavras_negativas`, `regiao_presencial`, `corte_prescore` and salary floors (`clt`, `pj`), kept only as a negotiation reference: salary never drops an opening |
 | `radar.criterios.modalidades` | all three | Accepted work modes (`remoto`, `hibrido`, `presencial`); openings in any other mode are dropped. `/setup` asks and saves them with the `preferencias` command |
 | `radar.criterios.modalidade_preferida` | none | The preferred mode scores higher in triage |
 | `radar.janela_dias` | `7` | How many days back each collection looks |

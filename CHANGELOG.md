@@ -5,6 +5,15 @@ mudanças de comportamento podem acontecer entre versões menores.
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-10-26
+
+### Alterado
+
+- **Salário não descarta mais vaga no radar.** Quase nenhuma vaga divulga salário (997 de 1.030 no pipeline real), e o
+  piso de `clt` e `pj` em `radar.criterios` descartava as poucas que divulgam valor abaixo dele, com o motivo "abaixo do
+  piso". Agora o portão do radar ignora o salário, divulgado ou não, e o piso fica no `config.yml` só como referência de
+  negociação. Local fora do Brasil e presencial fora da região continuam descartando.
+
 ## [0.3.2] - 2026-10-26
 
 Correções do painel e do perfil da Gupy encontradas no uso real.
