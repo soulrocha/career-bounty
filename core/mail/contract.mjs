@@ -65,6 +65,12 @@ export function paraRemetente(bruto) {
 const limparNome = nome => paraRemetente(nome).remetente_nome;
 
 function diaDe(texto) {
+  if (texto === null) return null;
+  // Timestamp numérico (o Gmail expõe internalDate em ms): abaixo de 1e11 é segundo.
+  if (typeof texto === 'number') {
+    const data = new Date(texto < 1e11 ? texto * 1000 : texto);
+    return Number.isFinite(texto) && !Number.isNaN(data.getTime()) ? localDay(data) : null;
+  }
   const m = /^(\d{4}-\d{2}-\d{2})(?:[T ]\S+)?$/.exec(String(texto).trim());
   if (!m) return null;
   if (m[0].length === 10) return isoDate(m[1]);
