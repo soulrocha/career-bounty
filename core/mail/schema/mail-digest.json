@@ -14,7 +14,7 @@
         "required": ["message_id", "data", "assunto", "trecho"],
         "properties": {
           "message_id": { "type": "string", "minLength": 1, "maxLength": 200 },
-          "data": { "type": "string" },
+          "data": { "type": ["string", "number", "null"] },
           "remetente": { "type": "string" },
           "remetente_nome": { "type": "string" },
           "remetente_dominio": { "type": "string" },

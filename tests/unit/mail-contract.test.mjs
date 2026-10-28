@@ -39,6 +39,13 @@ test('data inválida ou futura rejeita só o item', () => {
   assert.deepEqual(rejeitados.map(r => r.message_id), ['msg-1', 'msg-2', 'msg-3']);
 });
 
+test('data como timestamp numérico vira o dia local; data nula rejeita só o item', () => {
+  const ms = Date.parse('2026-10-13T12:00:00-03:00');
+  const { digest: d, rejeitados } = validarDigest(digest([item(1, { data: ms }), item(2, { data: ms / 1000 }), item(3, { data: null }), item(4, { data: Date.parse('2026-10-20T12:00:00-03:00') })]), { now: AGORA });
+  assert.deepEqual(d.itens.map(i => [i.message_id, i.data]), [['msg-1', '2026-10-13'], ['msg-2', '2026-10-13']]);
+  assert.deepEqual(rejeitados.map(r => [r.message_id, r.motivo]), [['msg-3', 'data inválida'], ['msg-4', 'data futura']]);
+});
+
 test('precisa_abrir com id fora de itens rejeita o digest', () => {
   assert.throws(() => validarDigest(digest([item(1)], { precisa_abrir: ['msg-9'] }), { now: AGORA }), error => error.codigo === 'precisa_abrir_invalido');
   assert.deepEqual(validarDigest(digest([item(1)], { precisa_abrir: ['msg-1'] }), { now: AGORA }).digest.precisa_abrir, ['msg-1']);
