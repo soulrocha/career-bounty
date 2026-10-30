@@ -7,7 +7,7 @@ export async function sincronizarComPrazo(dataRoot, { prazoMs = 25000, rodada = 
   try { config = await lerConfigSync(dataRoot); } catch (error) { return `base central: configuração inválida (${String(error.message ?? error).slice(0, 120)})`; }
   if (!config) return null;
   let timer;
-  const prazo = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`sem resposta em ${Math.round(prazoMs / 1000)} s`)), prazoMs); timer.unref(); });
+  const prazo = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`sem resposta em ${Math.round(prazoMs / 1000)} s`)), prazoMs); });
   try {
     const r = await Promise.race([rodada({ dataRoot }), prazo]);
     const avisos = [];
