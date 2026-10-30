@@ -83,7 +83,7 @@ Diagnóstico completo: `node bin/career-bounty.mjs doctor`.
 - O manifesto do plugin passa em `plugin validate` e em `claude plugin validate .`; a instalação
   local pelo marketplace ainda não foi exercitada.
 - O processamento/renderização equivalente e eventos granulares continuam pendentes.
-- A sincronização da pasta privada entre máquinas não está configurada por este setup.
+- A sincronização da pasta privada entre máquinas é opcional e usa um servidor seu por SSH: veja [SYNC.md](SYNC.md).
 - O corte definitivo exige cinco dias úteis reais com diff zero, teste de escrita
   em dados sintéticos e decisão explícita de congelar o escritor anterior.
 - A publicação do repositório e a primeira versão (0.2.0) são manuais e ficam a cargo de quem mantém o projeto.

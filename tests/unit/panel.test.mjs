@@ -28,7 +28,7 @@ test('painel local identifica modo sombra e entrega HTML com token efêmero', as
   const panel = await startPanel({ dataRoot, port: 0 });
   t.after(panel.close);
   const response = await fetch(`${panel.url}/api/status`);
-  assert.deepEqual(await response.json(), { app: 'career-bounty', version: 1, mode: 'shadow' });
+  assert.deepEqual(await response.json(), { app: 'career-bounty', version: 1, mode: 'shadow', sync: { configurado: false } });
   assert.equal(response.headers.get('cache-control'), 'no-store');
   assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
   assert.equal(response.headers.get('x-frame-options'), 'DENY');
