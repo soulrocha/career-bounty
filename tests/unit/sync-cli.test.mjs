@@ -45,6 +45,9 @@ test('sync configurar recusa comando ou raiz inválidos', async t => {
   assert.equal(run(['sync', 'configurar', '--comando-json', '"ssh"', '--raiz', '/srv/x', '--json'], { dataRoot: dir }).status, 2);
   assert.equal(run(['sync', 'configurar', '--comando-json', '["ssh"]', '--raiz', '/srv/com espaco', '--json'], { dataRoot: dir }).status, 2);
   assert.equal(run(['sync', '--json'], { dataRoot: dir }).json.error.includes('sync configurar'), true);
+  // Nome curto do Windows (RUNNER~1) no meio do caminho é aceito; "~" no início, não.
+  assert.equal(run(['sync', 'configurar', '--comando-json', '["ssh","u@h","node","/a.mjs"]', '--raiz', 'D:\\a\\RUNNER~1\\x', '--json'], { dataRoot: dir }).status, 0);
+  assert.equal(run(['sync', 'configurar', '--comando-json', '["ssh","u@h","node","/a.mjs"]', '--raiz', '~/x', '--json'], { dataRoot: dir }).status, 2);
 });
 
 test('envio inicial, PC novo recebe tudo e os arquivos locais da máquina ficam de fora', async t => {

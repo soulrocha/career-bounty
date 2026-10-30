@@ -15,7 +15,7 @@ import { ehLogDeEventos, sincronizavel, unirLinhas } from './regras.mjs';
 import { transporteComando } from './transporte.mjs';
 
 const arquivo = (dataRoot, nome) => path.join(dataRoot, PASTA_SYNC, nome);
-const RAIZ_VALIDA = /^(\/|[A-Za-z]:[\\/])[\w./\\:-]*$/;
+const RAIZ_VALIDA = /^(\/|[A-Za-z]:[\\/])[\w./\\:~-]*$/; // "~" só no meio (nome curto do Windows, RUNNER~1)
 const PALAVRA_REMOTA = /^[\w./@:=+,-]+$/;
 const OPCOES_SSH = /^(BatchMode=(yes|no)|ConnectTimeout=\d{1,3}|ServerAliveInterval=\d{1,3}|ServerAliveCountMax=\d{1,2})$/;
 const BUSY = 'Outra sincronização está em andamento.';
