@@ -526,6 +526,9 @@ a { color: var(--t-condicional); text-underline-offset: 3px; }
 .vazio strong { display: block; color: var(--tx); font-size: var(--t-lg); margin-bottom: 4px; }
 
 footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0; border-top: 1px solid var(--borda); text-align: center; }
+.sync-status { margin: 0 0 8px; }
+.sync-status[data-estado="erro"], .sync-status[data-estado="conflito"] { color: var(--tx2); }
+.sync-status button { font: inherit; color: inherit; text-decoration: underline; background: none; border: 0; padding: 0; cursor: pointer; }
 
 /* ==========================================================================
    Aba Histórico & Linha do Tempo (Design Misto / Metrô)
@@ -2109,6 +2112,7 @@ footer { margin: 24px 20px; color: var(--tx3); font-size: 11px; padding: 15px 0;
   </details>
 
   <footer>
+    <p class="sync-status" id="sync-status" role="status" aria-live="polite" hidden></p>
     Aderência não é probabilidade de contratação. Salários não publicados permanecem pendentes.
     Notas de empresas são retratos datados. Nenhuma candidatura ou mensagem é enviada por este painel.
   </footer>
@@ -4982,6 +4986,40 @@ if (elBtnLimparHist) {
 
 render();
 exibirRecadoCoruja('vagas');
+
+// Base central (F11): mostra a última sincronização e avisa quando chegaram dados de outro computador.
+(function acompanharSync() {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  let novosAoAbrir = null;
+  const hora = iso => { try { return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
+  async function atualizar() {
+    let s;
+    try { s = (await (await fetch('/api/status')).json()).sync; } catch { return; }
+    if (!s || !s.configurado) { el.hidden = true; return; }
+    if (novosAoAbrir === null) novosAoAbrir = s.dados_novos || 0;
+    const partes = [];
+    let estado = 'ok';
+    if (s.ok === false) { estado = 'erro'; partes.push('Base central: a última sincronização falhou' + (s.ultima ? ' às ' + hora(s.ultima) : '') + '. O que você marcar fica neste computador e sobe na próxima.'); }
+    else if (s.ok) partes.push('Base central sincronizada às ' + hora(s.ultima) + '.');
+    else partes.push('Base central: sincronizando…');
+    if ((s.conflitos || []).length) { estado = 'conflito'; partes.push(s.conflitos.length + (s.conflitos.length === 1 ? ' arquivo' : ' arquivos') + ' em conflito: valeu a versão da base central e a sua ficou ao lado (.conflito-).'); }
+    if ((s.pendentes || []).length) { estado = 'conflito'; partes.push(s.pendentes.length + (s.pendentes.length === 1 ? ' arquivo não sincronizou' : ' arquivos não sincronizaram') + ' nesta rodada (veja career-bounty sync status).'); }
+    el.dataset.estado = estado;
+    el.textContent = partes.join(' ');
+    el.title = s.erro || '';
+    if ((s.dados_novos || 0) > novosAoAbrir) {
+      const botao = document.createElement('button');
+      botao.type = 'button';
+      botao.textContent = 'Chegaram dados de outro computador: recarregar';
+      botao.addEventListener('click', () => location.reload());
+      el.append(' ', botao);
+    }
+    el.hidden = false;
+  }
+  atualizar();
+  setInterval(atualizar, 30000);
+})();
 </script>
 </body>
 </html>

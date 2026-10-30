@@ -33,6 +33,7 @@ import { projectEntrevistas } from '../core/store/projections/entrevistas.mjs';
 import { gerarPreparacaoEntrevista, formatarPreparacaoMarkdown } from '../core/interview/preparation.mjs';
 import { carregarFontes } from '../core/kb/fontes.mjs';
 import { lerBase } from '../core/kb/base.mjs';
+import { criarSyncDoPainel } from './sync.mjs';
 
 const ABAS = [ABA_QUADRANTES, ABA_PERGUNTAS, ABA_FILA];
 const PANEL_DIR = dirname(fileURLToPath(import.meta.url));
@@ -47,10 +48,13 @@ const FONTES_PERMITIDAS = new Set([
 // Painel sem recurso externo: nada carrega nem envia dado para fora de 127.0.0.1. Script e estilo inline vêm do template local.
 const CSP = ["default-src 'none'", "script-src 'unsafe-inline'", "style-src 'unsafe-inline'", "img-src 'self' data:", "font-src 'self' data:", "connect-src 'self'", "base-uri 'self'", "form-action 'none'", "frame-ancestors 'none'", "object-src 'none'"].join('; ');
 
-export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, appName = 'career-bounty', now, hostId, perfil = {} }) {
+export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, appName = 'career-bounty', now, hostId, perfil = {}, sincronizador, intervaloSyncMs, esperaSyncMs }) {
   if (!['127.0.0.1', 'localhost'].includes(host)) throw new Error('O painel exige endereço local.');
   dataRoot = resolve(dataRoot);
   await noLinks(dataRoot).catch(() => { throw new Error('Diretório de dados inválido.'); });
+  // Base central (F11): num PC novo a primeira rodada traz o estado e a projeção antes de o painel ler.
+  const syncPainel = await criarSyncDoPainel({ dataRoot, sincronizador, intervaloSyncMs, esperaSyncMs });
+  await syncPainel.inicial();
   const token = randomBytes(32).toString('hex');
   const state = JSON.parse(await privateFile(dataRoot, 'state/migration.json'));
   const hasSnapshot = state.snapshotRoot !== null;
@@ -88,6 +92,7 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
         'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY',
         'Referrer-Policy': 'no-referrer', 'Content-Security-Policy': CSP, ...extra });
       res.end(bytes);
+      if (req.method === 'POST' && code < 300) syncPainel.agendar();
     };
     try {
       if (![`127.0.0.1:${actualPort}`, `localhost:${actualPort}`].includes(req.headers.host)) return send(403, { erro: 'Host inválido.' });
@@ -298,7 +303,7 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
       try { path = decodeURIComponent(req.url.split('?')[0]); } catch { return send(404, { erro: 'Arquivo indisponível.' }); }
       if (/[\\%\x00]/.test(path) || path.split('/').some(part => part === '.' || part === '..')) return send(404, { erro: 'Arquivo indisponível.' });
       if (req.method !== 'GET') return send(405, { erro: 'Método indisponível.' });
-      if (path === '/api/status') return send(200, { app: appName, version: 1, mode: state.mode });
+      if (path === '/api/status') return send(200, { app: appName, version: 1, mode: state.mode, sync: syncPainel.status() });
       if (path === '/api/candidaturas') {
         if (req.headers['x-painel-token'] !== token) return send(403, { erro: 'Acesso inválido.' });
         const vagas = writable ? projectEvents((await readEvents(dataRoot)).eventos).vagas : pipeline.vagas;
@@ -583,5 +588,5 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
   });
   await new Promise((done, fail) => { server.once('error', fail); server.listen(port, host, done); });
   actualPort = server.address().port;
-  return { server, mode: state.mode, url: `http://${host}:${actualPort}`, close: () => new Promise((done, fail) => server.close(error => error ? fail(error) : done())) };
+  return { server, mode: state.mode, url: `http://${host}:${actualPort}`, close: () => new Promise((done, fail) => { syncPainel.parar(); server.close(error => error ? fail(error) : done()); }) };
 }

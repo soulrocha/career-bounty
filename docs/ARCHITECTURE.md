@@ -44,8 +44,9 @@ Testes vivem nestas fronteiras públicas, nunca em detalhes internos.
 | S9 | Hook: CLI que lê JSON do hook no stdin e devolve decisão |
 | S10 | Contrato do leitor de e-mail: JSON `MailDigest` e `MailFull` |
 | S11 | Rotina diária: `shouldRun({now, ultimaExecucao, calendario, host})` |
+| S12 | Base central: `sync-remote <op> --raiz` (quadros no stdin/stdout) e `planejar({local, remoto, base})` |
 
-Estado atual: S1, S5 e S6 (em modo sombra) têm implementação desde a F1. A F2 acrescentou S3 (fontes de vagas em `core/sources/`), S4 (`core/llm/runner.mjs` com fake, replay e live), S9 (`hooks/`) e S11 (`core/schedule/`). A F3 trouxe S10 (`core/mail/contract.mjs`). A F7 trouxe S7 (`core/apply/policy/evaluate.mjs`, função pura `avaliarPolitica`) e S8 (`core/apply/drivers/`, `executarDriver` com navegador efêmero e sem modelo).
+Estado atual: S1, S5 e S6 (em modo sombra) têm implementação desde a F1. A F2 acrescentou S3 (fontes de vagas em `core/sources/`), S4 (`core/llm/runner.mjs` com fake, replay e live), S9 (`hooks/`) e S11 (`core/schedule/`). A F3 trouxe S10 (`core/mail/contract.mjs`). A F7 trouxe S7 (`core/apply/policy/evaluate.mjs`, função pura `avaliarPolitica`) e S8 (`core/apply/drivers/`, `executarDriver` com navegador efêmero e sem modelo). A F11 trouxe S12 (`core/sync/`, base central por SSH; ver `docs/SYNC.md`).
 
 ## Painel: desvio deliberado do contrato
 
