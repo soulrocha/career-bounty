@@ -139,6 +139,10 @@ test('na aba de candidatura, upload só do PDF ATS versionado da própria vaga',
   const ok = ['D:', 'dados', 'artifacts', 'cv', 'vaga-01', H, 'cv-ats.pdf'].join(String.fromCharCode(92));
   assert.equal(decidir(`${CHROME}file_upload`, { ref: 'ref_3', tabId: 7, paths: [ok] }), null);
   assert.equal(decidir(`${CHROME}file_upload`, { ref: 'ref_3', tabId: 7, paths: [`/srv/dados/artifacts/cv/vaga-01/${H}/cv-ats.pdf`] }), null);
+  assert.equal(decidir(`${CHROME}file_upload`, { ref: 'ref_3', tabId: 7, paths: [`/srv/dados/artifacts/cv/vaga-01/${H}/envio/Empresa-Vaga-Ana.pdf`] }), null);
+  for (const fora of [`/srv/dados/artifacts/cv/vaga-01/${H}/envio/sub/x.pdf`, `/srv/dados/artifacts/cv/vaga-01/${H}/envio/x.txt`, `/srv/dados/artifacts/cv/vaga-02/${H}/envio/x.pdf`]) {
+    assert.equal(decidir(`${CHROME}file_upload`, { ref: 'ref_3', tabId: 7, paths: [fora] })?.decisao, 'negar', fora);
+  }
   for (const paths of [[ok.replace('vaga-01', 'vaga-02')], [ok.replace('cv-ats', 'cv-visual')], ['D:/dados/outro.pdf'], [], [ok, 'D:/dados/.ssh/id_rsa']]) {
     assert.equal(decidir(`${CHROME}file_upload`, { ref: 'ref_3', tabId: 7, paths })?.decisao, 'negar', JSON.stringify(paths));
   }
