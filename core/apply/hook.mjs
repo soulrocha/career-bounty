@@ -61,9 +61,10 @@ function decidirAcao(ferramenta, input, aba, ctx) {
   }
   if (ferramenta === 'javascript_tool') return decidirScript(input?.text, aba, ctx);
   if (ferramenta === 'file_upload') {
-    // Só o PDF ATS versionado da vaga da aba (artifacts/cv/<vaga>/<hash>/cv-ats.pdf); arquivo sem caminho não é conferível.
+    // Só o PDF ATS versionado da vaga da aba (artifacts/cv/<vaga>/<hash>/cv-ats.pdf) ou a cópia de envio com nome legível
+    // (<hash>/envio/<nome>.pdf); arquivo sem caminho não é conferível.
     const vaga = String(aba.vaga_id).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const cv = new RegExp(`[\\\\/]artifacts[\\\\/]cv[\\\\/]${vaga}[\\\\/][0-9a-f]{64}[\\\\/]cv-ats\\.pdf$`);
+    const cv = new RegExp(`[\\\\/]artifacts[\\\\/]cv[\\\\/]${vaga}[\\\\/][0-9a-f]{64}[\\\\/](?:cv-ats|envio[\\\\/][^\\\\/]+)\\.pdf$`);
     const caminhos = Array.isArray(input?.paths) ? input.paths : [];
     if ('cv_ats' in aba && (!aba.cv_ats || caminhos.some(c => c !== aba.cv_ats))) return nega('aba de candidatura: use o PDF escolhido ao iniciar esta tentativa', aba.vaga_id);
     if (!caminhos.length || input?.files?.length || !caminhos.every(c => typeof c === 'string' && cv.test(c))) return nega('aba de candidatura: só o PDF ATS aprovado desta vaga pode ser anexado', aba.vaga_id);

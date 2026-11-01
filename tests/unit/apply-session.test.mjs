@@ -81,9 +81,21 @@ test('aba reservada aceita apenas upload do CV escolhido, não outra versão da 
   const tentativa = await iniciarCandidatura(dataRoot, { vaga, tabId: 7, ts: TS });
   const ctx = { sessao: await lerSessao(dataRoot), aprovacoes: { aprovacoes: [] }, agora: TS };
   const decidir = arquivo => decidirNavegador({ tool_name: 'mcp__claude-in-chrome__file_upload', tool_input: { tabId: 7, paths: [arquivo] } }, ctx);
-  const arquivo = path.join(dataRoot, tentativa.cv.ats);
+  const arquivo = path.join(dataRoot, tentativa.cv.envio);
   assert.equal(decidir(arquivo), null);
   assert.equal(decidir(arquivo.replace(H, 'b'.repeat(64)))?.decisao, 'negar');
+  assert.equal(decidir(path.join(dataRoot, tentativa.cv.ats))?.decisao, 'negar');
+});
+
+test('o PDF anexado leva o nome Empresa-Vaga-Nome, sem "ats", com os mesmos bytes do aprovado', async t => {
+  const { dataRoot, vaga } = await contexto(t);
+  await cv(dataRoot, vaga);
+  await mkdir(path.join(dataRoot, 'cv'), { recursive: true });
+  await writeFile(path.join(dataRoot, 'cv/perfil.json'), JSON.stringify({ cabecalho: { nome: 'Ana Souza' } }));
+  const inicio = executar(dataRoot, ['iniciar', '--vaga', vaga.id, '--aba', '7']);
+  assert.equal(path.basename(inicio.cv_ats), `${vaga.empresa}-${vaga.cargo}-Ana Souza.pdf`);
+  assert.doesNotMatch(path.basename(inicio.cv_ats), /ats/i);
+  assert.deepEqual(await readFile(inicio.cv_ats), await readFile(path.join(dataRoot, inicio.cv.ats)));
 });
 
 test('validador de rascunho rejeita campos, afirmações e quantidades sem suporte', () => {

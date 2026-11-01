@@ -75,7 +75,7 @@ export const aplicarCommands = {
       if (!values['--vaga'] || !values['--aba']) throw new Error(USO);
       const vaga = await vagaDaProjecao(dataRoot, values['--vaga']);
       const r = await iniciarCandidatura(dataRoot, { vaga, tabId: values['--aba'] });
-      return { result: { ...r, extrator: SCRIPT_EXTRATOR, cv_ats: r.cv ? path.join(dataRoot, r.cv.ats) : null } };
+      return { result: { ...r, extrator: SCRIPT_EXTRATOR, cv_ats: r.cv ? path.join(dataRoot, r.cv.envio ?? r.cv.ats) : null } };
     }
     if (sub === 'preparar') {
       const values = parseFlags(flags, { allowed: ['--vaga', '--extracao', '--live', '--replay', '--gravar'], withValue: ['--vaga', '--extracao', '--replay'] });
@@ -101,7 +101,7 @@ export const aplicarCommands = {
       if (runner && preparo.rascunhos?.length) sugestoes = await rascunharRespostas({ runner, campos: preparo.rascunhos, vaga, afirmacoes: (await lerBase((await carregarFontes({ dataRoot, settings })).fontes)).claims, meta });
       const { perguntas } = await registrarPreparacao(dataRoot, { vaga, preparo, portal, tentativa_id: tentativa.tentativa_id, rascunhosSugeridos: sugestoes, ts });
       const atual = tentativa.cv;
-      const resultado = { ...preparo, perguntas_criadas: perguntas, cv_ats: preparo.anexar_cv && atual ? path.join(dataRoot, atual.ats) : null };
+      const resultado = { ...preparo, perguntas_criadas: perguntas, cv_ats: preparo.anexar_cv && atual ? path.join(dataRoot, atual.envio ?? atual.ats) : null };
       const texto = preparo.bloqueada ? `bloqueada: ${preparo.motivo}`
         : `${preparo.pronta ? 'pronta para revisar e enviar' : `${perguntas} pergunta(s) criada(s) na aba Perguntas`}; ${preparo.preencha_voce.length} campo(s) sensível(is) para a pessoa digitar`;
       return { result: resultado, text: texto };

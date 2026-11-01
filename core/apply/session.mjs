@@ -14,16 +14,27 @@ import { registrarComprovante } from './receipt.mjs';
 import { rotaDe } from './route.mjs';
 import { appendEvents, readEvents } from '../store/events.mjs';
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { cvDoPainel, lerManifesto } from '../cv/artifacts.mjs';
+import { cvDoPainel, lerManifesto, nomeArquivoCv } from '../cv/artifacts.mjs';
+
+// O portal mostra ao recrutador o nome do arquivo anexado: anexa-se uma cópia "Empresa-Vaga-Nome.pdf" (sem "cv-ats"),
+// com os mesmos bytes, em <versão>/envio/. O hook só libera essa cópia e o PDF da própria versão.
+async function copiaParaEnvio(dataRoot, vaga, atual) {
+  const perfil = JSON.parse(await readFile(path.join(dataRoot, 'cv', 'perfil.json'), 'utf8').catch(() => '{}'));
+  const nome = nomeArquivoCv({ empresa: vaga.empresa, cargo: vaga.cargo, nome: perfil.nome_arquivo ?? perfil.cabecalho?.nome, tipo: 'ats' });
+  const relativo = `${path.posix.dirname(atual.ats)}/envio/${nome}`;
+  await mkdir(path.join(dataRoot, path.dirname(relativo)), { recursive: true });
+  await copyFile(path.join(dataRoot, atual.ats), path.join(dataRoot, relativo));
+  return relativo;
+}
 
 export async function iniciarCandidatura(dataRoot, { vaga, tabId, ts = new Date().toISOString() }) {
   const { rota, portal } = rotaDe(vaga);
   const atual = cvDoPainel(await lerManifesto(dataRoot, vaga.id))?.atual;
-  const cv = atual ? { hash: atual.hash, ats: atual.ats, pdf_sha256: createHash('sha256').update(await readFile(path.join(dataRoot, atual.ats))).digest('hex') } : null;
+  const cv = atual ? { hash: atual.hash, ats: atual.ats, envio: await copiaParaEnvio(dataRoot, vaga, atual), pdf_sha256: createHash('sha256').update(await readFile(path.join(dataRoot, atual.ats))).digest('hex') } : null;
   const tentativa = await reservarTentativa(dataRoot, { vaga, rota, cv, ts });
-  await marcarAba(dataRoot, { tabId, vagaId: vaga.id, tentativaId: tentativa.tentativa_id, cvAts: cv ? path.join(dataRoot, cv.ats) : null, rota, ts });
+  await marcarAba(dataRoot, { tabId, vagaId: vaga.id, tentativaId: tentativa.tentativa_id, cvAts: cv ? path.join(dataRoot, cv.envio) : null, rota, ts });
   return { ...tentativa, rota, portal };
 }
 
