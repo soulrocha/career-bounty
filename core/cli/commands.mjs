@@ -48,6 +48,7 @@ import { acompanhamentoCommands } from './acompanhamento.mjs';
 import { projectProcessos } from '../store/projections/processos.mjs';
 import { empresaCommands } from './empresa.mjs';
 import { analiseCommands } from './analise.mjs';
+import { syncCommands } from './sync.mjs';
 import { relogio } from './relogio.mjs';
 export { relogio } from './relogio.mjs';
 
@@ -73,6 +74,7 @@ export const legacyCommandNames = ['migrate', 'project', 'verify', 'panel'];
 export const commandNames = () => [...legacyCommandNames, ...Object.keys(commands)];
 
 export const commands = {
+  ...syncCommands,
   ...kbCommands,
   ...cvCommands,
   ...aplicarCommands,
