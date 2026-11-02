@@ -2,7 +2,7 @@
 // O HTML é local e autocontido (a foto entra como data URI); o navegador roda com perfil temporário e sem rede de fundo.
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -32,6 +32,19 @@ export function encontrarNavegador({ env = process.env, plataforma = process.pla
   return candidatos(env, plataforma).find(caminho => existsSync(caminho)) ?? null;
 }
 
+// Espera o arquivo existir com o tamanho estável entre duas leituras. Devolve false se o prazo acabar antes.
+export async function esperarArquivo(arquivo, prazoMs, intervaloMs = 100) {
+  const fim = Date.now() + Math.max(0, prazoMs);
+  let anterior = -1;
+  while (Date.now() < fim) {
+    const tamanho = existsSync(arquivo) ? (await stat(arquivo)).size : -1;
+    if (tamanho > 0 && tamanho === anterior) return true;
+    anterior = tamanho;
+    await new Promise(resolve => setTimeout(resolve, intervaloMs));
+  }
+  return false;
+}
+
 // Grava o HTML num diretório temporário, imprime e devolve os bytes do PDF.
 export async function imprimirPdf({ html, navegador = encontrarNavegador() }) {
   if (!navegador) throw new Error('Nenhum Chrome, Chromium ou Edge encontrado para gerar o PDF. Defina CAREER_BOUNTY_BROWSER com o caminho do executável.');
@@ -47,7 +60,10 @@ export async function imprimirPdf({ html, navegador = encontrarNavegador() }) {
     ];
     // O Ubuntu 24 restringe namespaces sem privilégio e o sandbox do Chrome não sobe; o HTML é nosso, local e sem script.
     if (process.platform === 'linux') args.unshift('--no-sandbox');
+    const inicio = Date.now();
     const r = spawnSync(navegador, args, { timeout: TEMPO_MAX_MS, windowsHide: true, encoding: 'utf8' });
+    // No Windows o Chrome/Edge pode devolver o controle antes de o processo filho terminar de gravar o PDF.
+    if (r.status === 0) await esperarArquivo(saida, TEMPO_MAX_MS - (Date.now() - inicio));
     if (!existsSync(saida)) {
       const detalhe = r.error?.message ?? String(r.stderr ?? '').trim().split(/\r?\n/).slice(-3).join(' ');
       throw new Error(`O navegador não gerou o PDF (status ${r.status ?? 'sem status'}): ${detalhe.slice(0, 300)}`);

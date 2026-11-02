@@ -5,6 +5,12 @@ mudanças de comportamento podem acontecer entre versões menores.
 
 ## [Unreleased]
 
+### Corrigido
+
+- **CV em PDF no Windows.** Em algumas instalações o Chrome/Edge headless devolve o controle antes de o processo filho
+  gravar o PDF, e `cv gerar` falhava com "O navegador não gerou o PDF (status 0)". A impressão agora espera o arquivo
+  aparecer com tamanho estável, dentro do mesmo prazo de 60 s.
+
 ## [0.3.3] - 2026-10-26
 
 ### Alterado
