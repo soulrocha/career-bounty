@@ -7,6 +7,9 @@ mudanças de comportamento podem acontecer entre versões menores.
 
 ### Corrigido
 
+- **`--live` não ligava a chamada real.** Em `cv gerar` e `entrevista preparar`, a opção `--live` punha `LIVE=1` no
+  ambiente, mas o runner confere `CAREER_BOUNTY_LIVE=1`, e o comando falhava com "O modo live exige
+  CAREER_BOUNTY_LIVE=1". A opção agora define a variável que o runner exige.
 - **CV em PDF no Windows.** Em algumas instalações o Chrome/Edge headless devolve o controle antes de o processo filho
   gravar o PDF, e `cv gerar` falhava com "O navegador não gerou o PDF (status 0)". A impressão agora espera o arquivo
   aparecer com tamanho estável, dentro do mesmo prazo de 60 s.
