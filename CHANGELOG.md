@@ -5,6 +5,13 @@ mudanças de comportamento podem acontecer entre versões menores.
 
 ## [Unreleased]
 
+### Adicionado
+
+- **PDF automático no `daily-run`.** Vagas abertas com aderência alta, boa, média ou condicional que ainda não têm CV ganham os
+  PDFs depois da avaliação. Falha de uma vaga não para as outras, e sem navegador o lote é pulado.
+- **"Gerar PDF desta vaga" no painel,** para as demais vagas (`POST /api/cv/gerar`). Em painel sem navegador, como o da VM, o botão
+  dá lugar a uma explicação e a rota responde 501.
+
 ### Corrigido
 
 - **`--live` não ligava a chamada real.** Em `cv gerar` e `entrevista preparar`, a opção `--live` punha `LIVE=1` no

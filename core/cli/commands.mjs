@@ -25,6 +25,7 @@ import { formatFindings, scanMessageFile, scanStaged, scanTracked } from '../pri
 import { buildDenylist, loadPrivacyContext } from '../privacy/context.mjs';
 import { auditTemplateFile } from '../privacy/auditTemplate.mjs';
 import { collect } from '../radar/collect.mjs';
+import { gerarCvsAutomaticos } from '../cv/lote.mjs';
 import { compararRadar } from '../radar/compare.mjs';
 import { buildDigest } from '../score/digest.mjs';
 import { readEvents } from '../store/events.mjs';
@@ -172,6 +173,13 @@ export const commands = {
         const runner = createRunner({ modo: 'live', dataRoot: settings.dataRoot, identity: await loadIdentityValues(), env: { ...process.env, CAREER_BOUNTY_LIVE: '1' }, timeoutMs: 300000, now: () => now });
         result.email = await sincronizarEmail({ dataRoot: settings.dataRoot, settings, runner, now });
       } catch (error) { result.email = { ok: false, falha: { etapa: 'inicio', erro: String(error.message ?? error).slice(0, 200) } }; }
+    }
+    // PDFs das vagas que chegam ao painel com aderência alta, boa, média ou condicional; falha aqui não derruba a rodada.
+    if (!values['--dry-run'] && result.executou && !result.falha) {
+      try {
+        const vagas = projectEvents((await readEvents(settings.dataRoot)).eventos, { now }).vagas ?? [];
+        result.cvs = await gerarCvsAutomaticos({ dataRoot: settings.dataRoot, settings, vagas });
+      } catch (error) { result.cvs = { erro: String(error.message ?? error).slice(0, 200) }; }
     }
     // Avaliação de empresas depois do radar e do e-mail:
     if (!values['--dry-run'] && result.executou && !result.falha) {

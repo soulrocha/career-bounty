@@ -97,7 +97,7 @@ test('a raiz entrega o painel renderizado da projeção, com token e perfil, e r
   const a = await ambiente(t);
   const dadosDe = async () => {
     const page = await (await fetch(a.panel.url)).text();
-    assert.match(page, /window\.PAINEL_API=\{"token":"[a-f0-9]{64}"\}/);
+    assert.match(page, /window\.PAINEL_API=\{"token":"[a-f0-9]{64}","cvGerar":(true|false)\}/);
     return JSON.parse(page.match(/const DATA=([\s\S]*?);\nconst esc=/)[1]);
   };
   const antes = await dadosDe();

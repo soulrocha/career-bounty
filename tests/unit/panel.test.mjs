@@ -33,7 +33,7 @@ test('painel local identifica modo sombra e entrega HTML com token efêmero', as
   assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
   assert.equal(response.headers.get('x-frame-options'), 'DENY');
   const page = await (await fetch(panel.url)).text();
-  assert.match(page, /window\.PAINEL_API=\{"token":"[a-f0-9]{64}"\}/);
+  assert.match(page, /window\.PAINEL_API=\{"token":"[a-f0-9]{64}","cvGerar":(true|false)\}/);
   assert.match(page, /SOMBRA/);
 });
 
