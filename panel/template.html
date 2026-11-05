@@ -2434,7 +2434,16 @@ function renderCvs(v) {
   }).join('');
 
   if (!cvs || !cvs.atual) {
-    return `<div class="cvs">${baseLinks || '<p class="meta">PDFs da vaga serão gerados na próxima rodada.</p>'}</div>`;
+    // Alta, boa, média e condicional ganham PDF no daily-run; as demais (baixa etc.) geram aqui, sob demanda.
+    // Sem navegador (painel na VM), o PDF sai num PC e chega aqui pela sincronização.
+    const acaoCv = api?.cvGerar
+      ? `<button type="button" class="btn peq" id="btn-gerar-cv" data-id="${esc(v.id)}">Gerar PDF desta vaga</button>
+      <span id="gerar-cv-feedback" role="status"></span>`
+      : 'O PDF próprio só sai num PC com navegador (<code>cv gerar --vaga</code>) e chega aqui pela sincronização.';
+    return `<div class="cvs">${baseLinks}</div>
+    <p class="meta">Esta vaga ainda não tem PDF próprio.
+      ${acaoCv}
+    </p>`;
   }
 
   const artLink = (u, tit, desc) => u ? `<a class="cv" href="/${esc(u)}" target="_blank" rel="noopener noreferrer">
@@ -2704,6 +2713,23 @@ document.getElementById('detalhe-conteudo').addEventListener('change', async e =
     } catch {
       feedback.textContent = 'Erro ao salvar.';
     }
+  }
+});
+
+document.getElementById('detalhe-conteudo').addEventListener('click', async e => {
+  const btn = e.target.closest('#btn-gerar-cv');
+  if (!btn) return;
+  const feedback = document.getElementById('gerar-cv-feedback');
+  btn.disabled = true;
+  feedback.textContent = 'Gerando PDF (leva alguns segundos)...';
+  try {
+    const r = await apiPost('cv/gerar', { id: btn.dataset.id });
+    if (r && r.gerado === false) { feedback.textContent = r.motivo === 'portal_sem_cv' ? 'Este portal usa o perfil, não PDF.' : 'Sem PDF para esta vaga.'; return; }
+    // Os links do CV vêm na página montada pelo servidor: recarrega para mostrá-los.
+    location.reload();
+  } catch {
+    feedback.textContent = 'Erro ao gerar o PDF.';
+    btn.disabled = false;
   }
 });
 

@@ -23,6 +23,17 @@ Em modo sombra (antes do corte da migração), `cv gerar` e `cv gate` gravam o a
 o legado continua o escritor oficial do pipeline. A saída avisa. Depois do corte para o modo ativo, rode `cv gate --vaga <id>`
 nas vagas com CV para que o resultado do gate entre na projeção.
 
+## Quando o PDF é gerado
+
+- **Automático:** o `daily-run`, depois da avaliação, gera os PDFs de toda vaga aberta com aderência alta, boa, média ou
+  condicional que ainda não tem CV, não foi descartada nem marcada como candidatura (`core/cv/lote.mjs`). Falha de uma
+  vaga não para as outras nem a rodada; o resumo sai em `cvs` no resultado.
+- **Sob demanda:** as demais (baixa, incompatível, pendente) mostram no painel o botão "Gerar PDF desta vaga"
+  (`POST /api/cv/gerar`), além do PDF-base configurado em `perfil.pdfs_base`.
+- Portal em `cv_skip_portals` (Gupy por padrão) nunca recebe PDF.
+- **Sem navegador (painel na VM):** o botão não aparece, `POST /api/cv/gerar` responde 501 e o lote do `daily-run` devolve
+  `cvs.pulado: "sem_navegador"`. O PDF gerado num PC chega ao painel pela sincronização.
+
 ## Quem recebe adaptação
 
 | Situação da vaga | CV |

@@ -9,7 +9,7 @@ O painel é uma ferramenta de uso estritamente local e opera sem carregar depend
 
 1. **Endereço e Host:** Apenas `127.0.0.1` e `localhost` na porta designada. Qualquer outro cabeçalho `Host` é rejeitado com `403 Forbidden`.
 2. **Autenticação:** Toda requisição à API (exceto `/api/status`) exige o cabeçalho `X-Painel-Token` com o token efêmero de 64 caracteres hexadecimais gerado na inicialização do servidor e injetado em `window.PAINEL_API`.
-3. **Somente Leitura por Padrão:** As rotas são `GET`, exceto onde expressamente previsto (`/api/candidaturas`, `/api/descarte`, `/api/perguntas`, `/api/analise-curriculo/incluir`, `/api/analise-curriculo/marcar`, `/api/analise-curriculo/entrevista`).
+3. **Somente Leitura por Padrão:** As rotas são `GET`, exceto onde expressamente previsto (`/api/candidaturas`, `/api/descarte`, `/api/perguntas`, `/api/analise-curriculo/incluir`, `/api/analise-curriculo/marcar`, `/api/analise-curriculo/entrevista`, `/api/cv/gerar`). A última responde 501 quando o painel não tem navegador; `window.PAINEL_API.cvGerar` informa isso à página.
 4. **Mascaramento Estrito de PII:** Dados de contato de recrutadores (telefones, e-mails, endereços de WhatsApp) são estritamente mascarados antes de qualquer resposta da API. Resumos de mensagens nunca expõem números completos ou endereços privados de pessoas físicas.
 
 ---

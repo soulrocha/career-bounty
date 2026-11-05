@@ -34,6 +34,8 @@ import { gerarPreparacaoEntrevista, formatarPreparacaoMarkdown } from '../core/i
 import { carregarFontes } from '../core/kb/fontes.mjs';
 import { lerBase } from '../core/kb/base.mjs';
 import { criarSyncDoPainel } from './sync.mjs';
+import { gerarCvDaVaga } from '../core/cv/gerar.mjs';
+import { encontrarNavegador } from '../core/cv/navegador.mjs';
 
 const ABAS = [ABA_QUADRANTES, ABA_PERGUNTAS, ABA_FILA];
 const PANEL_DIR = dirname(fileURLToPath(import.meta.url));
@@ -48,7 +50,7 @@ const FONTES_PERMITIDAS = new Set([
 // Painel sem recurso externo: nada carrega nem envia dado para fora de 127.0.0.1. Script e estilo inline vêm do template local.
 const CSP = ["default-src 'none'", "script-src 'unsafe-inline'", "style-src 'unsafe-inline'", "img-src 'self' data:", "font-src 'self' data:", "connect-src 'self'", "base-uri 'self'", "form-action 'none'", "frame-ancestors 'none'", "object-src 'none'"].join('; ');
 
-export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, appName = 'career-bounty', now, hostId, perfil = {}, sincronizador, intervaloSyncMs, esperaSyncMs }) {
+export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, appName = 'career-bounty', now, hostId, perfil = {}, sincronizador, intervaloSyncMs, esperaSyncMs, gerarCv = gerarCvDaVaga, navegadorDisponivel = () => encontrarNavegador() !== null }) {
   if (!['127.0.0.1', 'localhost'].includes(host)) throw new Error('O painel exige endereço local.');
   dataRoot = resolve(dataRoot);
   await noLinks(dataRoot).catch(() => { throw new Error('Diretório de dados inválido.'); });
@@ -78,6 +80,7 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
   }
   const materialsPolicy = createMaterials({ snapshot, namedMaterials, baseFiles: allowedBaseFiles });
   const writable = state.mode === 'ativo';
+  let gerandoCv = false; // uma geração de PDF por vez: cada uma abre o navegador duas vezes
   let actualPort;
   const nomeDoDownload = async (vagaId, tipo) => {
     const vagas = (writable ? projectEvents((await readEvents(dataRoot)).eventos) : pipeline).vagas ?? [];
@@ -104,10 +107,38 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
           '/api/analise-curriculo/incluir',
           '/api/analise-curriculo/marcar',
           '/api/analise-curriculo/entrevista',
+          '/api/cv/gerar',
         ];
         if (![`http://127.0.0.1:${actualPort}`, `http://localhost:${actualPort}`].includes(req.headers.origin)
           || req.headers['x-painel-token'] !== token || !rotasPostPermitidas.includes(req.url)) {
           return send(403, { erro: 'Acesso inválido.' });
+        }
+        // PDF sob demanda (baixa aderência e afins): gera o CV da vaga na hora; alta, boa, média e condicional já vêm do daily-run.
+        if (req.url === '/api/cv/gerar') {
+          if (!navegadorDisponivel()) return send(501, { erro: 'Este painel não tem navegador para gerar PDF.' });
+          if ((req.headers['content-type'] ?? '').split(';')[0] !== 'application/json') return send(415, { erro: 'Formato inválido.' });
+          const tamanho = Number(req.headers['content-length'] ?? 0);
+          if (!(tamanho > 0 && tamanho <= 1024)) return send(413, { erro: 'Pedido inválido.' });
+          if (!writable) return send(409, { erro: 'Modo sombra: gravação desligada.', gravacao_painel: 'desligada' });
+          const partes = [];
+          for await (const parte of req) partes.push(parte);
+          let corpo;
+          try { corpo = JSON.parse(Buffer.concat(partes).toString('utf8')); } catch { return send(400, { erro: 'Pedido malformado.' }); }
+          if (!corpo || typeof corpo !== 'object' || Array.isArray(corpo) || Object.keys(corpo).some(k => k !== 'id') || typeof corpo.id !== 'string') return send(400, { erro: 'Campos inválidos.' });
+          const vagas = projectEvents((await readEvents(dataRoot)).eventos).vagas ?? [];
+          if (!vagas.some(v => v.id === corpo.id)) return send(404, { erro: 'Vaga não encontrada.' });
+          if (gerandoCv) return send(409, { erro: 'Já há um PDF sendo gerado. Tente de novo em instantes.' });
+          gerandoCv = true;
+          try {
+            const settings = await loadSettings({ dataRoot }).catch(() => ({}));
+            const r = await gerarCv({ dataRoot, settings, vagaId: corpo.id });
+            return send(200, r.gerado ? { gerado: true, tipo: r.tipo, gate: r.gate.status } : { gerado: false, motivo: r.motivo });
+          } catch {
+            // A mensagem do gerador pode trazer caminho local; o detalhe sai em `cv gerar --vaga <id>`.
+            return send(500, { erro: 'Não foi possível gerar o PDF.' });
+          } finally {
+            gerandoCv = false;
+          }
         }
         // Rotas de analise-curriculo (F9.5)
         if (req.url.startsWith('/api/analise-curriculo/')) {
@@ -554,7 +585,7 @@ export async function startPanel({ dataRoot, host = '127.0.0.1', port = 8880, ap
         return bytes ? send(200, bytes, 'font/woff2') : send(404, { erro: 'Fonte indisponível.' });
       }
       if (['/', '/carreira/busca-vagas/painel-vagas.html'].includes(path)) {
-        const init = `<script>window.PAINEL_API=${JSON.stringify({ token })};</script>`;
+        const init = `<script>window.PAINEL_API=${JSON.stringify({ token, cvGerar: navegadorDisponivel() })};</script>`;
         const source = pageSource ?? await renderPainelDe(writable ? projectEvents((await readEvents(dataRoot)).eventos) : pipeline, { dataRoot, perfil });
         const withInit = source.replace('</head>', `${pageSource ? "<base href=\"/carreira/busca-vagas/\">" : ""}${init}</head>`);
         const page = writable ? withInit : withInit
